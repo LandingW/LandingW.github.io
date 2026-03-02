@@ -1,23 +1,12 @@
 {
-  "updated_at": "2026-03-01 04:27 UTC",
+  "updated_at": "2026-03-02 04:20 UTC",
   "articles": [
-    {
-      "id": "2011061440631562706",
-      "title": "成功在 20岁速通游戏大厂入职被开跳槽全流程",
-      "url": "https://zhuanlan.zhihu.com/p/2011061440631562706",
-      "excerpt": "本人从去年四月就开始在某游戏大厂实习做引擎支持一款预研项目，到现在已经快一年了；年前冲刺版本，感觉是一片欣欣向荣啊 年后回来没过几天感觉大家都没啥干劲了，以为是人还没都回来没人对接，但我回来了，我还在认真工作，我负责的一个模块又迭代了，叫mt来看一看 mt看完了让我跟他去会议室一趟跟我说有点事，我还以为是我和同要到期了找我续合同，跟着mt去会议室。会议室都占满了（伏笔），我们就去了楼下，刚出大厦m",
-      "voteup_count": 39,
-      "comment_count": 20,
-      "created": 1772254623,
-      "updated": 1772296754,
-      "thumbnail": "https://pic1.zhimg.com/v2-977f00b49dcf8f483657ab7627844602_720w.jpg?source=d16d100b"
-    },
     {
       "id": "1992568844586329068",
       "title": "Neural Light Grid：问题不在 Probe，而在权重，重新理解体积 GI 的漏光问题",
       "url": "https://zhuanlan.zhihu.com/p/1992568844586329068",
       "excerpt": "基于 Volume / Probe 的全局光照（如 Irradiance Volume、DDGI）通过在空间中离散采样irradiance，并在查询点对多个 probe 进行插值来近似间接光照，其基本形式可以写为： 其中，x是查询的位置，N是采样的probe数量，在3D游戏里面一般是8个；Li是第i个probe采样到的irradiance，wi是第i个probe的权重目前市面上对于神经网络和静态v",
-      "voteup_count": 73,
+      "voteup_count": 74,
       "comment_count": 16,
       "created": 1767852102,
       "updated": 1767852209,
@@ -32,7 +21,7 @@
       "comment_count": 31,
       "created": 1767719165,
       "updated": 1767786577,
-      "thumbnail": "https://pic1.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pica.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
     },
     {
       "id": "1977086546894136146",
@@ -54,7 +43,7 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
@@ -65,7 +54,7 @@
       "comment_count": 3,
       "created": 1742741377,
       "updated": 1742812252,
-      "thumbnail": "https://picx.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
     },
     {
       "id": "1885397709336336241",
@@ -131,7 +120,7 @@
       "comment_count": 4,
       "created": 1740931283,
       "updated": 1740931453,
-      "thumbnail": "https://picx.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
     },
     {
       "id": "27426862916",
@@ -208,7 +197,7 @@
       "comment_count": 4,
       "created": 1740489743,
       "updated": 1740580702,
-      "thumbnail": "https://picx.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
     }
   ]
 }
