@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-04 04:13 UTC",
+  "updated_at": "2026-03-05 04:18 UTC",
   "articles": [
     {
       "id": "1992568844586329068",
@@ -21,7 +21,7 @@
       "comment_count": 31,
       "created": 1767719165,
       "updated": 1767786577,
-      "thumbnail": "https://pic1.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
     },
     {
       "id": "1977086546894136146",
@@ -32,7 +32,7 @@
       "comment_count": 20,
       "created": 1764154980,
       "updated": 1764155664,
-      "thumbnail": "https://pic1.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
     },
     {
       "id": "1964513030189609602",
@@ -43,14 +43,14 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://pic1.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
       "title": "纹素对齐（Texel Alignment）如何消除阴影边缘的抖动？",
       "url": "https://zhuanlan.zhihu.com/p/32242478377",
       "excerpt": "大一初学者写文章可能会有纰漏/错误，如果您发现错误欢迎指出嗷最近在复习 catlike coding 的 rendering 部分，想把当初没有太搞明白的小细节（未来面试的坑）搞明白相比当初的懵懵懂懂，现在算是有图形学的几把刷子了，虽然刷子上没几根毛所以这个栏目可能会不定时更新，取决于我的忙碌程度，希望能帮到你！在 rendering 的 part7 中，jasper 讲解了如何渲染各种阴影。其中",
-      "voteup_count": 36,
+      "voteup_count": 38,
       "comment_count": 3,
       "created": 1742741377,
       "updated": 1742812252,
@@ -120,7 +120,7 @@
       "comment_count": 4,
       "created": 1740931283,
       "updated": 1740931453,
-      "thumbnail": "https://pic1.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
     },
     {
       "id": "27426862916",
@@ -197,7 +197,7 @@
       "comment_count": 4,
       "created": 1740489743,
       "updated": 1740580702,
-      "thumbnail": "https://pica.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
     }
   ]
 }
