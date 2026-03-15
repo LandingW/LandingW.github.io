@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-14 04:15 UTC",
+  "updated_at": "2026-03-15 04:37 UTC",
   "articles": [
     {
       "id": "1992568844586329068",
@@ -17,11 +17,11 @@
       "title": "从Instant-NGP到NTC ：傻子都能看懂的神经网络压缩贴图",
       "url": "https://zhuanlan.zhihu.com/p/1992004641165168964",
       "excerpt": "本人被困在学校军训，身边没有高性能台式机无法启动UE，只有一台Mac，无聊至极苦不堪言，没有班上的日子真是度日如年，不学习我浑身难受，遂打开B站观看吴恩达深度学习；同时一直又对神经网络压缩贴图很感兴趣，正好现在难得有时间，遂研究了一下，向大家分享我浅薄的见解本人学习AI到编写这篇文章只有三天，也只是看了两篇论文，所以我是一个纯AI小白，如果有说错的地方那也是很正常的罢O.o欢迎各位大佬指正，感谢大",
-      "voteup_count": 110,
+      "voteup_count": 111,
       "comment_count": 31,
       "created": 1767719165,
       "updated": 1767786577,
-      "thumbnail": "https://pic1.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pica.zhimg.com/v2-232ad3cbcab7c353986c8d35e93f855e_720w.jpg?source=d16d100b"
     },
     {
       "id": "1977086546894136146",
@@ -43,7 +43,7 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pica.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
@@ -54,7 +54,7 @@
       "comment_count": 3,
       "created": 1742741377,
       "updated": 1742812252,
-      "thumbnail": "https://picx.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
     },
     {
       "id": "1885397709336336241",
@@ -120,7 +120,7 @@
       "comment_count": 4,
       "created": 1740931283,
       "updated": 1740931453,
-      "thumbnail": "https://pic1.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
     },
     {
       "id": "27426862916",
@@ -197,7 +197,7 @@
       "comment_count": 4,
       "created": 1740489743,
       "updated": 1740580702,
-      "thumbnail": "https://pica.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
     }
   ]
 }
