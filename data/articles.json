@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-26 04:38 UTC",
+  "updated_at": "2026-03-27 04:38 UTC",
   "articles": [
     {
       "id": "1992568844586329068",
@@ -32,7 +32,7 @@
       "comment_count": 20,
       "created": 1764154980,
       "updated": 1764155664,
-      "thumbnail": "https://pic1.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
     },
     {
       "id": "1964513030189609602",
@@ -43,7 +43,7 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
@@ -54,7 +54,7 @@
       "comment_count": 3,
       "created": 1742741377,
       "updated": 1742812252,
-      "thumbnail": "https://pica.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
     },
     {
       "id": "1885397709336336241",
@@ -105,7 +105,7 @@
       "title": "Optix/CUDA学习笔记（一）初始化",
       "url": "https://zhuanlan.zhihu.com/p/29574999426",
       "excerpt": "这Optix中文互联网上学习资料真的少，希望我的笔记能帮到你大一初学者写文章可能会有纰漏/错误，如果您发现错误欢迎指出嗷这是我熟悉 optix 的特性，学习 optix 的笔记，课程主页为：https://github.com/ingowald/optix7courseOptiX 是 NVIDIA 开发的一个高性能光线追踪引擎，专为图形渲染和计算设计。它基于 NVIDIA 的 CUDA 平台，充分",
-      "voteup_count": 9,
+      "voteup_count": 10,
       "comment_count": 0,
       "created": 1741707763,
       "updated": 1741707763,
@@ -197,7 +197,7 @@
       "comment_count": 4,
       "created": 1740489743,
       "updated": 1740580702,
-      "thumbnail": "https://pica.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-efd45aae779be033732532ef1efd8f59_720w.jpg?source=d16d100b"
     }
   ]
 }
