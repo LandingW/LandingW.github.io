@@ -22,7 +22,7 @@ export default function Hero() {
         >
           <span className="status-dot" />
           <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--green)" }}>
-            在职 · 米哈游 Varsapura
+            图形程序 · 米哈游 Varsapura
           </span>
         </div>
       </FadeUp>

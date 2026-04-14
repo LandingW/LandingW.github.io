@@ -20,6 +20,22 @@ export const education = [
 
 export const experiences = [
   {
+    company: "米哈游",
+    department: "Varsapura",
+    role: "图形程序",
+    period: "2026.04 — 至今",
+    icon: "/company-icons/mhy-cutout.png",
+    iconWidth: 262,
+    iconHeight: 93,
+    iconDisplayHeight: 30,
+    highlights: [
+      {
+        title: "当前状态",
+        desc: "2026.04 起在米哈游 Varsapura 工作。",
+      },
+    ],
+  },
+  {
     company: "腾讯 IEG",
     department: "天美 G1 工作室",
     role: "游戏引擎图形开发实习生（GI / UE5）",
@@ -52,22 +68,6 @@ export const experiences = [
       {
         title: "构建 GI 工具链、可视化与源码文档体系",
         desc: "完善编辑器工具、可视化面板与 Ray Debug 捕获链路，支持 Probe / Brick 状态观察、SparseRT 调试、单 Probe 射线回放与运行时参数诊断；同时沉淀系统级源码说明与维护文档，明确模块职责、关键入口与排障路径，显著提升后续研发、联调与跨团队知识传递效率。",
-      },
-    ],
-  },
-  {
-    company: "米哈游",
-    department: "Varsapura",
-    role: "在职",
-    period: "2026.04 — 至今",
-    icon: "/company-icons/mhy-cutout.png",
-    iconWidth: 262,
-    iconHeight: 93,
-    iconDisplayHeight: 30,
-    highlights: [
-      {
-        title: "当前状态",
-        desc: "2026.04 起在米哈游 Varsapura 工作。",
       },
     ],
   },
