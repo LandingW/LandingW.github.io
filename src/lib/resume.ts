@@ -20,30 +20,46 @@ export const education = [
 
 export const experiences = [
   {
-    company: "腾讯 IEG",
-    department: "天美 G1 工作室",
-    role: "游戏引擎开发实习生（UE5）",
-    period: "2025.05 — 至今",
+    company: "米哈游",
+    department: "Varsapura",
+    role: "在职",
+    period: "2026.04 — 至今",
     highlights: [
       {
-        title: "独立支撑 G1 预研 3A 项目 GI 方案落地",
-        desc: "作为核心开发者，独立承担 G1 工作室预研 3A 项目全局光照技术方案的设计与工程落地。从零搭建适配中低算力平台的自研 GI 烘焙管线，将 Skylight Visibility 从运行时解耦为离线预计算，彻底替代 UE 原生 DFAO 方案；同时兼容 TOD（Time of Day）动态天光变化，系统性解决了漏光、性能瓶颈与画面稳定性问题，方案已通过项目组技术评审并进入集成阶段。",
+        title: "当前状态",
+        desc: "2026.04 起在米哈游 Varsapura 工作。",
+      },
+    ],
+  },
+  {
+    company: "腾讯 IEG",
+    department: "天美 G1 工作室",
+    role: "游戏引擎图形开发实习生（GI / UE5）",
+    period: "2025.05 — 2026.04",
+    highlights: [
+      {
+        title: "持续一年深度参与自研 GI 系统研发",
+        desc: "围绕基于体积 Probe / SH 的自研全局光照系统持续 1 年进行源码级研发，长期覆盖离线烘焙、运行时流式、屏幕采样、时域积累、空间滤波、Sky Visibility 与硬件光追增量更新全链路；能够在 UE 渲染主干、插件模块、Shader 与调试工具之间独立定位并推进复杂问题。",
       },
       {
-        title: "Probe 自适应偏移与有效性评估系统",
-        desc: "针对复杂几何场景下光照探针数据不稳定的共性问题，设计并实现 Probe 自适应偏移与有效性评估机制。通过对探针周围几何遮挡关系的离线分析，动态调整探针采样位置，配合有效性权重剔除无效探针数据，显著提升间接光结果在角色走廊、密集建筑等复杂场景下的可靠性与视觉稳定性。",
+        title: "核心支撑 G1 预研 3A 项目 GI 方案工程化落地",
+        desc: "作为核心开发者推进自研 GI 在预研 3A 项目中的实际接入，搭建面向中低算力平台的离线预计算与运行时采样方案，将 Skylight Visibility 从运行时解耦为离线数据，并兼容 TOD（Time of Day）动态天光变化；系统性缓解漏光、性能瓶颈与画面稳定性问题，方案通过技术评审并进入项目集成。",
       },
       {
-        title: "大规模场景 GI 数据流式加载与显存优化",
-        desc: "针对预研 3A 项目超大开放世界地图的内存与显存压力，将全局光照系统与场景分块逻辑解耦，设计基于视距与探针重要度的独立 GI Streaming 机制。在给定 atlas 预算下进行异步优先级排序，自适应加载近场高精度探针数据，有效消除因场景流式加载/卸载引发的渲染线程帧率抖动，同时保证视觉质量不降级。",
+        title: "打通 Probe GI 从 Runtime 数据到屏幕结果的完整链路",
+        desc: "深度参与 GI Runtime 数据结构、FScene/FViewInfo 桥接、Uniform 填充与 Gather / Temporal / Spatial Pass 实现，支撑 Compute 异步采样与全屏 Pixel 两条路径；围绕世界坐标到 Probe Atlas / Page Texture 的映射、历史结果继承与边缘保护去噪，持续优化复杂场景下的间接光稳定性与一致性。",
       },
       {
-        title: "Nanite 架构下特效渲染管线定制",
-        desc: "针对 UE Nanite VisBuffer 架构无法直接兼容传统粒子特效渲染的深层痛点，深入 UE 渲染管线底层，定制 MeshDrawCommand 生成流程与 Primitive 收集逻辑，在完整保留 Nanite 虚拟几何高保真细节的前提下，成功支持特效所需的深度写入、模板测试与交互逻辑，打通了美术特效工作流与 Nanite 场景的协作瓶颈。",
+        title: "SparseRT 增量更新与多次反弹能力研发",
+        desc: "负责基于硬件光追的 Probe 稀疏更新能力建设，参与 active probe 选择、Ray Trace、SH Reduce、Temporal Writeback、Irradiance Upload 等关键环节研发；推进 recursive bounce、probe relocation、Chebyshev / simple occlusion / runtime validity 等机制协同，增强封闭空间、洞穴、薄壳结构附近的能量表现与收敛稳定性。",
       },
       {
-        title: "技术沉淀与跨团队输出",
-        desc: "结合项目实战，深度撰写多篇涵盖 UE 管线定制、GI 系统架构、源码模块解析的技术文档，多次入选公司级技术精选与头条推荐，有效沉淀了可复用的工程知识资产，并在跨项目组技术分享中获得正向反馈。",
+        title: "大世界 GI Streaming 与自适应资源调度优化",
+        desc: "围绕稀疏存储、indirection / page atlas、brick 升降级与 HZB 遮挡参与流式系统优化，设计异步排序与按帧预算重分配策略，使近场高价值区域优先保留高精度数据，降低大地图场景下因 GI 数据加载、页迁移和资源重分配带来的显存压力与渲染抖动。",
+      },
+      {
+        title: "构建 GI 工具链、可视化与源码文档体系",
+        desc: "完善编辑器工具、可视化面板与 Ray Debug 捕获链路，支持 Probe / Brick 状态观察、SparseRT 调试、单 Probe 射线回放与运行时参数诊断；同时沉淀系统级源码说明与维护文档，明确模块职责、关键入口与排障路径，显著提升后续研发、联调与跨团队知识传递效率。",
       },
     ],
   },
@@ -59,7 +75,7 @@ export const experiences = [
       },
       {
         title: "现代 GI 算法研究与工程实践",
-        desc: "系统研究并实践 ReSTIR GI / ReSTIR DI / DDGI 等现代全局光照技术，深入理解各方案的采样策略、收敛特性与工程约束；熟悉 DXR 与 NVIDIA OptiX 完整工作流，具备从加速结构构建、光线调度、着色到降噪协同的全链路工程级理解与实践经验。",
+        desc: "系统研究并实践 ReSTIR GI / ReSTIR DI / DDGI 等现代全局光照技术，深入理解各方案的采样策略、收敛特性与工程约束；熟悉 DXR 与 NVIDIA OptiX 完整工作流，具备从加速结构构建、光线调度、着色到降噪协同的全链路工程级理解，并为后续在天美持续一年的自研 GI 与 SparseRT 研发打下扎实基础。",
       },
     ],
   },

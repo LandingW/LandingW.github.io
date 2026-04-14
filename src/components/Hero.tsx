@@ -22,7 +22,7 @@ export default function Hero() {
         >
           <span className="status-dot" />
           <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--green)" }}>
-            在职实习 · 腾讯 IEG 天美 G1
+            在职 · 米哈游 Varsapura
           </span>
         </div>
       </FadeUp>
@@ -42,7 +42,7 @@ export default function Hero() {
             lineHeight: 1.5,
           }}
         >
-          游戏引擎开发 · 图形渲染工程师
+          游戏引擎开发 · 图形渲染工程师 · 1 年+ GI 研发经验
         </p>
         <p
           style={{
@@ -53,7 +53,7 @@ export default function Hero() {
             letterSpacing: "0.04em",
           }}
         >
-          UE5 &nbsp;·&nbsp; Global Illumination &nbsp;·&nbsp; Ray Tracing
+          UE5 &nbsp;·&nbsp; Global Illumination &nbsp;·&nbsp; SparseRT &nbsp;·&nbsp; Ray Tracing
         </p>
       </FadeUp>
 
