@@ -1,34 +1,34 @@
 {
-  "updated_at": "2026-04-15 04:50 UTC",
+  "updated_at": "2026-04-16 04:55 UTC",
   "articles": [
     {
       "id": "2027425907149652572",
       "title": "Arrow Lake 指令偏移调试经验&怎么调试蓝屏",
       "url": "https://zhuanlan.zhihu.com/p/2027425907149652572",
       "excerpt": "近期在开发环境中遭遇高频随机蓝屏，涉及 0x3B、0x1E 和 0x119 等多种异常代码。常规排查未发现物理内存或驱动冲突问题，通过 !chkimg 校验内核映像完整性亦未见异常。通过对三次不同场景的 Kernel Dump 进行底层逆向分析，最终确认该现象源于 Intel Arrow Lake 架构在核心调度时的硬件译码缺陷。本文记录完整的调试推演过程。我并不是专业的OS开发人员，也不是int",
-      "voteup_count": 8,
-      "comment_count": 6,
+      "voteup_count": 25,
+      "comment_count": 11,
       "created": 1776166080,
       "updated": 1776166151,
-      "thumbnail": "https://pic1.zhimg.com/v2-305acb5c7607e861694870cddb76593f_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-305acb5c7607e861694870cddb76593f_1440w.jpg"
     },
     {
       "id": "2021899719325021160",
       "title": "我在腾讯做GI一年的经验 & 一个实习生对AI时代的思考",
       "url": "https://zhuanlan.zhihu.com/p/2021899719325021160",
       "excerpt": "在腾讯工作了快一年，主要负责做 GI 相关的内容，离别之际想把我踩过的坑，走过的路总结一下，供大家参考；文章末尾有我的一些对AI对思考，欢迎大家交流在腾讯的同学想要看详细版本请看内部km文章哦第1章：前言总的来说：我们这套GI系统是一个稀疏辐照度体积系统讲人话就是：在场景里按网格放一堆光照探针（probe），稀疏的意思是只在物体的表面或标记过的人物可能移动的范围烘焙数据，离线烘焙好每个 probe",
-      "voteup_count": 259,
-      "comment_count": 58,
+      "voteup_count": 262,
+      "comment_count": 57,
       "created": 1774843024,
       "updated": 1774925039,
-      "thumbnail": "https://picx.zhimg.com/v2-8ab4a7b53872356dab4338678084a211_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic4.zhimg.com/v2-8ab4a7b53872356dab4338678084a211_1440w.jpg"
     },
     {
       "id": "1992568844586329068",
       "title": "Neural Light Grid：问题不在 Probe，而在权重，重新理解体积 GI 的漏光问题",
       "url": "https://zhuanlan.zhihu.com/p/1992568844586329068",
       "excerpt": "基于 Volume / Probe 的全局光照（如 Irradiance Volume、DDGI）通过在空间中离散采样irradiance，并在查询点对多个 probe 进行插值来近似间接光照，其基本形式可以写为： 其中，x是查询的位置，N是采样的probe数量，在3D游戏里面一般是8个；Li是第i个probe采样到的irradiance，wi是第i个probe的权重目前市面上对于神经网络和静态v",
-      "voteup_count": 80,
+      "voteup_count": 81,
       "comment_count": 18,
       "created": 1767852102,
       "updated": 1767852209,
@@ -54,7 +54,7 @@
       "comment_count": 20,
       "created": 1764154980,
       "updated": 1764155664,
-      "thumbnail": "https://pica.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
     },
     {
       "id": "1964513030189609602",
@@ -65,7 +65,7 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
