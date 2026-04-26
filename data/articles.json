@@ -1,23 +1,23 @@
 {
-  "updated_at": "2026-04-25 04:40 UTC",
+  "updated_at": "2026-04-26 05:17 UTC",
   "articles": [
     {
       "id": "2027425907149652572",
       "title": "Arrow Lake 指令偏移调试经验&怎么调试蓝屏",
       "url": "https://zhuanlan.zhihu.com/p/2027425907149652572",
       "excerpt": "近期在开发环境中遭遇高频随机蓝屏，涉及 0x3B、0x1E 和 0x119 等多种异常代码。常规排查未发现物理内存或驱动冲突问题，通过 !chkimg 校验内核映像完整性亦未见异常。通过对三次不同场景的 Kernel Dump 进行底层逆向分析，最终确认该现象源于 Intel Arrow Lake 架构在核心调度时的硬件译码缺陷。本文记录完整的调试推演过程。我并不是专业的OS开发人员，也不是int",
-      "voteup_count": 48,
+      "voteup_count": 49,
       "comment_count": 15,
       "created": 1776166080,
       "updated": 1776166151,
-      "thumbnail": "https://pic1.zhimg.com/v2-305acb5c7607e861694870cddb76593f_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pica.zhimg.com/v2-305acb5c7607e861694870cddb76593f_720w.jpg?source=d16d100b"
     },
     {
       "id": "2021899719325021160",
       "title": "我在腾讯做GI一年的经验 & 一个实习生对AI时代的思考",
       "url": "https://zhuanlan.zhihu.com/p/2021899719325021160",
       "excerpt": "在腾讯工作了快一年，主要负责做 GI 相关的内容，离别之际想把我踩过的坑，走过的路总结一下，供大家参考；文章末尾有我的一些对AI对思考，欢迎大家交流在腾讯的同学想要看详细版本请看内部km文章哦第1章：前言总的来说：我们这套GI系统是一个稀疏辐照度体积系统讲人话就是：在场景里按网格放一堆光照探针（probe），稀疏的意思是只在物体的表面或标记过的人物可能移动的范围烘焙数据，离线烘焙好每个 probe",
-      "voteup_count": 289,
+      "voteup_count": 291,
       "comment_count": 57,
       "created": 1774843024,
       "updated": 1774925039,
@@ -54,7 +54,7 @@
       "comment_count": 20,
       "created": 1764154980,
       "updated": 1764155664,
-      "thumbnail": "https://picx.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-489d952dfabce8600b244ad8add1c3bd_720w.jpg?source=d16d100b"
     },
     {
       "id": "1964513030189609602",
@@ -65,7 +65,7 @@
       "comment_count": 4,
       "created": 1761156851,
       "updated": 1761193832,
-      "thumbnail": "https://pic1.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
+      "thumbnail": "https://picx.zhimg.com/v2-84b04d23cb332e4ccc613f4f409e2133_720w.jpg?source=d16d100b"
     },
     {
       "id": "32242478377",
@@ -76,7 +76,7 @@
       "comment_count": 3,
       "created": 1742741377,
       "updated": 1742812252,
-      "thumbnail": "https://picx.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pica.zhimg.com/v2-c939c3b737e7e6a57e9854230a6b1654_720w.jpg?source=d16d100b"
     },
     {
       "id": "1885397709336336241",
@@ -142,7 +142,7 @@
       "comment_count": 4,
       "created": 1740931283,
       "updated": 1740931453,
-      "thumbnail": "https://pica.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
+      "thumbnail": "https://pic1.zhimg.com/v2-386042d641e2a51c4cbd085c26d8a03a_720w.jpg?source=d16d100b"
     },
     {
       "id": "27426862916",
