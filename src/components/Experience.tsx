@@ -1,134 +1,74 @@
-import Image from "next/image";
 import { experiences } from "@/lib/resume";
-import FadeUp from "./FadeUp";
+import Image from "next/image";
+import SectionHeading from "./SectionHeading";
 
 export default function Experience() {
   return (
     <section id="experience" className="section">
-      <div className="section-label">Experience</div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        {experiences.map((exp, i) => (
-          <FadeUp key={i} delay={i * 100} spring>
-            {/* Job header */}
-            <div className="glass-card" style={{ padding: "20px 24px", marginBottom: 24 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  marginBottom: 6,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
-                  {exp.icon && (
-                    <div
-                      style={{
-                        width: 92,
-                        minWidth: 92,
-                        height: 36,
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Image
-                        src={exp.icon}
-                        alt={`${exp.company} logo`}
-                        width={exp.iconWidth}
-                        height={exp.iconHeight}
-                        style={{
-                          width: "auto",
-                          height: exp.iconDisplayHeight,
-                          objectFit: "contain",
-                        }}
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
-                      {exp.role}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-3)" }}>
-                        {exp.company}
-                      </span>
-                      <span style={{ color: "var(--border)", fontSize: 10 }}>·</span>
-                      <span
-                        style={{
-                          fontFamily: "var(--mono)",
-                          fontSize: 12,
-                          color: "var(--accent)",
-                          background: "var(--accent-dim)",
-                          border: "1px solid rgba(96,165,250,0.2)",
-                          borderRadius: 4,
-                          padding: "2px 8px",
-                        }}
-                      >
-                        {exp.department}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <span
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: 12,
-                    color: "var(--text-3)",
-                    paddingTop: 2,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {exp.period}
+      <SectionHeading number="01" english="SELECTED WORK" title="工作与经历">
+        <p>
+          从理解光，到构建世界。
+          <br />
+          在真实的问题中，不断深入。
+        </p>
+      </SectionHeading>
+      <div className="experience-list">
+        {experiences.map((item, index) => (
+          <article
+            key={item.department}
+            className={`experience ${item.current ? "experience-current" : ""}`}
+          >
+            <div className="experience-time">
+              <span className="mono">{item.period}</span>
+              {item.current && (
+                <span className="current-badge">
+                  <span className="status-dot" /> 现在
                 </span>
-              </div>
+              )}
+              <span className="experience-index mono">
+                /{String(index + 1).padStart(2, "0")}
+              </span>
             </div>
-
-            {/* Highlights */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginBottom: 52 }}>
-              {exp.highlights.map((h, j) => (
-                <div key={j} className="highlight-item">
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--text-2)",
-                      marginBottom: 6,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "var(--mono)",
-                        fontSize: 11,
-                        color: "var(--accent)",
-                        opacity: 0.6,
-                      }}
-                    >
-                      {String(j + 1).padStart(2, "0")}
-                    </span>
-                    {h.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      color: "var(--text-3)",
-                      lineHeight: 1.8,
-                    }}
-                  >
-                    {h.desc}
-                  </div>
+            <div className="experience-body">
+              <div className="experience-company">
+                <div className="company-logo">
+                  <Image
+                    src={item.logo.src}
+                    width={item.logo.width}
+                    height={item.logo.height}
+                    alt={`${item.company}标识`}
+                  />
                 </div>
-              ))}
+                <div className="company-heading">
+                  <p className="company-name">{item.company}</p>
+                  <h3>{item.department}</h3>
+                  <p className="experience-role">{item.role}</p>
+                </div>
+              </div>
+              <h4>{item.summary}</h4>
+              <p className="experience-description">{item.description}</p>
+              <div className="tags">
+                {item.tags.map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
+              {item.highlights.length > 0 && (
+                <div className="work-highlights">
+                  {item.highlights.map((highlight) => (
+                    <div key={highlight.title}>
+                      <h5>{highlight.title}</h5>
+                      <p>{highlight.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {item.current && (
+                <p className="disclosure-note">
+                  以上为公开技术方向，不涉及项目内部实现与性能数据。
+                </p>
+              )}
             </div>
-
-            {i < experiences.length - 1 && (
-              <hr className="divider" style={{ marginBottom: 52 }} />
-            )}
-          </FadeUp>
+          </article>
         ))}
       </div>
     </section>

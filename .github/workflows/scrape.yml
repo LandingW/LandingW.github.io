@@ -9,9 +9,15 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: zhihu-sync
+  cancel-in-progress: false
+
 jobs:
   scrape:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +30,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Verify sync failure protection
+        run: python -m unittest discover -s scripts -p "test_*.py"
 
       - name: Run scraper
         env:

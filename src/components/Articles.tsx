@@ -1,260 +1,212 @@
-import articlesData from "../../data/articles.json";
-import FadeUp from "./FadeUp";
+"use client";
 
-interface Article {
-  id: number;
-  title: string;
-  url: string;
-  excerpt: string;
-  voteup_count: number;
-  comment_count: number;
-  created: number;
-  updated: number;
-  thumbnail?: string | null;
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import type { ArticleSummary } from "@/lib/articles";
+import SectionHeading from "./SectionHeading";
+import { Arrow } from "./Icons";
+
+const filters = ["全部", "渲染与光照", "引擎实践", "学习笔记", "随想"];
+const PAGE_SIZE = 6;
+
+function ArticleMeta({
+  article,
+  featured = false,
+}: {
+  article: ArticleSummary;
+  featured?: boolean;
+}) {
+  return (
+    <div className="article-meta">
+      <time dateTime={article.date}>{article.date.replaceAll("-", ".")}</time>
+      <span>{article.category}</span>
+      <span>
+        {article.hasFullContent
+          ? `全文 · 约 ${article.readingMinutes} 分钟`
+          : "摘要 · 知乎原文"}
+      </span>
+      {featured && (
+        <span className="read-label">
+          {article.hasFullContent ? "开始阅读" : "阅读摘要"}
+          <Arrow />
+        </span>
+      )}
+    </div>
+  );
 }
 
-interface ArticlesData {
-  updated_at: string;
-  articles: Article[];
+function LightStudy() {
+  return (
+    <div className="article-art">
+      <Image
+        src="/studies/cornell-box.webp"
+        alt="Cornell Box 光照研究：红绿侧墙、面积光源与两个白色方块"
+        width={480}
+        height={480}
+      />
+      <div className="art-label mono">
+        <span>CORNELL BOX</span>
+        <span>LIGHT TRANSPORT / 02</span>
+      </div>
+    </div>
+  );
 }
 
-const data = articlesData as unknown as ArticlesData;
-
-function formatDate(ts: number): string {
-  if (!ts) return "";
-  const d = new Date(ts * 1000);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
-
-function formatNum(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-}
-
-export default function Articles() {
-  const articles = data.articles;
-  const updatedAt = data.updated_at;
-  const isEmpty = !articles || articles.length === 0;
+export default function Articles({
+  articles,
+  syncedAt,
+}: {
+  articles: ArticleSummary[];
+  syncedAt: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("全部");
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const filtered = articles.filter(
+    (article) =>
+      (category === "全部" || article.category === category) &&
+      `${article.title} ${article.excerpt} ${article.category}`
+        .toLocaleLowerCase()
+        .includes(normalizedQuery),
+  );
+  // The server provides publication-time order, including time-of-day.
+  const featured = articles[0];
+  const reset = () => {
+    setQuery("");
+    setCategory("全部");
+    setLimit(PAGE_SIZE);
+  };
 
   return (
-    <section
-      id="articles"
-      className="section"
-      style={{ borderTop: "1px solid var(--border-light)", paddingBottom: 80 }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 28,
-        }}
-      >
-        <div className="section-label" style={{ marginBottom: 0, flex: 1 }}>
-          Writing
+    <section id="articles" className="section">
+      <SectionHeading number="03" english="FIELD NOTES" title="思考的切片">
+        <div className="writing-links">
+          <a className="text-link" href="/feed.xml">
+            RSS 订阅 <Arrow diagonal />
+          </a>
+          <a
+            className="text-link"
+            href="https://www.zhihu.com/people/wrm-66-76"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            知乎 <Arrow diagonal />
+          </a>
         </div>
-        <a
-          href="https://www.zhihu.com/people/wrm-66-76"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="view-all-btn"
-        >
-          知乎主页
+      </SectionHeading>
+      {featured && !normalizedQuery && category === "全部" && (
+        <Link href={`/writing/${featured.slug}/`} className="featured-article">
+          <LightStudy />
+          <div className="featured-copy">
+            <span className="eyebrow">LATEST WRITING / 最新文章</span>
+            <h3>{featured.title}</h3>
+            <p>{featured.excerpt}</p>
+            <ArticleMeta article={featured} featured />
+          </div>
+        </Link>
+      )}
+      <div className="writing-toolbar">
+        <div className="article-filters" role="group" aria-label="文章分类">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              aria-pressed={category === filter}
+              onClick={() => {
+                setCategory(filter);
+                setLimit(PAGE_SIZE);
+              }}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+        <label className="article-search">
           <svg
-            width="11"
-            height="11"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <path d="M7 17L17 7M7 7h10v10" />
-          </svg>
-        </a>
-      </div>
-
-      {updatedAt && (
-        <div
-          style={{
-          fontFamily: "var(--mono)",
-          fontSize: 12,
-          color: "var(--text-3)",
-          marginBottom: 24,
-          marginTop: -16,
-          }}
-        >
-          // synced {updatedAt}
-        </div>
-      )}
-
-      {isEmpty ? (
-        <EmptyState />
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {articles.map((article, i) => (
-            <FadeUp key={article.id} delay={i * 50} spring>
-              <ArticleRow
-                article={article}
-                isLast={i === articles.length - 1}
-              />
-            </FadeUp>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ArticleRow({
-  article,
-  isLast,
-}: {
-  article: Article;
-  isLast: boolean;
-}) {
-  const hasThumbnail = !!article.thumbnail;
-
-  return (
-    <a
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="article-row-link"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "14px 0",
-        borderBottom: isLast ? "none" : "1px solid var(--border-light)",
-        textDecoration: "none",
-      }}
-    >
-      {/* Thumbnail */}
-      <div
-        className="article-thumb"
-        style={{
-          width: 96,
-          height: 64,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {hasThumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={article.thumbnail!}
-            alt={article.title}
-          />
-        ) : (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--border)"
             strokeWidth="1.5"
-            strokeLinecap="round"
+            aria-hidden="true"
           >
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="M21 15l-5-5L5 21" />
+            <circle cx="10" cy="10" r="6" />
+            <path d="m15 15 5 5" />
           </svg>
-        )}
-      </div>
-
-      {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          className="article-row-title"
-          style={{
-            fontSize: 15,
-            fontWeight: 500,
-            color: "var(--text-1)",
-            lineHeight: 1.5,
-            marginBottom: 4,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {article.title}
-        </div>
-        {article.excerpt && (
-          <div
-            style={{
-              fontSize: 13,
-              color: "var(--text-3)",
-              lineHeight: 1.55,
-              display: "-webkit-box",
-              WebkitLineClamp: 1,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              marginBottom: 6,
+          <input
+            type="search"
+            aria-label="搜索文章"
+            placeholder="搜索标题、内容或关键词"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setLimit(PAGE_SIZE);
             }}
+          />
+        </label>
+      </div>
+      <p className="results-label" role="status" aria-live="polite">
+        {filtered.length} 篇文字{query.trim() && ` · 搜索「${query.trim()}」`}
+      </p>
+      <div className="article-list" key={category}>
+        {filtered.slice(0, limit).map((article, index) => (
+          <Link
+            className="article-row"
+            key={article.slug}
+            href={`/writing/${article.slug}/`}
           >
-            {article.excerpt}
-          </div>
-        )}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            fontFamily: "var(--mono)",
-            fontSize: 12,
-            color: "var(--text-3)",
-          }}
-        >
-          <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            >
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
-            {formatNum(article.voteup_count)}
-          </span>
-          <span>{formatDate(article.created)}</span>
+            <span className="mono">{String(index + 1).padStart(2, "0")}</span>
+            <div>
+              <h3>{article.title}</h3>
+              <ArticleMeta article={article} />
+            </div>
+            <Arrow diagonal />
+          </Link>
+        ))}
+      </div>
+      {filtered.length === 0 && (
+        <div className="empty-state">
+          <h3>还没有找到这篇文字。</h3>
+          <p>换一个关键词，或回到全部文章看看。</p>
+          <button
+            type="button"
+            className="button button-outline"
+            onClick={reset}
+          >
+            清除筛选 <Arrow />
+          </button>
         </div>
+      )}
+      <div className="article-list-footer">
+        <p>
+          知乎索引更新于 {syncedAt.replaceAll("-", ".")} · 已存档{" "}
+          {articles.filter((article) => article.hasFullContent).length}{" "}
+          篇全文，其余保留摘要
+        </p>
+        {filtered.length > limit ? (
+          <button
+            className="button button-outline"
+            type="button"
+            onClick={() => setLimit(limit + PAGE_SIZE)}
+          >
+            继续阅读 · 还有 {filtered.length - limit} 篇{" "}
+            <span aria-hidden="true">+</span>
+          </button>
+        ) : (
+          filtered.length > PAGE_SIZE && (
+            <button
+              className="button button-outline"
+              type="button"
+              onClick={() => setLimit(PAGE_SIZE)}
+            >
+              收起列表 −
+            </button>
+          )
+        )}
       </div>
-    </a>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div
-      style={{
-        paddingTop: 20,
-        fontFamily: "var(--mono)",
-        fontSize: 12,
-        color: "var(--text-3)",
-        lineHeight: 2,
-      }}
-    >
-      <div>// 首次运行 GitHub Actions 后文章将自动同步</div>
-      <div>
-        // 前往{" "}
-        <a
-          href="https://www.zhihu.com/people/wrm-66-76"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "var(--accent)", textDecoration: "none" }}
-        >
-          知乎主页
-        </a>{" "}
-        查看原文
-      </div>
-    </div>
+    </section>
   );
 }

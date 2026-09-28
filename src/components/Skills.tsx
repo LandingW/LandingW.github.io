@@ -1,58 +1,35 @@
 import { skills } from "@/lib/resume";
-import FadeUp from "./FadeUp";
+import SectionHeading from "./SectionHeading";
 
 export default function Skills() {
   return (
-    <section
-      id="skills"
-      className="section"
-      style={{ borderTop: "1px solid var(--border-light)" }}
-    >
-      <div className="section-label">Skills</div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: "32px 40px",
-        }}
-      >
-          {skills.map((group, i) => (
-            <FadeUp key={i} delay={i * 60} spring>
-            <div
-              style={{
-              fontFamily: "var(--mono)",
-              fontSize: 11,
-              color: "var(--text-3)",
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-                marginBottom: 10,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: "50%",
-                  background: "var(--accent)",
-                  display: "inline-block",
-                  opacity: 0.6,
-                }}
-              />
-              {group.category}
+    <section id="skills" className="section">
+      <SectionHeading number="02" english="STACK & CRAFT" title="技术栈与专注">
+        <p>深入一个问题，也连接不同的领域。</p>
+      </SectionHeading>
+      <div className="focus-grid">
+        {skills.map((skill) => (
+          <article className="focus-item" key={skill.number}>
+            <div className="focus-top mono">
+              <span>{skill.number}</span>
+              <span>{skill.english}</span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {group.items.map((item, j) => (
-                <span key={j} className="tag">
-                  {item}
-                </span>
+            <h3>{skill.title}</h3>
+            <p>{skill.description}</p>
+            <ul>
+              {skill.items.map((item) => (
+                <li key={item}>{item}</li>
               ))}
-            </div>
-            </FadeUp>
-          ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+      <div className="education">
+        <span className="eyebrow">ALWAYS LEARNING</span>
+        <p>
+          华南理工大学 <span>软件工程 · 本科</span>
+        </p>
+        <span className="mono">2024.09 — 至今</span>
       </div>
     </section>
   );

@@ -2,10 +2,37 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Land1ngW's Base",
+  metadataBase: new URL("https://landingw.github.io"),
+  title: {
+    default: "landingw的主页",
+    template: "%s · landingw的主页",
+  },
   description:
-    "Land1ngW — 游戏引擎开发 / 图形渲染工程师，现于米哈游 Varsapura 工作，具备 1 年+ 自研 GI 系统研发经验，专注 UE5 全局光照、渲染管线、SparseRT 与光线追踪。",
-  keywords: ["游戏引擎", "图形程序", "米哈游", "Varsapura", "UE5", "GI", "全局光照", "SparseRT", "渲染管线", "光线追踪", "Land1ngW"],
+    "王若淼 / Land1ngW，米哈游 Varsapura 图形程序。关注 Nanite Raster、GPU 编程、PS5 图形开发、AMD RDNA 与 CUDA / OptiX，记录引擎研发、学习与思考。",
+  keywords: [
+    "游戏引擎",
+    "图形程序",
+    "Varsapura",
+    "UE5",
+    "Nanite Raster",
+    "GPU Programming",
+    "PS5",
+    "AMD RDNA",
+    "CUDA",
+    "全局光照",
+    "实时渲染",
+    "Land1ngW",
+  ],
+  alternates: { canonical: "/", types: { "application/rss+xml": "/feed.xml" } },
+  openGraph: {
+    title: "landingw的主页",
+    description: "图形程序 / 游戏引擎开发。工作、学习与思考的个人记录。",
+    url: "https://landingw.github.io",
+    siteName: "landingw的主页",
+    locale: "zh_CN",
+    type: "website",
+  },
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({
@@ -15,7 +42,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main-content">
+          跳至主要内容
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
