@@ -1,0 +1,10 @@
+ALTER TABLE photos ADD COLUMN camera_json TEXT;
+ALTER TABLE photos ADD COLUMN gps_latitude REAL;
+ALTER TABLE photos ADD COLUMN gps_longitude REAL;
+ALTER TABLE photos ADD COLUMN location_mode TEXT NOT NULL DEFAULT 'exact' CHECK(location_mode IN ('exact','hidden'));
+ALTER TABLE photos ADD COLUMN metadata_state TEXT NOT NULL DEFAULT 'pending' CHECK(metadata_state IN ('pending','queued','processing','ready','failed'));
+ALTER TABLE photos ADD COLUMN metadata_lease TEXT;
+ALTER TABLE photos ADD COLUMN metadata_updated_at TEXT;
+ALTER TABLE photos ADD COLUMN metadata_error TEXT;
+CREATE INDEX photos_metadata_queue ON photos(metadata_state, metadata_updated_at);
+UPDATE photos SET metadata_state='queued' WHERE state='ready';

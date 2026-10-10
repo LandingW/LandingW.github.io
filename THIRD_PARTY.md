@@ -18,6 +18,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 # 旅行影集补充
 
+- exifr：MIT，读取 EXIF 白名单标签与 GPS；通过 Sharp 提取的 TIFF EXIF 块支持 JPEG、PNG 和 WebP。
+
 - OpenSeadragon：BSD-3-Clause，深度缩放查看器。
 - Sharp / libvips：Apache-2.0 / LGPL-2.1-or-later，图像处理及标准 Deep Zoom 切片。
 - D3 Geo：ISC；TopoJSON Client：ISC；world-atlas 数据来自 Natural Earth 公有领域数据，世界地图仅绘制陆地轮廓。

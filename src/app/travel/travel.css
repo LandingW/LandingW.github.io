@@ -664,3 +664,153 @@
     transition: none;
   }
 }
+
+.photo-facts {
+  margin: 18px 0;
+}
+.photo-facts > div {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 12px;
+}
+.photo-facts dt {
+  opacity: 0.6;
+}
+.photo-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.photo-facts-empty {
+  font-size: 12px;
+  opacity: 0.65;
+  padding-block: 12px;
+}
+.manager-exif {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--paper-deep);
+  max-width: 650px;
+}
+.manager-exif summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 12px;
+}
+.manager-exif button {
+  background: none;
+  border: 0;
+  color: var(--ink);
+  padding: 8px 0;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.manager-exif .location-map {
+  margin-top: 15px;
+  height: 250px;
+}
+.manager-exif .photo-facts {
+  margin-block: 12px;
+}
+.viewer-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.viewer-caption {
+  min-width: 0;
+  max-width: min(650px, 65%);
+}
+.viewer-camera {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.viewer-settings {
+  margin-top: 3px;
+  font-size: 11px !important;
+  opacity: 0.8;
+}
+.viewer-status {
+  margin-top: 4px;
+  font-size: 11px !important;
+  opacity: 0.55;
+}
+.photo-info-panel {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  top: 12px;
+  bottom: 12px;
+  width: min(335px, calc(100% - 32px));
+  padding: 22px;
+  overflow: auto;
+  background: var(--viewer-bg);
+  border: 1px solid color-mix(in srgb, var(--viewer-ink) 20%, transparent);
+  animation: photo-info-enter 0.2s ease-out;
+}
+.photo-info-panel h2 {
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.photo-info-panel .location-map {
+  height: 220px;
+}
+.photo-info-panel .travel-location {
+  padding-bottom: 0;
+}
+.photo-info-panel .travel-location > a,
+.photo-info-panel .travel-location > p {
+  color: inherit;
+  opacity: 0.75;
+}
+.photo-gps {
+  font-size: 11px;
+  margin-bottom: 14px;
+  overflow-wrap: anywhere;
+}
+@keyframes photo-info-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .viewer-caption {
+    max-width: 100%;
+    text-align: center;
+  }
+  .viewer-top > span:nth-child(2) {
+    display: none;
+  }
+  .viewer-top-actions {
+    gap: 3px;
+  }
+  .photo-info-panel {
+    top: auto;
+    bottom: 8px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 80%;
+    padding: 18px;
+  }
+  .photo-info-panel .location-map {
+    height: 180px;
+  }
+  .manager-exif {
+    padding-inline: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo-info-panel {
+    animation: none;
+  }
+}

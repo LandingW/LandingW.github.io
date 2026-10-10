@@ -75,6 +75,10 @@ export default function TravelGallery() {
   );
   const photo = photos.find((item) => item.id === photoId);
   const index = photo ? photos.indexOf(photo) : -1;
+  const albumLocation =
+    album && album.latitude !== null && album.longitude !== null
+      ? { latitude: album.latitude, longitude: album.longitude }
+      : photos.find((item) => item.location)?.location;
   function navigate(trip: string, id = "") {
     const url = new URL(window.location.href);
     if (trip) url.searchParams.set("trip", trip);
@@ -103,6 +107,7 @@ export default function TravelGallery() {
       </section>
       <WorldMap
         albums={manifest.albums}
+        photos={manifest.photos}
         selected={selected}
         onSelect={(id) => navigate(id)}
       />
@@ -136,7 +141,7 @@ export default function TravelGallery() {
               <h2>{album.title}</h2>
               <p>{album.description}</p>
             </div>
-            {album.latitude !== null && (
+            {albumLocation && (
               <button
                 className="travel-text-button"
                 onClick={() => setShowMap(!showMap)}
@@ -146,17 +151,14 @@ export default function TravelGallery() {
             )}
           </div>
         )}
-        {album &&
-          showMap &&
-          album.latitude !== null &&
-          album.longitude !== null && (
-            <LocationMap
-              key={album.id}
-              latitude={album.latitude}
-              longitude={album.longitude}
-              place={album.place}
-            />
-          )}
+        {album && showMap && albumLocation && (
+          <LocationMap
+            key={album.id}
+            latitude={albumLocation.latitude}
+            longitude={albumLocation.longitude}
+            place={album.place}
+          />
+        )}
         {loading ? (
           <p className="travel-empty" role="status">
             正在翻开旅行影集…

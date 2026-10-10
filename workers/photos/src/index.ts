@@ -1,6 +1,11 @@
 import { AwsClient } from "aws4fetch";
 import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
 import {
+  cameraFromJson,
+  normalizePhotoMetadata,
+  normalizeLocation,
+} from "../../../src/lib/photo-metadata";
+import {
   albumInput,
   PART_SIZE,
   PHOTO_LIMIT,
@@ -41,6 +46,14 @@ interface PhotoRow {
   width: number;
   height: number;
   caption: string;
+  published: number;
+  camera_json: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
+  location_mode: "exact" | "hidden";
+  metadata_state: string;
+  metadata_lease: string | null;
+  metadata_updated_at: string | null;
 }
 class HttpError extends Error {
   constructor(
@@ -192,7 +205,7 @@ export async function publishManifest(env: Env) {
     "SELECT id,title,description,place,date,latitude,longitude FROM albums WHERE published=1 ORDER BY date DESC,created_at DESC",
   ).all();
   const photos = await env.DB.prepare(
-    "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
+    "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
   ).all<PhotoRow>();
   const visible = new Set(photos.results.map((p) => p.album_id));
   const manifest: TravelManifest = {
@@ -210,6 +223,14 @@ export async function publishManifest(env: Env) {
       thumbnail: `photos/${p.id}/${p.revision}/thumbnail.jpg`,
       preview: `photos/${p.id}/${p.revision}/preview.jpg`,
       dzi: `photos/${p.id}/${p.revision}/image.dzi`,
+      camera: cameraFromJson(p.camera_json),
+      location:
+        p.location_mode === "exact"
+          ? normalizeLocation({
+              latitude: p.gps_latitude,
+              longitude: p.gps_longitude,
+            })
+          : null,
     })),
   };
   await env.PUBLIC.put("manifest.json", JSON.stringify(manifest), {
@@ -221,21 +242,87 @@ export async function publishManifest(env: Env) {
   return manifest;
 }
 
+async function dispatchProcessing(
+  env: Env,
+  inputs: Record<string, string | boolean> = {},
+) {
+  if (!env.GITHUB_TOKEN || !/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPOSITORY))
+    throw new HttpError(503, "GitHub 图片处理凭据尚未配置");
+  const response = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_REPOSITORY}/actions/workflows/photos.yml/dispatches`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "landingw-photos",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ref: "main", inputs }),
+    },
+  );
+  if (!response.ok)
+    throw new HttpError(
+      502,
+      "无法启动处理任务，请检查工作流和 GitHub 凭据权限",
+    );
+}
+
+async function storeMetadata(
+  env: Env,
+  row: PhotoRow,
+  value: unknown,
+  metadataOnly: boolean,
+) {
+  const metadata = normalizePhotoMetadata(value);
+  const guard = metadataOnly
+    ? "id=? AND metadata_lease=? AND metadata_state='processing'"
+    : "id=? AND lease=? AND state='ready'";
+  const result = await env.DB.prepare(
+    `UPDATE photos SET camera_json=?,gps_latitude=?,gps_longitude=?,metadata_state='ready',metadata_error=NULL,metadata_updated_at=? WHERE ${guard}`,
+  )
+    .bind(
+      metadata.camera ? JSON.stringify(metadata.camera) : null,
+      metadata.gps?.latitude ?? null,
+      metadata.gps?.longitude ?? null,
+      now(),
+      row.id,
+      metadataOnly ? row.metadata_lease : row.lease,
+    )
+    .run();
+  if (!result.meta.changes) throw new HttpError(409, "元数据处理任务已过期");
+  if (metadata.camera?.capturedAt)
+    await env.DB.prepare("UPDATE albums SET date=? WHERE id=? AND date=''")
+      .bind(metadata.camera.capturedAt.slice(0, 10), row.album_id)
+      .run();
+  if (row.published) await publishManifest(env);
+}
+
 async function admin(request: Request, env: Env, path: string) {
   await authorizeAdmin(request, env);
   if (request.method === "GET" && path === "/admin/state") {
     const [albums, photos, usage] = await Promise.all([
       env.DB.prepare("SELECT * FROM albums ORDER BY created_at DESC").all(),
       env.DB.prepare(
-        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,derived_bytes,created_at,updated_at FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
-      ).all(),
+        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,derived_bytes,created_at,updated_at,camera_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
+      ).all<PhotoRow>(),
       env.DB.prepare(
         "SELECT COALESCE(SUM(bytes),0) AS bytes FROM photos WHERE state!='aborted'",
       ).first<{ bytes: number }>(),
     ]);
     return json({
       albums: albums.results,
-      photos: photos.results,
+      photos: photos.results.map(
+        ({ camera_json, gps_latitude, gps_longitude, ...row }) => ({
+          ...row,
+          camera: cameraFromJson(camera_json),
+          gps: normalizeLocation({
+            latitude: gps_latitude,
+            longitude: gps_longitude,
+          }),
+        }),
+      ),
       usedBytes: usage?.bytes || 0,
       maxBytes: Number(env.MAX_ORIGINAL_BYTES),
       mediaUrl: env.PUBLIC_MEDIA_URL,
@@ -437,34 +524,48 @@ async function admin(request: Request, env: Env, path: string) {
       throw new HttpError(409, "只有失败的照片可以重试");
     return json({ ok: true });
   }
+  const metadataAction = path.match(
+    /^\/admin\/photos\/([\w-]+)\/(read-metadata|location)$/,
+  );
+  if (metadataAction) {
+    const row = await photo(env, metadataAction[1]);
+    if (row.state !== "ready") throw new HttpError(409, "请等待照片处理完成");
+    if (metadataAction[2] === "location") {
+      if (input.mode !== "exact" && input.mode !== "hidden")
+        throw new HttpError(400, "位置显示方式不正确");
+      await env.DB.prepare("UPDATE photos SET location_mode=? WHERE id=?")
+        .bind(input.mode, row.id)
+        .run();
+      await publishManifest(env);
+    } else {
+      if (
+        row.metadata_state === "processing" &&
+        row.metadata_updated_at &&
+        row.metadata_updated_at > new Date(Date.now() - 3600_000).toISOString()
+      )
+        throw new HttpError(409, "正在读取 EXIF，请稍候");
+      await env.DB.prepare(
+        "UPDATE photos SET metadata_state='queued',metadata_error=NULL,metadata_updated_at=? WHERE id=?",
+      )
+        .bind(now(), row.id)
+        .run();
+      await dispatchProcessing(env, { photo_id: row.id, metadata_only: true });
+    }
+    return json({ ok: true });
+  }
   if (path === "/admin/process") {
     if (!env.GITHUB_TOKEN || !/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPOSITORY))
       throw new HttpError(503, "GitHub 图片处理凭据尚未配置");
     const queued = await env.DB.prepare(
-      "SELECT COUNT(*) AS count FROM photos WHERE state='queued' OR (state='processing' AND updated_at < ?)",
+      "SELECT COUNT(*) AS count FROM photos WHERE state='queued' OR (state='processing' AND updated_at < ?) OR (state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)))",
     )
-      .bind(new Date(Date.now() - 3600_000).toISOString())
+      .bind(
+        new Date(Date.now() - 3600_000).toISOString(),
+        new Date(Date.now() - 3600_000).toISOString(),
+      )
       .first<{ count: number }>();
     if (!queued?.count) return json({ ok: true, message: "没有待处理照片" });
-    const response = await fetch(
-      `https://api.github.com/repos/${env.GITHUB_REPOSITORY}/actions/workflows/photos.yml/dispatches`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.GITHUB_TOKEN}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "User-Agent": "landingw-photos",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ref: "main" }),
-      },
-    );
-    if (!response.ok)
-      throw new HttpError(
-        502,
-        "无法启动处理任务，请检查工作流是否已发布以及 GitHub 凭据权限",
-      );
+    await dispatchProcessing(env);
     return json({ ok: true, message: "已启动图片处理任务，完成后可在此发布" });
   }
   throw new HttpError(404, "接口不存在");
@@ -473,6 +574,73 @@ async function admin(request: Request, env: Env, path: string) {
 async function internal(request: Request, env: Env, path: string) {
   await authorized(request, env.PROCESSOR_TOKEN);
   if (request.method !== "POST") throw new HttpError(405, "不支持的操作");
+  if (path === "/internal/metadata/claim") {
+    const input = await body(request),
+      onlyId = input.photoId === undefined ? "" : input.photoId;
+    if (typeof onlyId !== "string" || (onlyId && !validId(onlyId)))
+      throw new HttpError(400, "照片编号不正确");
+    const lease = crypto.randomUUID();
+    const row = await env.DB.prepare(
+      "UPDATE photos SET metadata_state='processing',metadata_lease=?,metadata_updated_at=?,metadata_error=NULL WHERE id=(SELECT id FROM photos WHERE state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)) AND (?='' OR id=?) ORDER BY created_at LIMIT 1) RETURNING *",
+    )
+      .bind(
+        lease,
+        now(),
+        new Date(Date.now() - 3600_000).toISOString(),
+        onlyId,
+        onlyId,
+      )
+      .first<PhotoRow>();
+    if (!row) return json({ job: null });
+    try {
+      return json({
+        job: {
+          id: row.id,
+          lease,
+          bytes: row.bytes,
+          mime: row.mime,
+          sourceUrl: await signed(env, "GET", row.original_key),
+        },
+      });
+    } catch (error) {
+      await env.DB.prepare(
+        "UPDATE photos SET metadata_state='failed',metadata_error='EXIF 下载授权失败' WHERE id=? AND metadata_lease=?",
+      )
+        .bind(row.id, lease)
+        .run();
+      throw error;
+    }
+  }
+  const metadataResult = path.match(
+    /^\/internal\/photos\/([\w-]+)\/metadata\/(complete|fail)$/,
+  );
+  if (metadataResult) {
+    const row = await photo(env, metadataResult[1]),
+      input = await body(request);
+    if (
+      metadataResult[2] === "complete" &&
+      row.metadata_state === "ready" &&
+      typeof input.lease === "string" &&
+      input.lease === row.metadata_lease
+    ) {
+      if (row.published) await publishManifest(env);
+      return json({ ok: true });
+    }
+    if (
+      row.metadata_state !== "processing" ||
+      input.lease !== row.metadata_lease
+    )
+      throw new HttpError(409, "元数据处理任务已过期");
+    if (metadataResult[2] === "complete")
+      await storeMetadata(env, row, input.metadata, true);
+    else
+      await env.DB.prepare(
+        "UPDATE photos SET metadata_state='failed',metadata_error='读取 EXIF 失败，可稍后重试',metadata_updated_at=? WHERE id=? AND metadata_lease=?",
+      )
+        .bind(now(), row.id, row.metadata_lease)
+        .run();
+    return json({ ok: true });
+  }
   if (path === "/internal/claim") {
     const input = await body(request);
     const onlyId = input.photoId === undefined ? "" : input.photoId;
@@ -524,8 +692,12 @@ async function internal(request: Request, env: Env, path: string) {
     action === "complete" &&
     row.state === "ready" &&
     input.lease === row.lease
-  )
+  ) {
+    if (input.metadata !== undefined && row.metadata_state !== "ready")
+      await storeMetadata(env, row, input.metadata, false);
+    else if (row.published) await publishManifest(env);
     return json({ ok: true });
+  }
   if (row.state !== "processing" || input.lease !== row.lease)
     throw new HttpError(409, "处理任务已过期");
   if (action === "fail") {
@@ -555,6 +727,14 @@ async function internal(request: Request, env: Env, path: string) {
     )
       .bind(width, height, tileCount, derivedBytes, now(), id, row.lease)
       .run();
+    if (input.metadata !== undefined)
+      await storeMetadata(env, row, input.metadata, false);
+    else
+      await env.DB.prepare(
+        "UPDATE photos SET metadata_state='queued',metadata_updated_at=? WHERE id=? AND lease=?",
+      )
+        .bind(now(), id, row.lease)
+        .run();
   }
   return json({ ok: true });
 }

@@ -10,6 +10,12 @@ import {
   type TravelConfig,
 } from "@/lib/travel";
 import { loadTravelConfig, photoApi, uploadPhoto } from "@/lib/travel-client";
+import {
+  cameraName,
+  type CameraMetadata,
+  type PhotoLocation,
+} from "@/lib/photo-metadata";
+import PhotoFacts from "./PhotoFacts";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
 type Album = TravelAlbum & { published: number };
@@ -22,6 +28,11 @@ type Photo = {
   error: string | null;
   published: number;
   derived_bytes: number | null;
+  camera: CameraMetadata | null;
+  gps: PhotoLocation | null;
+  location_mode: "exact" | "hidden";
+  metadata_state: string;
+  metadata_error: string | null;
 };
 interface State {
   albums: Album[];
@@ -60,6 +71,7 @@ export default function TravelManager() {
     name: string;
     value: number;
   } | null>(null);
+  const [gpsPreview, setGpsPreview] = useState("");
   const abort = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -76,8 +88,10 @@ export default function TravelManager() {
       abort.current?.abort();
     };
   }, []);
-  const pending = state?.photos.some((photo) =>
-    ["queued", "processing"].includes(photo.state),
+  const pending = state?.photos.some(
+    (photo) =>
+      ["queued", "processing"].includes(photo.state) ||
+      ["queued", "processing"].includes(photo.metadata_state),
   );
   useEffect(() => {
     if (!token || !config?.apiUrl || !pending) return;
@@ -371,8 +385,8 @@ export default function TravelManager() {
                       纬度
                       <input
                         type="number"
-                        min={-85}
-                        max={85}
+                        min={-90}
+                        max={90}
                         step="any"
                         value={form.latitude}
                         onChange={(e) =>
@@ -397,8 +411,8 @@ export default function TravelManager() {
                     </label>
                   </div>
                   <p className="manager-help">
-                    只公开你填写的位置，不自动发布照片
-                    GPS。可以把标记放在城市中心。
+                    旅行参考点可留空；照片有 GPS
+                    时会自动标记精确拍摄位置。每张照片可单独隐藏 GPS。
                   </p>
                   <div className="manager-actions">
                     <button type="button" onClick={() => setShowMap(!showMap)}>
@@ -439,7 +453,7 @@ export default function TravelManager() {
               <p>
                 JPEG、PNG、WebP · 单张最多 64MiB
                 <br />
-                缩略图和高清切片由后台自动生成。
+                自动生成高清切片，并读取相机、镜头、拍摄参数和 GPS。
               </p>
               <label
                 className={`photo-dropzone${!selected || busy ? " is-disabled" : ""}`}
@@ -486,8 +500,10 @@ export default function TravelManager() {
                 className="travel-button is-secondary"
                 disabled={
                   busy ||
-                  !state?.photos.some((photo) =>
-                    ["queued", "processing"].includes(photo.state),
+                  !state?.photos.some(
+                    (photo) =>
+                      ["queued", "processing"].includes(photo.state) ||
+                      ["queued", "processing"].includes(photo.metadata_state),
                   )
                 }
                 onClick={() =>
@@ -580,6 +596,143 @@ export default function TravelManager() {
                           : ""}
                       </span>
                       {photo.error && <p>{photo.error}</p>}
+                      {photo.state === "ready" && (
+                        <details className="manager-exif">
+                          <summary>
+                            拍摄信息
+                            {photo.camera
+                              ? ` · ${cameraName(photo.camera)}`
+                              : ""}
+                            {["queued", "processing"].includes(
+                              photo.metadata_state,
+                            )
+                              ? " · 正在读取 EXIF…"
+                              : ""}
+                          </summary>
+                          <PhotoFacts camera={photo.camera} />
+                          {photo.metadata_error && (
+                            <p role="status">{photo.metadata_error}</p>
+                          )}
+                          {photo.gps ? (
+                            <>
+                              <p className="mono">
+                                GPS {photo.gps.latitude.toFixed(6)},{" "}
+                                {photo.gps.longitude.toFixed(6)}
+                              </p>
+                              <label>
+                                照片位置
+                                <select
+                                  disabled={busy}
+                                  value={photo.location_mode || "exact"}
+                                  onChange={(event) =>
+                                    void run(async () => {
+                                      await photoApi(
+                                        config.apiUrl,
+                                        token,
+                                        `/admin/photos/${photo.id}/location`,
+                                        { mode: event.target.value },
+                                      );
+                                      await refresh();
+                                      setMessage("照片位置显示方式已更新。");
+                                    })
+                                  }
+                                >
+                                  <option value="exact">
+                                    随照片公开精确 GPS
+                                  </option>
+                                  <option value="hidden">
+                                    不公开这张照片的 GPS
+                                  </option>
+                                </select>
+                              </label>
+                              <button
+                                disabled={busy}
+                                onClick={() =>
+                                  setGpsPreview(
+                                    gpsPreview === photo.id ? "" : photo.id,
+                                  )
+                                }
+                              >
+                                {gpsPreview === photo.id
+                                  ? "收起地图"
+                                  : "自动定位拍摄位置 ↗"}
+                              </button>
+                              {gpsPreview === photo.id && (
+                                <LocationMap
+                                  latitude={photo.gps.latitude}
+                                  longitude={photo.gps.longitude}
+                                  place="照片 GPS 拍摄位置"
+                                />
+                              )}
+                            </>
+                          ) : (
+                            <p className="manager-help">
+                              没有可用
+                              GPS，不会猜测位置。部分相机需要开启手机位置同步才能写入
+                              GPS。
+                            </p>
+                          )}
+                          <div className="manager-actions">
+                            {(photo.gps || photo.camera?.capturedAt) && (
+                              <button
+                                disabled={busy}
+                                onClick={() => {
+                                  selectAlbum(photo.album_id);
+                                  setForm((old) => ({
+                                    ...old,
+                                    ...(photo.gps
+                                      ? {
+                                          latitude: String(photo.gps.latitude),
+                                          longitude: String(
+                                            photo.gps.longitude,
+                                          ),
+                                        }
+                                      : {}),
+                                    ...(photo.camera?.capturedAt
+                                      ? {
+                                          date: photo.camera.capturedAt.slice(
+                                            0,
+                                            10,
+                                          ),
+                                        }
+                                      : {}),
+                                  }));
+                                  if (photo.gps) setShowMap(true);
+                                  setMessage(
+                                    "已填入旅行日期/参考点，确认后点击保存旅行信息。",
+                                  );
+                                }}
+                              >
+                                用这张照片填入旅行信息
+                              </button>
+                            )}
+                            <button
+                              disabled={
+                                busy ||
+                                ["queued", "processing"].includes(
+                                  photo.metadata_state,
+                                )
+                              }
+                              onClick={() =>
+                                void run(async () => {
+                                  await photoApi(
+                                    config.apiUrl,
+                                    token,
+                                    `/admin/photos/${photo.id}/read-metadata`,
+                                    {},
+                                  );
+                                  await refresh();
+                                  setMessage(
+                                    "已启动 EXIF 补读，不会重新生成切片。",
+                                  );
+                                })
+                              }
+                            >
+                              重新读取 EXIF
+                            </button>
+                          </div>
+                        </details>
+                      )}
                     </div>
                     <span>
                       {photo.published ? "已发布" : statuses[photo.state]}

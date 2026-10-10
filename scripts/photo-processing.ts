@@ -1,6 +1,8 @@
 import sharp from "sharp";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { readExifBlock } from "./photo-exif";
+import type { PhotoMetadata } from "../src/lib/photo-metadata";
 
 export interface ProcessedPhoto {
   width: number;
@@ -8,6 +10,7 @@ export interface ProcessedPhoto {
   tileCount: number;
   derivedBytes: number;
   files: string[];
+  metadata: PhotoMetadata;
 }
 
 async function filesIn(directory: string, relative = ""): Promise<string[]> {
@@ -41,6 +44,7 @@ export async function generatePhoto(
     failOn: "warning",
   });
   const metadata = await image.metadata();
+  const photoMetadata = await readExifBlock(metadata.exif);
   if (
     !["jpeg", "png", "webp"].includes(metadata.format || "") ||
     (metadata.pages || 1) !== 1 ||
@@ -97,6 +101,7 @@ export async function generatePhoto(
   if (derivedBytes > 512 * 1024 * 1024)
     throw new Error("展示文件超过 512MiB 限制，请降低原片尺寸后重试");
   return {
+    metadata: photoMetadata,
     width,
     height,
     tileCount: files.filter(

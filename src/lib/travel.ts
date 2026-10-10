@@ -1,3 +1,10 @@
+import {
+  normalizeCamera,
+  normalizeLocation,
+  type CameraMetadata,
+  type PhotoLocation,
+} from "./photo-metadata";
+
 export const PHOTO_LIMIT = 64 * 1024 * 1024;
 export const PART_SIZE = 8 * 1024 * 1024;
 export const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -28,6 +35,8 @@ export interface TravelPhoto {
   thumbnail: string;
   preview: string;
   dzi: string;
+  camera?: CameraMetadata | null;
+  location?: PhotoLocation | null;
 }
 
 export interface TravelManifest {
@@ -102,7 +111,7 @@ export function albumInput(value: unknown): Omit<TravelAlbum, "id"> {
   if (
     (latitude === null) !== (longitude === null) ||
     (latitude !== null &&
-      (!Number.isFinite(latitude) || Math.abs(latitude) > 85)) ||
+      (!Number.isFinite(latitude) || Math.abs(latitude) > 90)) ||
     (longitude !== null &&
       (!Number.isFinite(longitude) || Math.abs(longitude) > 180))
   )
@@ -157,7 +166,11 @@ export function parseManifest(input: unknown): TravelManifest {
       throw new Error("照片信息不正确");
     for (const path of [photo.thumbnail, photo.preview, photo.dzi])
       mediaUrl("https://example.com", path);
-    return photo;
+    return {
+      ...photo,
+      camera: normalizeCamera(photo.camera),
+      location: normalizeLocation(photo.location),
+    };
   });
   if (new Set(photos.map((photo) => photo.id)).size !== photos.length)
     throw new Error("照片编号重复");

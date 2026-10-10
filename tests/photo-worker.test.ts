@@ -206,6 +206,19 @@ test(
         height: 100,
         tileCount: 8,
         derivedBytes: 1200,
+        metadata: {
+          camera: {
+            make: "Example",
+            model: "Example Camera",
+            lens: "35mm Test Lens",
+            fNumber: 2.8,
+            exposureTime: 0.008,
+            iso: 200,
+            capturedAt: "2026-10-10T15:20:30",
+            serialNumber: "NEVER_PUBLIC",
+          },
+          gps: { latitude: -31.2, longitude: -121.5 },
+        },
       };
       assert.equal(
         (
@@ -259,9 +272,110 @@ test(
       assert.equal(data.albums.length, 1);
       assert.equal(data.photos.length, 1);
       assert.equal(data.albums[0].latitude, 0);
+      assert.equal(data.photos[0].camera.model, "Example Camera");
+      assert.deepEqual(data.photos[0].location, {
+        latitude: -31.2,
+        longitude: -121.5,
+      });
+      assert.equal(data.albums[0].date, "2026-10-10");
       assert.doesNotMatch(
         manifest,
-        /originals|private-test|fingerprint|sourceUrl|lease|upload_id|X-Amz/,
+        /originals|private-test|fingerprint|sourceUrl|lease|upload_id|X-Amz|NEVER_PUBLIC|serialNumber/,
+      );
+      assert.equal(
+        (await request(`/admin/photos/${id}/location`, { mode: "hidden" }))
+          .status,
+        200,
+      );
+      assert.equal(
+        JSON.parse(await (await published.get("manifest.json"))!.text())
+          .photos[0].location,
+        null,
+      );
+      const oldRevision = await db
+        .prepare("SELECT revision,derived_bytes FROM photos WHERE id=?")
+        .bind(id)
+        .first<{ revision: string; derived_bytes: number }>();
+      await db
+        .prepare("UPDATE photos SET metadata_state='queued' WHERE id=?")
+        .bind(id)
+        .run();
+      const metaClaim = await request(
+        "/internal/metadata/claim",
+        { photoId: id },
+        processorToken,
+      );
+      const metaJob = ((await metaClaim.json()) as { job: { lease: string } })
+        .job;
+      const metaResult = {
+        lease: metaJob.lease,
+        metadata: {
+          camera: { model: "Updated EXIF", iso: 400 },
+          gps: { latitude: 12.34, longitude: 56.78 },
+        },
+      };
+      assert.equal(
+        (
+          await request(
+            `/internal/photos/${id}/metadata/complete`,
+            { ...metaResult, lease: "expired" },
+            processorToken,
+          )
+        ).status,
+        409,
+      );
+      assert.equal(
+        (
+          await request(
+            `/internal/photos/${id}/metadata/complete`,
+            metaResult,
+            processorToken,
+          )
+        ).status,
+        200,
+      );
+      assert.equal(
+        (
+          await request(
+            `/internal/photos/${id}/metadata/complete`,
+            metaResult,
+            processorToken,
+          )
+        ).status,
+        200,
+      );
+      const after = await db
+        .prepare(
+          "SELECT revision,derived_bytes,state,metadata_state,location_mode FROM photos WHERE id=?",
+        )
+        .bind(id)
+        .first<{
+          revision: string;
+          derived_bytes: number;
+          state: string;
+          metadata_state: string;
+          location_mode: string;
+        }>();
+      assert.equal(after!.revision, oldRevision!.revision);
+      assert.equal(after!.derived_bytes, oldRevision!.derived_bytes);
+      assert.equal(after!.state, "ready");
+      assert.equal(after!.metadata_state, "ready");
+      assert.equal(after!.location_mode, "hidden");
+      const updated = JSON.parse(
+        await (await published.get("manifest.json"))!.text(),
+      );
+      assert.equal(updated.photos[0].camera.model, "Updated EXIF");
+      assert.equal(updated.photos[0].location, null);
+      assert.equal(updated.photos[0].dzi, data.photos[0].dzi);
+      assert.equal(
+        (await request(`/admin/photos/${id}/location`, { mode: "exact" }))
+          .status,
+        200,
+      );
+      assert.deepEqual(
+        JSON.parse(await (await published.get("manifest.json"))!.text())
+          .photos[0].location,
+        { latitude: 12.34, longitude: 56.78 },
       );
       assert.equal(
         (await request(`/admin/albums/${albumId}/unpublish`, {})).status,

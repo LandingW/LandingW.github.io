@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import type OpenSeadragon from "openseadragon";
 import { mediaUrl, type TravelPhoto } from "@/lib/travel";
+import { cameraName, shootingSummary } from "@/lib/photo-metadata";
+import PhotoFacts from "./PhotoFacts";
+
+const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
 
 export default function PhotoViewer({
   photo,
@@ -26,6 +31,7 @@ export default function PhotoViewer({
   const viewer = useRef<OpenSeadragon.Viewer | null>(null);
   const [status, setStatus] = useState("正在加载高清切片…");
   const [drawn, setDrawn] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
@@ -97,14 +103,16 @@ export default function PhotoViewer({
       aria-label={photo.caption || "高清照片"}
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
-        if (event.key === "ArrowLeft") onMove(-1);
-        if (event.key === "ArrowRight") onMove(1);
+        if (!(event.target as HTMLElement).closest(".photo-info-panel")) {
+          if (event.key === "ArrowLeft") onMove(-1);
+          if (event.key === "ArrowRight") onMove(1);
+        }
         if (event.key === "Tab") {
           const buttons = [
-            ...dialog.current!.querySelectorAll<HTMLButtonElement>(
-              "button:not(:disabled)",
+            ...dialog.current!.querySelectorAll<HTMLElement>(
+              "button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),[tabindex='0']",
             ),
-          ];
+          ].filter((element) => element.getClientRects().length > 0);
           const first = buttons[0],
             last = buttons.at(-1);
           if (event.shiftKey && document.activeElement === first) {
@@ -125,9 +133,18 @@ export default function PhotoViewer({
         <span>
           {photo.width.toLocaleString()} × {photo.height.toLocaleString()}
         </span>
-        <button ref={closeButton} onClick={onClose}>
-          关闭 ×
-        </button>
+        <div className="viewer-top-actions">
+          <button
+            onClick={() => setShowInfo(!showInfo)}
+            aria-expanded={showInfo}
+            aria-controls="photo-info-panel"
+          >
+            拍摄信息
+          </button>
+          <button ref={closeButton} onClick={onClose}>
+            关闭 ×
+          </button>
+        </div>
       </div>
       <div className="viewer-image-area">
         {/* The preview remains below the tiled renderer during slow or failed requests. */}
@@ -144,12 +161,50 @@ export default function PhotoViewer({
           ref={stage}
           aria-label="可缩放的照片区域"
         />
+        {showInfo && (
+          <aside
+            id="photo-info-panel"
+            className="photo-info-panel"
+            aria-label="摄影参数和拍摄地点"
+          >
+            <h2>拍摄信息</h2>
+            <PhotoFacts camera={photo.camera} />
+            {photo.location ? (
+              <>
+                <p className="photo-gps mono">
+                  GPS {photo.location.latitude.toFixed(6)},{" "}
+                  {photo.location.longitude.toFixed(6)}
+                </p>
+                <LocationMap
+                  latitude={photo.location.latitude}
+                  longitude={photo.location.longitude}
+                  place="照片拍摄位置"
+                />
+              </>
+            ) : (
+              <p className="photo-facts-empty">这张照片没有公开的位置记录。</p>
+            )}
+          </aside>
+        )}
       </div>
       <div className="viewer-bottom">
-        <p>
-          {photo.caption}
-          <span role="status">{status}</span>
-        </p>
+        <div className="viewer-caption">
+          <p>{photo.caption}</p>
+          {photo.camera && (
+            <>
+              <p className="viewer-camera">
+                {cameraName(photo.camera)}
+                {photo.camera.lens ? ` / ${photo.camera.lens}` : ""}
+              </p>
+              <p className="viewer-settings mono">
+                {shootingSummary(photo.camera)}
+              </p>
+            </>
+          )}
+          <p className="viewer-status" role="status">
+            {status}
+          </p>
+        </div>
         <div className="viewer-controls">
           <button
             onClick={() => onMove(-1)}
