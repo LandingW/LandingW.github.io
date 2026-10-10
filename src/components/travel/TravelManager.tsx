@@ -600,7 +600,7 @@ export default function TravelManager() {
                         <details className="manager-exif">
                           <summary>
                             拍摄信息
-                            {photo.camera
+                            {cameraName(photo.camera)
                               ? ` · ${cameraName(photo.camera)}`
                               : ""}
                             {["queued", "processing"].includes(

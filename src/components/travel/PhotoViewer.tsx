@@ -192,10 +192,13 @@ export default function PhotoViewer({
           <p>{photo.caption}</p>
           {photo.camera && (
             <>
-              <p className="viewer-camera">
-                {cameraName(photo.camera)}
-                {photo.camera.lens ? ` / ${photo.camera.lens}` : ""}
-              </p>
+              {(cameraName(photo.camera) || photo.camera.lens) && (
+                <p className="viewer-camera">
+                  {[cameraName(photo.camera), photo.camera.lens]
+                    .filter(Boolean)
+                    .join(" / ")}
+                </p>
+              )}
               <p className="viewer-settings mono">
                 {shootingSummary(photo.camera)}
               </p>
