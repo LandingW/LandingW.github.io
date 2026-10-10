@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://landingw.github.io",
+          "http://127.0.0.1:3000",
+          "http://localhost:3000"
+        ],
+        "methods": ["GET", "HEAD"],
+        "headers": ["content-type"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

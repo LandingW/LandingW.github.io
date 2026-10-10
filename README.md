@@ -13,6 +13,9 @@ THINK IN PIXELS 首屏背景轮流绘制递归分枝、Sierpiński 三角形、K
 
 ## 本地运行
 
+旅行影集接入说明见 [照片服务配置](docs/PHOTOS-SETUP.md)。`/travel/` 从 R2 动态读取已发布相册，`/travel/manage/` 用于私有管理；未配置服务时只显示准备状态，不生成虚构照片或足迹。
+照片处理使用独立 Actions 工作流，不触发网站构建；可先运行 `npm run photos:sample -- "照片路径"` 在本机验证标准 Deep Zoom 切片。
+
 需要 Node.js 22.12+（建议 Node 24）和 npm。知乎同步另需 Python 3.12+。
 
 ```sh

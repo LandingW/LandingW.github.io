@@ -15,3 +15,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# 旅行影集补充
+
+- OpenSeadragon：BSD-3-Clause，深度缩放查看器。
+- Sharp / libvips：Apache-2.0 / LGPL-2.1-or-later，图像处理及标准 Deep Zoom 切片。
+- D3 Geo：ISC；TopoJSON Client：ISC；world-atlas 数据来自 Natural Earth 公有领域数据，世界地图仅绘制陆地轮廓。
+- Leaflet：BSD-2-Clause；详情底图使用 OpenStreetMap，保留 © OpenStreetMap contributors 署名。遵守官方瓦片使用政策，不预取或批量下载；不提供商业可用性保证。

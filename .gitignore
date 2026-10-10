@@ -45,5 +45,12 @@ __pycache__/
 *.pyc
 .venv/
 
+# Photo service: credentials and generated private media never enter Git.
+.wrangler/
+.dev.vars
+.dev.vars.*
+/photo-output/
+/photo-input/
+
 # CV PDF (personal file, not needed in repo)
 CV.pdf

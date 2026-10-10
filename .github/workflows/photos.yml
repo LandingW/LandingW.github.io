@@ -1,0 +1,69 @@
+name: Process Travel Photos
+
+on:
+  workflow_dispatch:
+    inputs:
+      photo_id:
+        description: "可选：仅处理指定照片 ID，留空处理全部待办"
+        required: false
+        type: string
+      verify_test:
+        description: "仅用于 smoke- 前缀的合成测试图：验证并清理测试文件"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: travel-photo-processing
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Validate synthetic test scope
+        id: test_scope
+        if: inputs.verify_test
+        run: npx tsx scripts/photo-smoke.ts guard
+        env:
+          PHOTO_ID: ${{ inputs.photo_id }}
+      - name: Generate and upload standard Deep Zoom tiles
+        run: npm run photos:process
+        env:
+          PHOTO_WORKER_URL: ${{ secrets.PHOTO_WORKER_URL }}
+          PHOTO_PROCESSOR_TOKEN: ${{ secrets.PHOTO_PROCESSOR_TOKEN }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BUCKET: landingw-photo-public
+          PHOTO_ID: ${{ inputs.photo_id }}
+      - name: Verify public tiles and private original
+        if: inputs.verify_test && steps.test_scope.outcome == 'success'
+        run: npx tsx scripts/photo-smoke.ts verify
+        env:
+          PHOTO_ID: ${{ inputs.photo_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      - name: Remove synthetic test objects only
+        if: always() && inputs.verify_test && steps.test_scope.outcome == 'success'
+        run: npx tsx scripts/photo-smoke.ts cleanup
+        env:
+          PHOTO_ID: ${{ inputs.photo_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # No image artifacts, repository writes, Pages build or deploy in this workflow.

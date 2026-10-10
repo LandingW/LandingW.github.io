@@ -1,0 +1,29 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "landingw-photos",
+  "account_id": "63632d123ea631486d010392e5c17819",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-10",
+  "workers_dev": true,
+  "observability": { "enabled": false },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://landingw.github.io,http://127.0.0.1:3000,http://localhost:3000",
+    "PUBLIC_MEDIA_URL": "https://pub-bf2df0b0406a43158f4287ca834603c7.r2.dev",
+    "R2_ACCOUNT_ID": "63632d123ea631486d010392e5c17819",
+    "R2_ORIGINALS_BUCKET": "landingw-photo-originals",
+    "GITHUB_REPOSITORY": "LandingW/LandingW.github.io",
+    "MAX_ORIGINAL_BYTES": "2000000000",
+  },
+  "r2_buckets": [
+    { "binding": "ORIGINALS", "bucket_name": "landingw-photo-originals" },
+    { "binding": "PUBLIC", "bucket_name": "landingw-photo-public" },
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "landingw-photos",
+      "database_id": "ec1ae9b1-c813-4306-9aaa-91d09cc8e00e",
+      "migrations_dir": "migrations",
+    },
+  ],
+}

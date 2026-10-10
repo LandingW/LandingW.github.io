@@ -6,12 +6,18 @@ import { navSections } from "@/lib/resume";
 import { Arrow } from "./Icons";
 import FractalMark from "./FractalMark";
 
-export default function Header({ article = false }: { article?: boolean }) {
+export default function Header({
+  article = false,
+  travel = false,
+}: {
+  article?: boolean;
+  travel?: boolean;
+}) {
   const [active, setActive] = useState("");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (article) return;
+    if (article || travel) return;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries)
@@ -24,7 +30,7 @@ export default function Header({ article = false }: { article?: boolean }) {
       if (element) observer.observe(element);
     });
     return () => observer.disconnect();
-  }, [article]);
+  }, [article, travel]);
 
   return (
     <header className="site-header">
@@ -75,6 +81,15 @@ export default function Header({ article = false }: { article?: boolean }) {
               <span className="nav-dot" />
             </Link>
           ))}
+          <Link
+            href="/travel/"
+            className={travel ? "is-active" : ""}
+            aria-current={travel ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            <span className="nav-index">04</span>旅行
+            <span className="nav-dot" />
+          </Link>
           <Link
             className="nav-contact"
             href="/#contact"
