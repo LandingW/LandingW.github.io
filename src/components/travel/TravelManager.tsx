@@ -40,6 +40,7 @@ type Photo = {
   width: number | null;
   height: number | null;
   thumbnail?: string | null;
+  created_at: string;
 };
 interface State {
   albums: Album[];
@@ -235,6 +236,10 @@ export default function TravelManager() {
   const active = state?.albums.find((album) => album.id === selected);
   const previewPhotos: TravelPhoto[] = (state?.photos || [])
     .filter((photo) => photo.state === "ready" && photo.thumbnail)
+    .sort(
+      (a, b) =>
+        a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
+    )
     .map((photo) => ({
       id: photo.id,
       albumId: photo.album_id,

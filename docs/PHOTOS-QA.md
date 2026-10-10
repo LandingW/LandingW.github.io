@@ -2,6 +2,10 @@
 
 ## 后续云端接入记录
 
+- 组合封面/Google 选点版本已部署：<https://github.com/LandingW/LandingW.github.io/actions/runs/38048619223>。
+- 用户目录导入的 12 张照片已全部完成云端处理：<https://github.com/LandingW/LandingW.github.io/actions/runs/38048695977>。原片合计 153,373,412 bytes，预览/切片合计 86,731,716 bytes，数据库状态全部 ready，published_count=0；新相册仍为草稿，现有相册未改变。
+- 浏览器控制连接仍不可用，Google key 仍未提供，因此未完成真实 Google API 联调或本轮设备视觉验收。封面/标记/后端规则通过自动化测试，不把这些结果称为浏览器实测。
+
 - 旅行概览改为最多四图组合封面卡片，点击进入单次旅行；一至四张封面有对应布局，支持手动选择封面顺序。世界概览改为每次旅行一个标记，手动旅行地点优先于照片 GPS。
 - Google Maps JavaScript / Places（New）接入代码与受限浏览器 key 配置界面已完成，使用新 `gmp-select` 事件和 AdvancedMarkerElement；长期只保存 Place ID。未提供 Google key，未开通 Google 账单，尚未验证真实 Google 搜索、显示、选点及计费。
 - 41 项测试通过，覆盖封面选择/数量、每旅行一个标记、Google 地点不写入非 Google 底图、仅保存地点 ID、密钥类型校验、封面归属和按旅行领取后台任务。

@@ -98,9 +98,22 @@ export default function TravelGallery() {
           .matches
           ? "auto"
           : "smooth";
-        if (trip)
+        if (trip) {
           collection.current?.scrollIntoView({ behavior, block: "start" });
-        else window.scrollTo({ top: overviewScroll.current, behavior });
+          collection.current
+            ?.querySelector<HTMLHeadingElement>(".travel-album-heading h2")
+            ?.focus({ preventScroll: true });
+        } else {
+          window.scrollTo({ top: overviewScroll.current, behavior });
+          const previous = [
+            ...(collection.current?.querySelectorAll<HTMLAnchorElement>(
+              ".trip-card",
+            ) || []),
+          ].find(
+            (card) => new URL(card.href).searchParams.get("trip") === selected,
+          );
+          previous?.focus({ preventScroll: true });
+        }
       });
   }
   return (
@@ -156,7 +169,7 @@ export default function TravelGallery() {
               <p className="mono">
                 {album.date} {album.place && ` / ${album.place}`}
               </p>
-              <h2>{album.title}</h2>
+              <h2 tabIndex={-1}>{album.title}</h2>
               <p>{album.description}</p>
             </div>
             {(albumLocation || album.googlePlaceId) && (
