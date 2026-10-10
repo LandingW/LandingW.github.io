@@ -1,6 +1,7 @@
 import {
   PHOTO_LIMIT,
   PHOTO_TYPES,
+  adminAuthorization,
   serviceUrl,
   type TravelConfig,
 } from "./travel";
@@ -28,7 +29,7 @@ export async function photoApi<T>(
   const response = await fetch(`${base}${path}`, {
     method: data === undefined ? "GET" : "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: adminAuthorization(token),
       ...(data === undefined ? {} : { "Content-Type": "application/json" }),
     },
     body: data === undefined ? undefined : JSON.stringify(data),

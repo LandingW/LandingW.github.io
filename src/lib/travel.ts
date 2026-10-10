@@ -2,6 +2,13 @@ export const PHOTO_LIMIT = 64 * 1024 * 1024;
 export const PART_SIZE = 8 * 1024 * 1024;
 export const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+export function adminAuthorization(password: string): string {
+  // Header values are ASCII. UTF-8 Basic encoding also supports a self-chosen
+  // password containing non-Latin characters; HTTPS remains mandatory.
+  const bytes = new TextEncoder().encode(`admin:${password}`);
+  return `Basic ${btoa(String.fromCharCode(...bytes))}`;
+}
+
 export interface TravelAlbum {
   id: string;
   title: string;

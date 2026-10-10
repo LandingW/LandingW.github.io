@@ -13,7 +13,20 @@ import {
   parseManifest,
   serviceUrl,
   EMPTY_MANIFEST,
+  adminAuthorization,
 } from "../src/lib/travel";
+
+test("self-chosen Unicode admin passwords are encoded as a valid ASCII header", () => {
+  const value = "仅供测试的密码-123456";
+  const header = adminAuthorization(value);
+  assert.match(header, /^Basic [A-Za-z0-9+/]+=*$/);
+  assert.equal(
+    new TextDecoder().decode(
+      Uint8Array.from(atob(header.slice(6)), (c) => c.charCodeAt(0)),
+    ),
+    `admin:${value}`,
+  );
+});
 import { generatePhoto } from "../scripts/photo-processing";
 import WorldMap from "../src/components/travel/WorldMap";
 

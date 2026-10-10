@@ -11,7 +11,15 @@ Cloudflare 授权已验证，账号 `63632d123ea631486d010392e5c17819`：
 - 已设置两桶的 CORS；原片桶保留默认的 7 天终止未完成分片上传规则，不会自动删除已完成原片。
 - Worker 已部署：`https://landingw-photos.landingw-homepage.workers.dev`。
 - 试用展示地址：`https://pub-bf2df0b0406a43158f4287ca834603c7.r2.dev`。它是开发用途地址，不能当作正式自有域名 CDN 的性能保证。
-- 已确认 Cloudflare 的 5 项应用 Secrets 与 GitHub 的 5 项 Actions Secrets 齐全，未读取或回显其值。正在发布旅行页和验证独立图片工作流；没有上传个人照片，未升级付费计划。
+- 已确认 Cloudflare 的 5 项应用 Secrets 与 GitHub 的 5 项 Actions Secrets 齐全，未读取或回显其值。旅行页、管理页已上线；独立图片工作流通过真实云端合成图验证。没有上传个人照片，未升级付费计划。
+
+## 日常入口
+
+- 旅行页：<https://landingw.github.io/travel/>
+- 管理页：<https://landingw.github.io/travel/manage/>
+- 输入自己设置的管理密码 → 创建旅行并确认公开地点 → 上传照片 → 点击“处理待办照片” → 等待“可以发布” → 发布当前旅行。
+- 后续添加图片不需要改代码、Git 提交或重建网站。首次建议先试一张真实照片，再批量上传。
+- 本次云端测试没有代替用户浏览器的真实分片上传、本人管理密码登录和手机手势验收；这些还需首次使用时核对。
 
 ## 一次性密钥配置（已完成；以后更换密钥时参考）
 

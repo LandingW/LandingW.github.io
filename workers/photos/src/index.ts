@@ -80,8 +80,18 @@ async function authorized(
 ) {
   if (!expected || expected.length < minimumLength)
     throw new HttpError(503, "服务密钥尚未配置");
-  const supplied =
-    request.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
+  const header = request.headers.get("Authorization") || "";
+  let supplied = header.replace(/^Bearer /, "");
+  if (minimumLength === 12 && header.startsWith("Basic ")) {
+    try {
+      const decoded = new TextDecoder("utf-8", { fatal: true }).decode(
+        Uint8Array.from(atob(header.slice(6)), (char) => char.charCodeAt(0)),
+      );
+      supplied = decoded.startsWith("admin:") ? decoded.slice(6) : "";
+    } catch {
+      throw new HttpError(401, "管理密码格式不正确");
+    }
+  }
   const digest = async (text: string) =>
     new Uint8Array(
       await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)),

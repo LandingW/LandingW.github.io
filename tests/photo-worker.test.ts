@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { build } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { adminAuthorization } from "../src/lib/travel";
 
 test(
   "photo service enforces authentication, quota, private originals and explicit publication",
@@ -82,6 +83,16 @@ test(
         (await request("/admin/state", undefined, "wrong")).status,
         401,
       );
+      const basic = await mf.dispatchFetch(
+        "https://photos.example.com/admin/state",
+        {
+          headers: {
+            Authorization: adminAuthorization(adminToken),
+            "CF-Connecting-IP": "203.0.113.10",
+          },
+        },
+      );
+      assert.equal(basic.status, 200);
       assert.equal(
         (
           await request(
