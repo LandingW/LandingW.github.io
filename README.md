@@ -16,6 +16,7 @@ THINK IN PIXELS 首屏背景轮流绘制递归分枝、Sierpiński 三角形、K
 旅行影集接入说明见 [照片服务配置](docs/PHOTOS-SETUP.md)。`/travel/` 从 R2 动态读取已发布相册，`/travel/manage/` 用于私有管理；未配置服务时只显示准备状态，不生成虚构照片或足迹。
 照片处理使用独立 Actions 工作流，不触发网站构建；可先运行 `npm run photos:sample -- "照片路径"` 在本机验证标准 Deep Zoom 切片。
 照片 EXIF 会自动提取机身、镜头、焦距、光圈、快门、ISO 和拍摄时间。按所有者选择，有 GPS 的已发布照片默认显示精确坐标，并自动生成地图足迹；单张可隐藏 GPS。旧照片可只补读 EXIF，不重新生成切片。公开清单只包含白名单字段，派生图片仍移除原始 EXIF 和设备序列号等无关信息。
+“全部旅行”使用可点击的多图封面卡片，每次旅行默认选取四张照片，也可在管理页选择最多四张封面。地图按旅行标记，优先使用旅行地点，其次才取照片 GPS。Google 地图与地点搜索的配置见 [Google 地图接入](docs/GOOGLE-MAPS.md)，未配置 key 时不发起 Google API 请求。
 
 需要 Node.js 22.12+（建议 Node 24）和 npm。知乎同步另需 Python 3.12+。
 

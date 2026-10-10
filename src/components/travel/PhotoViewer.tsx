@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import type OpenSeadragon from "openseadragon";
-import { mediaUrl, type TravelPhoto } from "@/lib/travel";
+import { mediaUrl, type TravelPhoto, type TravelConfig } from "@/lib/travel";
 import { cameraName, shootingSummary } from "@/lib/photo-metadata";
 import PhotoFacts from "./PhotoFacts";
 
@@ -17,6 +17,7 @@ export default function PhotoViewer({
   count,
   onClose,
   onMove,
+  mapConfig,
 }: {
   photo: TravelPhoto;
   mediaBase: string;
@@ -24,6 +25,7 @@ export default function PhotoViewer({
   count: number;
   onClose: () => void;
   onMove: (direction: number) => void;
+  mapConfig?: TravelConfig;
 }) {
   const stage = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -179,6 +181,7 @@ export default function PhotoViewer({
                   latitude={photo.location.latitude}
                   longitude={photo.location.longitude}
                   place="照片拍摄位置"
+                  mapConfig={mapConfig}
                 />
               </>
             ) : (

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import WorldMap from "./WorldMap";
+import TripCover from "./TripCover";
+import { tripLocation } from "@/lib/trip-presentation";
 import {
   EMPTY_MANIFEST,
   mediaUrl,
@@ -27,6 +29,8 @@ export default function TravelGallery() {
   const [photoId, setPhotoId] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [reload, setReload] = useState(0);
+  const collection = useRef<HTMLElement>(null);
+  const overviewScroll = useRef(0);
   useEffect(() => {
     const controller = new AbortController();
     void (async () => {
@@ -75,11 +79,10 @@ export default function TravelGallery() {
   );
   const photo = photos.find((item) => item.id === photoId);
   const index = photo ? photos.indexOf(photo) : -1;
-  const albumLocation =
-    album && album.latitude !== null && album.longitude !== null
-      ? { latitude: album.latitude, longitude: album.longitude }
-      : photos.find((item) => item.location)?.location;
+  const albumLocation = album ? tripLocation(album, photos) : null;
   function navigate(trip: string, id = "") {
+    if (trip === selected && id === photoId) return;
+    if (trip && !selected) overviewScroll.current = window.scrollY;
     const url = new URL(window.location.href);
     if (trip) url.searchParams.set("trip", trip);
     else url.searchParams.delete("trip");
@@ -89,6 +92,16 @@ export default function TravelGallery() {
     setSelected(trip);
     setPhotoId(id);
     setShowMap(false);
+    if (trip !== selected)
+      requestAnimationFrame(() => {
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches
+          ? "auto"
+          : "smooth";
+        if (trip)
+          collection.current?.scrollIntoView({ behavior, block: "start" });
+        else window.scrollTo({ top: overviewScroll.current, behavior });
+      });
   }
   return (
     <>
@@ -108,10 +121,15 @@ export default function TravelGallery() {
       <WorldMap
         albums={manifest.albums}
         photos={manifest.photos}
+        mapConfig={config}
         selected={selected}
         onSelect={(id) => navigate(id)}
       />
-      <section className="travel-collection" aria-label="旅行照片">
+      <section
+        ref={collection}
+        className="travel-collection"
+        aria-label="旅行影集"
+      >
         <div className="travel-filter">
           <div>
             <button
@@ -120,17 +138,17 @@ export default function TravelGallery() {
             >
               全部旅行 <span>{manifest.albums.length}</span>
             </button>
-            {manifest.albums.map((item) => (
-              <button
-                key={item.id}
-                className={album?.id === item.id ? "is-active" : ""}
-                onClick={() => navigate(item.id)}
-              >
-                {item.title}
-              </button>
-            ))}
+            {album && (
+              <span className="trip-breadcrumb">
+                <span aria-hidden="true">/</span> {album.title}
+              </span>
+            )}
           </div>
-          <span className="mono">{photos.length} PHOTOS</span>
+          <span className="mono">
+            {album
+              ? `${photos.length} PHOTOS`
+              : `${manifest.albums.length} TRIPS`}
+          </span>
         </div>
         {album && (
           <div className="travel-album-heading">
@@ -141,7 +159,7 @@ export default function TravelGallery() {
               <h2>{album.title}</h2>
               <p>{album.description}</p>
             </div>
-            {albumLocation && (
+            {(albumLocation || album.googlePlaceId) && (
               <button
                 className="travel-text-button"
                 onClick={() => setShowMap(!showMap)}
@@ -151,12 +169,14 @@ export default function TravelGallery() {
             )}
           </div>
         )}
-        {album && showMap && albumLocation && (
+        {album && showMap && (albumLocation || album.googlePlaceId) && (
           <LocationMap
             key={album.id}
-            latitude={albumLocation.latitude}
-            longitude={albumLocation.longitude}
+            latitude={albumLocation?.latitude || 0}
+            longitude={albumLocation?.longitude || 0}
             place={album.place}
+            googlePlaceId={album.googlePlaceId}
+            mapConfig={config}
           />
         )}
         {loading ? (
@@ -188,8 +208,69 @@ export default function TravelGallery() {
               这里会留下它们的位置与故事。
             </p>
           </div>
+        ) : !album ? (
+          <div className="trip-card-grid" key="trips">
+            {manifest.albums.map((trip, tripIndex) => {
+              const count = manifest.photos.filter(
+                (photo) => photo.albumId === trip.id,
+              ).length;
+              const located = Boolean(
+                trip.googlePlaceId || tripLocation(trip, manifest.photos),
+              );
+              return (
+                <a
+                  className="trip-card"
+                  key={trip.id}
+                  href={`?trip=${trip.id}`}
+                  onClick={(event) => {
+                    if (
+                      event.button === 0 &&
+                      !event.metaKey &&
+                      !event.ctrlKey &&
+                      !event.shiftKey &&
+                      !event.altKey
+                    ) {
+                      event.preventDefault();
+                      navigate(trip.id);
+                    }
+                  }}
+                  aria-label={`打开${trip.title}，${count}张照片`}
+                >
+                  <TripCover
+                    album={trip}
+                    photos={manifest.photos}
+                    mediaBase={config.mediaUrl}
+                  />
+                  <div className="trip-card-meta">
+                    <span className="mono">
+                      {String(tripIndex + 1).padStart(2, "0")} /{" "}
+                      {trip.date || "旅行记录"}
+                    </span>
+                    <span>{count} 张照片</span>
+                  </div>
+                  <div className="trip-card-heading">
+                    <h2>{trip.title}</h2>
+                    <span className="trip-card-arrow" aria-hidden="true">
+                      ↗
+                    </span>
+                  </div>
+                  <p className="trip-card-place">
+                    {trip.place ||
+                      (trip.googlePlaceId
+                        ? "已选择 Google 地点"
+                        : located
+                          ? "已标记旅行地点"
+                          : "地点待补充")}
+                  </p>
+                  {trip.description && (
+                    <p className="trip-card-description">{trip.description}</p>
+                  )}
+                </a>
+              );
+            })}
+          </div>
         ) : (
-          <div className="travel-photo-grid">
+          <div className="travel-photo-grid trip-photo-detail" key={album.id}>
             {photos.map((item, i) => (
               <button
                 className="travel-photo"
@@ -222,6 +303,7 @@ export default function TravelGallery() {
       </section>
       <div className="travel-end">
         <Link href="/">← 回到主页</Link>
+        <Link href="/travel/privacy/">地图与隐私说明</Link>
         <Link href="/travel/manage/">管理影集</Link>
       </div>
       {photo && (
@@ -229,6 +311,7 @@ export default function TravelGallery() {
           key={photo.id}
           photo={photo}
           mediaBase={config.mediaUrl}
+          mapConfig={config}
           position={index}
           count={photos.length}
           onClose={() => navigate(selected)}

@@ -22,6 +22,9 @@ const base = env("PHOTO_WORKER_URL").replace(/\/$/, ""),
 const account = env("R2_ACCOUNT_ID"),
   bucket = env("R2_PUBLIC_BUCKET");
 const onlyId = process.env.PHOTO_ID || "";
+const onlyAlbum = process.env.PHOTO_ALBUM_ID || "";
+if (onlyAlbum && !/^[a-zA-Z0-9_-]{1,80}$/.test(onlyAlbum))
+  throw new Error("旅行编号不正确");
 if (onlyId && !/^[a-zA-Z0-9_-]{1,80}$/.test(onlyId))
   throw new Error("照片编号不正确");
 if (!/^https:\/\/[^/?#]+$/.test(base) || !/^[a-f0-9]{32}$/.test(account))
@@ -74,6 +77,7 @@ async function main() {
         metadataOnly ? "/internal/metadata/claim" : "/internal/claim",
         {
           photoId: onlyId,
+          albumId: onlyAlbum,
         },
       );
       if (!job) break;

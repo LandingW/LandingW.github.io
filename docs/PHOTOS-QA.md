@@ -2,6 +2,11 @@
 
 ## 后续云端接入记录
 
+- 旅行概览改为最多四图组合封面卡片，点击进入单次旅行；一至四张封面有对应布局，支持手动选择封面顺序。世界概览改为每次旅行一个标记，手动旅行地点优先于照片 GPS。
+- Google Maps JavaScript / Places（New）接入代码与受限浏览器 key 配置界面已完成，使用新 `gmp-select` 事件和 AdvancedMarkerElement；长期只保存 Place ID。未提供 Google key，未开通 Google 账单，尚未验证真实 Google 搜索、显示、选点及计费。
+- 41 项测试通过，覆盖封面选择/数量、每旅行一个标记、Google 地点不写入非 Google 底图、仅保存地点 ID、密钥类型校验、封面归属和按旅行领取后台任务。
+- 用户指定目录的 12 张 JPEG（153,373,412 bytes）已通过本机读取校验并上传至私有原片桶，登记为新的“待整理 · e”草稿相册；本地原文件和原有相册未修改。预览/切片处理结果将在完成后记录。
+
 - EXIF 功能已部署：<https://github.com/LandingW/LandingW.github.io/actions/runs/38045758164>；现有照片的 metadata-only 补读成功：<https://github.com/LandingW/LandingW.github.io/actions/runs/38045801891>。
 - 现有 1 张已发布照片成功读取曝光参数，未读取到有效的机身/镜头型号或 EXIF GPS，未猜测或补造缺失信息。公开清单已更新摄影参数；补读前后 revision 相同、衍生文件体积均为 8,787,710 bytes，没有重新生成切片。
 - 此次通过公网清单和 D1 状态验证结果；浏览器控制连接此前不可用，新增信息面板与地图交互没有获得本轮真实手机视觉验收证据。

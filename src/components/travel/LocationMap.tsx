@@ -2,8 +2,64 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, CircleMarker } from "leaflet";
+import dynamic from "next/dynamic";
+import type { TravelConfig } from "@/lib/travel";
+import { googleMapsLink } from "@/lib/trip-presentation";
 
-export default function LocationMap({
+const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
+
+type LocationMapProps = {
+  latitude: number;
+  longitude: number;
+  place: string;
+  onPick?: (latitude: number, longitude: number) => void;
+  googlePlaceId?: string | null;
+  mapConfig?: TravelConfig;
+};
+
+export default function LocationMap(props: LocationMapProps) {
+  const location = { latitude: props.latitude, longitude: props.longitude };
+  if (props.mapConfig?.googleMapsApiKey)
+    return (
+      <div className="travel-location">
+        <GoogleMapView
+          apiKey={props.mapConfig.googleMapsApiKey}
+          mapId={props.mapConfig.googleMapsMapId}
+          pins={[
+            {
+              id: "location",
+              label: props.place || "拍摄位置",
+              location,
+              googlePlaceId: props.googlePlaceId,
+            },
+          ]}
+        />
+        <a
+          href={googleMapsLink(props.place, location, props.googlePlaceId)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          在 Google 地图中打开 ↗
+        </a>
+      </div>
+    );
+  if (props.googlePlaceId)
+    return (
+      <div className="travel-location">
+        <p className="map-service-note">Google 地图尚未配置或暂不可用。</p>
+        <a
+          href={googleMapsLink(props.place, null, props.googlePlaceId)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          在 Google 地图中查看所选地点 ↗
+        </a>
+      </div>
+    );
+  return <OsmLocationMap {...props} />;
+}
+
+function OsmLocationMap({
   latitude,
   longitude,
   place,

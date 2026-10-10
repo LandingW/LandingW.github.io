@@ -176,6 +176,12 @@ test(
         processorToken,
       );
       assert.equal(((await noMatch.json()) as { job: unknown }).job, null);
+      const wrongAlbum = await request(
+        "/internal/claim",
+        { albumId: "another-trip" },
+        processorToken,
+      );
+      assert.equal(((await wrongAlbum.json()) as { job: unknown }).job, null);
       assert.equal(
         (
           await request(
@@ -376,6 +382,62 @@ test(
         JSON.parse(await (await published.get("manifest.json"))!.text())
           .photos[0].location,
         { latitude: 12.34, longitude: 56.78 },
+      );
+      assert.equal(
+        (
+          await request(`/admin/albums/${albumId}/edit`, {
+            title: "Google 旅行",
+            googlePlaceId: "ChIJ_test_place",
+            latitude: 55,
+            longitude: 66,
+            coverPhotoIds: [id],
+          })
+        ).status,
+        200,
+      );
+      const googleAlbum = JSON.parse(
+        await (await published.get("manifest.json"))!.text(),
+      ).albums[0];
+      assert.equal(googleAlbum.googlePlaceId, "ChIJ_test_place");
+      assert.equal(googleAlbum.latitude, null);
+      assert.equal(googleAlbum.longitude, null);
+      assert.deepEqual(googleAlbum.coverPhotoIds, [id]);
+      assert.equal(
+        (
+          await request(`/admin/albums/${albumId}/edit`, {
+            title: "Bad cover",
+            coverPhotoIds: ["not-in-this-trip"],
+          })
+        ).status,
+        400,
+      );
+      assert.equal(
+        (
+          await request(`/admin/albums/${albumId}/edit`, {
+            title: "Legacy edit",
+          })
+        ).status,
+        200,
+      );
+      const preserved = JSON.parse(
+        await (await published.get("manifest.json"))!.text(),
+      ).albums[0];
+      assert.equal(preserved.googlePlaceId, "ChIJ_test_place");
+      assert.deepEqual(preserved.coverPhotoIds, [id]);
+      assert.equal(
+        (await request("/admin/maps", { apiKey: "a".repeat(64) })).status,
+        400,
+      );
+      assert.equal(await published.get("maps-config.json"), null);
+      const browserKey = `AIza${"A".repeat(35)}`;
+      assert.equal(
+        (await request("/admin/maps", { apiKey: browserKey })).status,
+        200,
+      );
+      assert.equal(
+        JSON.parse(await (await published.get("maps-config.json"))!.text())
+          .apiKey,
+        browserKey,
       );
       assert.equal(
         (await request(`/admin/albums/${albumId}/unpublish`, {})).status,

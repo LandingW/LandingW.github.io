@@ -8,6 +8,7 @@ import {
   formatBytes,
   type TravelAlbum,
   type TravelConfig,
+  type TravelPhoto,
 } from "@/lib/travel";
 import { loadTravelConfig, photoApi, uploadPhoto } from "@/lib/travel-client";
 import {
@@ -16,8 +17,11 @@ import {
   type PhotoLocation,
 } from "@/lib/photo-metadata";
 import PhotoFacts from "./PhotoFacts";
+import TripCover from "./TripCover";
+import { googleMapsLink } from "@/lib/trip-presentation";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
+const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
 type Album = TravelAlbum & { published: number };
 type Photo = {
   id: string;
@@ -33,6 +37,9 @@ type Photo = {
   location_mode: "exact" | "hidden";
   metadata_state: string;
   metadata_error: string | null;
+  width: number | null;
+  height: number | null;
+  thumbnail?: string | null;
 };
 interface State {
   albums: Album[];
@@ -47,6 +54,8 @@ const blank = {
   date: "",
   latitude: "",
   longitude: "",
+  googlePlaceId: null as string | null,
+  coverPhotoIds: [] as string[],
 };
 const statuses: Record<string, string> = {
   uploading: "上传未完成",
@@ -72,13 +81,21 @@ export default function TravelManager() {
     value: number;
   } | null>(null);
   const [gpsPreview, setGpsPreview] = useState("");
+  const [mapsOpen, setMapsOpen] = useState(false);
+  const [mapsForm, setMapsForm] = useState({ apiKey: "", mapId: "" });
   const abort = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let alive = true;
     void loadTravelConfig()
       .then((value) => {
-        if (alive) setConfig(value);
+        if (alive) {
+          setConfig(value);
+          setMapsForm({
+            apiKey: value.googleMapsApiKey || "",
+            mapId: value.googleMapsMapId || "",
+          });
+        }
       })
       .catch(() => {
         if (alive) setError("无法读取配置，请重新打开页面");
@@ -142,6 +159,8 @@ export default function TravelManager() {
             date: album.date,
             latitude: album.latitude === null ? "" : String(album.latitude),
             longitude: album.longitude === null ? "" : String(album.longitude),
+            googlePlaceId: album.googlePlaceId || null,
+            coverPhotoIds: album.coverPhotoIds || [],
           }
         : blank,
     );
@@ -157,6 +176,31 @@ export default function TravelManager() {
       setState(next);
       setToken(password);
       setPassword("");
+      const requestedTrip = new URLSearchParams(window.location.search).get(
+        "trip",
+      );
+      const requestedAlbum = next.albums.find(
+        (album) => album.id === requestedTrip,
+      );
+      if (requestedAlbum) {
+        setSelected(requestedAlbum.id);
+        setForm({
+          title: requestedAlbum.title,
+          description: requestedAlbum.description,
+          place: requestedAlbum.place,
+          date: requestedAlbum.date,
+          latitude:
+            requestedAlbum.latitude === null
+              ? ""
+              : String(requestedAlbum.latitude),
+          longitude:
+            requestedAlbum.longitude === null
+              ? ""
+              : String(requestedAlbum.longitude),
+          googlePlaceId: requestedAlbum.googlePlaceId || null,
+          coverPhotoIds: requestedAlbum.coverPhotoIds || [],
+        });
+      }
     });
   }
   async function upload(files: FileList | null) {
@@ -189,6 +233,37 @@ export default function TravelManager() {
     });
   }
   const active = state?.albums.find((album) => album.id === selected);
+  const previewPhotos: TravelPhoto[] = (state?.photos || [])
+    .filter((photo) => photo.state === "ready" && photo.thumbnail)
+    .map((photo) => ({
+      id: photo.id,
+      albumId: photo.album_id,
+      caption: "",
+      width: photo.width || 1,
+      height: photo.height || 1,
+      thumbnail: photo.thumbnail!,
+      preview: "",
+      dzi: "",
+    }));
+  function toggleCover(photo: Photo) {
+    if (selected !== photo.album_id) selectAlbum(photo.album_id);
+    const saved =
+      selected === photo.album_id
+        ? form.coverPhotoIds
+        : state?.albums.find((album) => album.id === photo.album_id)
+            ?.coverPhotoIds || [];
+    if (!saved.includes(photo.id) && saved.length >= 4) {
+      setError("封面最多选四张，请先取消一张。");
+      return;
+    }
+    setForm((old) => ({
+      ...old,
+      coverPhotoIds: saved.includes(photo.id)
+        ? saved.filter((id) => id !== photo.id)
+        : [...saved, photo.id],
+    }));
+    setMessage("封面选择已更新，点击保存旅行信息后生效。");
+  }
   return (
     <div className="travel-manager">
       <div className="manager-heading">
@@ -283,6 +358,70 @@ export default function TravelManager() {
               </button>
             </div>
           </div>
+          <details
+            className="manager-map-settings"
+            open={mapsOpen}
+            onToggle={(event) => setMapsOpen(event.currentTarget.open)}
+          >
+            <summary>
+              Google 地图服务 ·{" "}
+              {config.googleMapsApiKey ? "已配置" : "待配置 API key"}
+            </summary>
+            <p>
+              启用 Maps JavaScript API 和 Places API（New），并将浏览器 key
+              限制到本网站。Google
+              的账单、配额和费用由你的账号管理，不会自动替你开通。
+            </p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void run(async () => {
+                  const saved = await photoApi<{
+                    apiKey: string;
+                    mapId: string;
+                  }>(config.apiUrl, token, "/admin/maps", mapsForm);
+                  setConfig({
+                    ...config,
+                    googleMapsApiKey: saved.apiKey,
+                    googleMapsMapId: saved.mapId,
+                  });
+                  setMessage(
+                    "Google 地图设置已保存，无需构建网站。若更换了已加载的 key，请刷新页面。",
+                  );
+                });
+              }}
+            >
+              <label>
+                受网站限制的 Google Maps 浏览器 API key
+                <input
+                  type="password"
+                  value={mapsForm.apiKey}
+                  onChange={(event) =>
+                    setMapsForm({ ...mapsForm, apiKey: event.target.value })
+                  }
+                  placeholder="AIza…"
+                  autoComplete="off"
+                />
+              </label>
+              <label>
+                Map ID（可选）
+                <input
+                  value={mapsForm.mapId}
+                  onChange={(event) =>
+                    setMapsForm({ ...mapsForm, mapId: event.target.value })
+                  }
+                  placeholder="留空使用 DEMO_MAP_ID；正式使用建议设置自己的 Map ID"
+                />
+              </label>
+              <p className="manager-help">
+                此 key 会发给访客浏览器，必须设置 HTTP 网站来源和 API
+                限制。不要填写服务账号私钥、R2 或 GitHub 密钥。
+              </p>
+              <button className="travel-button" disabled={busy}>
+                保存地图配置
+              </button>
+            </form>
+          </details>
           <div className="manager-layout">
             <section className="manager-album">
               <div className="manager-section-title">
@@ -358,7 +497,7 @@ export default function TravelManager() {
                       />
                     </label>
                     <label>
-                      公开地点
+                      地点标签（自己标注）
                       <input
                         value={form.place}
                         onChange={(e) =>
@@ -385,6 +524,7 @@ export default function TravelManager() {
                       纬度
                       <input
                         type="number"
+                        disabled={Boolean(form.googlePlaceId)}
                         min={-90}
                         max={90}
                         step="any"
@@ -399,6 +539,7 @@ export default function TravelManager() {
                       经度
                       <input
                         type="number"
+                        disabled={Boolean(form.googlePlaceId)}
                         min={-180}
                         max={180}
                         step="any"
@@ -411,36 +552,119 @@ export default function TravelManager() {
                     </label>
                   </div>
                   <p className="manager-help">
-                    旅行参考点可留空；照片有 GPS
-                    时会自动标记精确拍摄位置。每张照片可单独隐藏 GPS。
+                    每次旅行一个标记：优先使用你选择的旅行地点，否则取首张公开
+                    GPS 照片的位置。选择 Google 地点时不必手填坐标。
                   </p>
                   <div className="manager-actions">
                     <button type="button" onClick={() => setShowMap(!showMap)}>
-                      {showMap ? "收起选点地图" : "在地图上选点"}
+                      {showMap ? "收起选点地图" : "在 Google 地图选择地点"}
                     </button>
                     {form.place && (
                       <a
-                        href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(form.place)}`}
+                        href={googleMapsLink(
+                          form.place,
+                          null,
+                          form.googlePlaceId,
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        搜索地点 ↗
+                        打开 Google 地图 ↗
                       </a>
                     )}
                   </div>
-                  {showMap && (
-                    <LocationMap
-                      latitude={Number(form.latitude) || 0}
-                      longitude={Number(form.longitude) || 0}
-                      place={form.place}
-                      onPick={(latitude, longitude) =>
+                  {form.googlePlaceId && (
+                    <p className="manager-help">
+                      已保存一个 Google 地点。
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({ ...form, googlePlaceId: null })
+                        }
+                      >
+                        清除地点关联，改用手动标记
+                      </button>
+                    </p>
+                  )}
+                  {showMap && config.googleMapsApiKey ? (
+                    <GoogleMapView
+                      apiKey={config.googleMapsApiKey}
+                      mapId={config.googleMapsMapId}
+                      pins={[
+                        {
+                          id: "trip",
+                          label: form.title || "旅行地点",
+                          googlePlaceId: form.googlePlaceId,
+                          location:
+                            form.latitude !== "" && form.longitude !== ""
+                              ? {
+                                  latitude: Number(form.latitude),
+                                  longitude: Number(form.longitude),
+                                }
+                              : null,
+                        },
+                      ]}
+                      selected="trip"
+                      onPick={(value) =>
                         setForm((old) => ({
                           ...old,
-                          latitude: latitude.toFixed(5),
-                          longitude: longitude.toFixed(5),
+                          googlePlaceId: value.googlePlaceId,
+                          latitude: value.googlePlaceId
+                            ? ""
+                            : value.location.latitude.toFixed(6),
+                          longitude: value.googlePlaceId
+                            ? ""
+                            : value.location.longitude.toFixed(6),
                         }))
                       }
                     />
+                  ) : (
+                    showMap && (
+                      <div className="map-picker-fallback">
+                        <p className="manager-help">
+                          Google 地图尚未配置。
+                          <button
+                            type="button"
+                            onClick={() => setMapsOpen(true)}
+                          >
+                            配置 API key
+                          </button>{" "}
+                          后可直接搜索景点；现在也可使用临时手动选点。
+                        </p>
+                        <LocationMap
+                          latitude={Number(form.latitude) || 0}
+                          longitude={Number(form.longitude) || 0}
+                          place={form.place}
+                          googlePlaceId={form.googlePlaceId}
+                          onPick={(latitude, longitude) =>
+                            setForm((old) => ({
+                              ...old,
+                              latitude: latitude.toFixed(5),
+                              longitude: longitude.toFixed(5),
+                              googlePlaceId: null,
+                            }))
+                          }
+                        />
+                      </div>
+                    )
+                  )}
+                  {active && (
+                    <div className="manager-cover-preview">
+                      <h3>
+                        旅行封面 ·{" "}
+                        {form.coverPhotoIds.length
+                          ? `${form.coverPhotoIds.length} 张已选`
+                          : "自动组合四张"}
+                      </h3>
+                      <TripCover
+                        album={{ ...active, coverPhotoIds: form.coverPhotoIds }}
+                        photos={previewPhotos}
+                        mediaBase={config.mediaUrl}
+                      />
+                      <p className="manager-help">
+                        在下方照片列表勾选最多四张封面；不勾选时自动选择不同位置的照片。
+                      </p>
+                    </div>
                   )}
                   <button className="travel-button" type="submit">
                     {selected ? "保存旅行信息" : "创建旅行"}
@@ -512,14 +736,14 @@ export default function TravelManager() {
                       config.apiUrl,
                       token,
                       "/admin/process",
-                      {},
+                      { albumId: selected },
                     );
                     setMessage(result.message);
                     await refresh();
                   })
                 }
               >
-                处理待办照片
+                {selected ? "处理当前旅行的待办照片" : "处理全部待办照片"}
               </button>
               <div className="manager-publish">
                 <h2>03 / 确认发布</h2>
@@ -588,6 +812,32 @@ export default function TravelManager() {
                 .map((photo) => (
                   <div className="manager-job" key={photo.id}>
                     <div>
+                      {photo.thumbnail && (
+                        <div className="manager-photo-preview">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`${config.mediaUrl}/${photo.thumbnail}`}
+                            alt=""
+                            width={96}
+                            height={72}
+                            loading="lazy"
+                          />
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={(selected === photo.album_id
+                                ? form.coverPhotoIds
+                                : state.albums.find(
+                                    (album) => album.id === photo.album_id,
+                                  )?.coverPhotoIds || []
+                              ).includes(photo.id)}
+                              disabled={busy || photo.state !== "ready"}
+                              onChange={() => toggleCover(photo)}
+                            />
+                            选作旅行封面
+                          </label>
+                        </div>
+                      )}
                       <strong>{photo.filename}</strong>
                       <span>
                         {(photo.bytes / 1_000_000).toFixed(1)} MB
@@ -662,6 +912,7 @@ export default function TravelManager() {
                                   latitude={photo.gps.latitude}
                                   longitude={photo.gps.longitude}
                                   place="照片 GPS 拍摄位置"
+                                  mapConfig={config}
                                 />
                               )}
                             </>
@@ -683,6 +934,7 @@ export default function TravelManager() {
                                     ...(photo.gps
                                       ? {
                                           latitude: String(photo.gps.latitude),
+                                          googlePlaceId: null,
                                           longitude: String(
                                             photo.gps.longitude,
                                           ),

@@ -1,4 +1,8 @@
 import { AwsClient } from "aws4fetch";
+import {
+  normalizeMapsConfig,
+  parseCoverIds,
+} from "../../../src/lib/trip-presentation";
 import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
 import {
   cameraFromJson,
@@ -202,7 +206,7 @@ export async function publishManifest(env: Env) {
   if (!serviceUrl(env.PUBLIC_MEDIA_URL))
     throw new HttpError(503, "公开图片地址尚未配置");
   const albums = await env.DB.prepare(
-    "SELECT id,title,description,place,date,latitude,longitude FROM albums WHERE published=1 ORDER BY date DESC,created_at DESC",
+    "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids FROM albums WHERE published=1 ORDER BY date DESC,created_at DESC",
   ).all();
   const photos = await env.DB.prepare(
     "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
@@ -211,9 +215,20 @@ export async function publishManifest(env: Env) {
   const manifest: TravelManifest = {
     version: 1,
     updatedAt: now(),
-    albums: albums.results.filter((a) =>
-      visible.has(a.id as string),
-    ) as unknown as TravelManifest["albums"],
+    albums: albums.results
+      .filter((a) => visible.has(a.id as string))
+      .map((a) => ({
+        id: String(a.id),
+        ...albumInput({
+          ...a,
+          googlePlaceId: a.google_place_id,
+          coverPhotoIds: parseCoverIds(a.cover_photo_ids).filter((id) =>
+            photos.results.some(
+              (photo) => photo.id === id && photo.album_id === a.id,
+            ),
+          ),
+        }),
+      })),
     photos: photos.results.map((p) => ({
       id: p.id,
       albumId: p.album_id,
@@ -305,17 +320,26 @@ async function admin(request: Request, env: Env, path: string) {
     const [albums, photos, usage] = await Promise.all([
       env.DB.prepare("SELECT * FROM albums ORDER BY created_at DESC").all(),
       env.DB.prepare(
-        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,derived_bytes,created_at,updated_at,camera_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
+        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
       ).all<PhotoRow>(),
       env.DB.prepare(
         "SELECT COALESCE(SUM(bytes),0) AS bytes FROM photos WHERE state!='aborted'",
       ).first<{ bytes: number }>(),
     ]);
     return json({
-      albums: albums.results,
+      albums: albums.results.map(
+        ({ google_place_id, cover_photo_ids, ...album }) => ({
+          ...album,
+          googlePlaceId: google_place_id || null,
+          coverPhotoIds: parseCoverIds(cover_photo_ids),
+        }),
+      ),
       photos: photos.results.map(
         ({ camera_json, gps_latitude, gps_longitude, ...row }) => ({
           ...row,
+          thumbnail: row.revision
+            ? `photos/${row.id}/${row.revision}/thumbnail.jpg`
+            : null,
           camera: cameraFromJson(camera_json),
           gps: normalizeLocation({
             latitude: gps_latitude,
@@ -330,11 +354,25 @@ async function admin(request: Request, env: Env, path: string) {
   }
   if (request.method !== "POST") throw new HttpError(405, "不支持的操作");
   const input = await body(request);
+  if (path === "/admin/maps") {
+    const settings = normalizeMapsConfig(input);
+    // This is an intentionally public, website-restricted browser key, never a
+    // server credential. The strict format rejects R2/GitHub/service-account keys.
+    await env.PUBLIC.put("maps-config.json", JSON.stringify(settings), {
+      httpMetadata: {
+        contentType: "application/json; charset=utf-8",
+        cacheControl: "public, max-age=60",
+      },
+    });
+    return json({ ok: true, ...settings });
+  }
   if (path === "/admin/albums") {
     const data = albumInput(input),
       id = crypto.randomUUID();
+    if (data.coverPhotoIds?.length)
+      throw new HttpError(400, "新旅行请先上传照片，再选择封面");
     await env.DB.prepare(
-      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,created_at) VALUES(?,?,?,?,?,?,?,?)",
+      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
     )
       .bind(
         id,
@@ -344,6 +382,8 @@ async function admin(request: Request, env: Env, path: string) {
         data.date,
         data.latitude,
         data.longitude,
+        data.googlePlaceId,
+        "[]",
         now(),
       )
       .run();
@@ -362,8 +402,17 @@ async function admin(request: Request, env: Env, path: string) {
       throw new HttpError(404, "旅行不存在");
     if (action === "edit") {
       const d = albumInput(input);
+      if (d.coverPhotoIds?.length) {
+        const picked = await env.DB.prepare(
+          `SELECT id FROM photos WHERE album_id=? AND state='ready' AND id IN (${d.coverPhotoIds.map(() => "?").join(",")})`,
+        )
+          .bind(id, ...d.coverPhotoIds)
+          .all();
+        if (picked.results.length !== d.coverPhotoIds.length)
+          throw new HttpError(400, "封面只能选择当前旅行中已处理完成的照片");
+      }
       await env.DB.prepare(
-        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=? WHERE id=?",
+        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=?,google_place_id=CASE WHEN ? THEN ? ELSE google_place_id END,cover_photo_ids=CASE WHEN ? THEN ? ELSE cover_photo_ids END WHERE id=?",
       )
         .bind(
           d.title,
@@ -372,6 +421,10 @@ async function admin(request: Request, env: Env, path: string) {
           d.date,
           d.latitude,
           d.longitude,
+          Object.hasOwn(input, "googlePlaceId") ? 1 : 0,
+          d.googlePlaceId,
+          Object.hasOwn(input, "coverPhotoIds") ? 1 : 0,
+          JSON.stringify(d.coverPhotoIds),
           id,
         )
         .run();
@@ -556,16 +609,21 @@ async function admin(request: Request, env: Env, path: string) {
   if (path === "/admin/process") {
     if (!env.GITHUB_TOKEN || !/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPOSITORY))
       throw new HttpError(503, "GitHub 图片处理凭据尚未配置");
+    const albumId = input.albumId || "";
+    if (typeof albumId !== "string" || (albumId && !validId(albumId)))
+      throw new HttpError(400, "旅行编号不正确");
     const queued = await env.DB.prepare(
-      "SELECT COUNT(*) AS count FROM photos WHERE state='queued' OR (state='processing' AND updated_at < ?) OR (state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)))",
+      "SELECT COUNT(*) AS count FROM photos WHERE (state='queued' OR (state='processing' AND updated_at < ?) OR (state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)))) AND (?='' OR album_id=?)",
     )
       .bind(
         new Date(Date.now() - 3600_000).toISOString(),
         new Date(Date.now() - 3600_000).toISOString(),
+        albumId,
+        albumId,
       )
       .first<{ count: number }>();
     if (!queued?.count) return json({ ok: true, message: "没有待处理照片" });
-    await dispatchProcessing(env);
+    await dispatchProcessing(env, albumId ? { album_id: albumId } : {});
     return json({ ok: true, message: "已启动图片处理任务，完成后可在此发布" });
   }
   throw new HttpError(404, "接口不存在");
@@ -579,9 +637,12 @@ async function internal(request: Request, env: Env, path: string) {
       onlyId = input.photoId === undefined ? "" : input.photoId;
     if (typeof onlyId !== "string" || (onlyId && !validId(onlyId)))
       throw new HttpError(400, "照片编号不正确");
+    const onlyAlbum = input.albumId || "";
+    if (typeof onlyAlbum !== "string" || (onlyAlbum && !validId(onlyAlbum)))
+      throw new HttpError(400, "旅行编号不正确");
     const lease = crypto.randomUUID();
     const row = await env.DB.prepare(
-      "UPDATE photos SET metadata_state='processing',metadata_lease=?,metadata_updated_at=?,metadata_error=NULL WHERE id=(SELECT id FROM photos WHERE state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)) AND (?='' OR id=?) ORDER BY created_at LIMIT 1) RETURNING *",
+      "UPDATE photos SET metadata_state='processing',metadata_lease=?,metadata_updated_at=?,metadata_error=NULL WHERE id=(SELECT id FROM photos WHERE state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)) AND (?='' OR id=?) AND (?='' OR album_id=?) ORDER BY created_at LIMIT 1) RETURNING *",
     )
       .bind(
         lease,
@@ -589,6 +650,8 @@ async function internal(request: Request, env: Env, path: string) {
         new Date(Date.now() - 3600_000).toISOString(),
         onlyId,
         onlyId,
+        onlyAlbum,
+        onlyAlbum,
       )
       .first<PhotoRow>();
     if (!row) return json({ job: null });
@@ -646,11 +709,14 @@ async function internal(request: Request, env: Env, path: string) {
     const onlyId = input.photoId === undefined ? "" : input.photoId;
     if (typeof onlyId !== "string" || (onlyId && !validId(onlyId)))
       throw new HttpError(400, "照片编号不正确");
+    const onlyAlbum = input.albumId || "";
+    if (typeof onlyAlbum !== "string" || (onlyAlbum && !validId(onlyAlbum)))
+      throw new HttpError(400, "旅行编号不正确");
     const lease = crypto.randomUUID(),
       revision = crypto.randomUUID(),
       timestamp = now();
     const row = await env.DB.prepare(
-      "UPDATE photos SET state='processing',lease=?,revision=?,updated_at=?,error=NULL WHERE id=(SELECT id FROM photos WHERE (state='queued' OR (state='processing' AND updated_at < ?)) AND (?='' OR id=?) ORDER BY created_at LIMIT 1) RETURNING *",
+      "UPDATE photos SET state='processing',lease=?,revision=?,updated_at=?,error=NULL WHERE id=(SELECT id FROM photos WHERE (state='queued' OR (state='processing' AND updated_at < ?)) AND (?='' OR id=?) AND (?='' OR album_id=?) ORDER BY created_at LIMIT 1) RETURNING *",
     )
       .bind(
         lease,
@@ -659,6 +725,8 @@ async function internal(request: Request, env: Env, path: string) {
         new Date(Date.now() - 3600_000).toISOString(),
         onlyId,
         onlyId,
+        onlyAlbum,
+        onlyAlbum,
       )
       .first<PhotoRow>();
     if (!row) return json({ job: null });
@@ -765,7 +833,9 @@ const worker = {
           ? error.status
           : error instanceof TypeError ||
               (error instanceof Error &&
-                /格式|长度|日期|经纬度|HTTPS|缺少/.test(error.message))
+                /格式|长度|日期|经纬度|HTTPS|缺少|封面|Google/.test(
+                  error.message,
+                ))
             ? 400
             : 500;
       response = json(

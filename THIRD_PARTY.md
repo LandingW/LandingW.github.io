@@ -18,6 +18,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 # 旅行影集补充
 
+- Google Maps JavaScript API / Places API（New）：通过官方 `@googlemaps/js-api-loader`（Apache-2.0）按需加载，地图服务本身适用 Google Maps Platform 条款。保留 Google 署名，不将 Places 结果复制到非 Google 底图；长期仅存 Place ID。
+
 - exifr：MIT，读取 EXIF 白名单标签与 GPS；通过 Sharp 提取的 TIFF EXIF 块支持 JPEG、PNG 和 WebP。
 
 - OpenSeadragon：BSD-3-Clause，深度缩放查看器。

@@ -3,6 +3,10 @@ name: Process Travel Photos
 on:
   workflow_dispatch:
     inputs:
+      album_id:
+        description: "可选：仅处理指定旅行中的照片"
+        required: false
+        type: string
       photo_id:
         description: "可选：仅处理指定照片 ID，留空处理全部待办"
         required: false
@@ -54,6 +58,7 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_PUBLIC_BUCKET: landingw-photo-public
+          PHOTO_ALBUM_ID: ${{ inputs.album_id }}
           PHOTO_ID: ${{ inputs.photo_id }}
           PHOTO_METADATA_ONLY: ${{ inputs.metadata_only }}
       - name: Verify public tiles and private original

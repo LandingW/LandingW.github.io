@@ -24,6 +24,8 @@ export interface TravelAlbum {
   date: string;
   latitude: number | null;
   longitude: number | null;
+  googlePlaceId?: string | null;
+  coverPhotoIds?: string[];
 }
 
 export interface TravelPhoto {
@@ -49,6 +51,8 @@ export interface TravelManifest {
 export interface TravelConfig {
   apiUrl: string;
   mediaUrl: string;
+  googleMapsApiKey?: string;
+  googleMapsMapId?: string;
 }
 
 export const EMPTY_MANIFEST: TravelManifest = {
@@ -117,6 +121,20 @@ export function albumInput(value: unknown): Omit<TravelAlbum, "id"> {
   )
     throw new Error("请填写有效的经纬度，或将两项都留空");
   const date = text("date", 10);
+  const googlePlaceId =
+    v.googlePlaceId === null || v.googlePlaceId === undefined
+      ? null
+      : text("googlePlaceId", 1024);
+  if (googlePlaceId && /[\x00-\x20\x7f]/.test(googlePlaceId))
+    throw new Error("Google Place ID 格式不正确");
+  const covers = v.coverPhotoIds === undefined ? [] : v.coverPhotoIds;
+  if (
+    !Array.isArray(covers) ||
+    covers.length > 4 ||
+    covers.some((id) => !validId(id)) ||
+    new Set(covers).size !== covers.length
+  )
+    throw new Error("封面最多选择四张不重复的照片");
   if (
     date &&
     (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
@@ -129,8 +147,10 @@ export function albumInput(value: unknown): Omit<TravelAlbum, "id"> {
     description: text("description", 1200),
     place: text("place", 120),
     date,
-    latitude,
-    longitude,
+    latitude: googlePlaceId ? null : latitude,
+    longitude: googlePlaceId ? null : longitude,
+    googlePlaceId: googlePlaceId || null,
+    coverPhotoIds: covers,
   };
 }
 

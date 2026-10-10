@@ -5,6 +5,11 @@ import { feature } from "topojson-client";
 import type { GeometryObject, Topology } from "topojson-specification";
 import world from "world-atlas/land-110m.json";
 import type { TravelAlbum, TravelPhoto } from "@/lib/travel";
+import type { TravelConfig } from "@/lib/travel";
+import dynamic from "next/dynamic";
+import { tripLocation } from "@/lib/trip-presentation";
+
+const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
 
 const projection = geoNaturalEarth1().fitExtent(
   [
@@ -24,56 +29,55 @@ export default function WorldMap({
   selected,
   onSelect,
   photos = [],
+  mapConfig,
 }: {
   albums: TravelAlbum[];
   selected: string;
   onSelect: (id: string) => void;
   photos?: TravelPhoto[];
+  mapConfig?: TravelConfig;
 }) {
   const places = albums.flatMap((album) => {
-    const positions = new Map<
-      string,
-      {
-        id: string;
-        albumId: string;
-        title: string;
-        latitude: number;
-        longitude: number;
-      }
-    >();
-    for (const photo of photos.filter(
-      (photo) => photo.albumId === album.id && photo.location,
-    )) {
-      const location = photo.location!;
-      const key = `${album.id}:${location.latitude.toFixed(3)}:${location.longitude.toFixed(3)}`;
-      if (!positions.has(key))
-        positions.set(key, {
-          id: key,
-          albumId: album.id,
-          title: `${album.title} · GPS ${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
-          ...location,
-        });
-    }
-    if (positions.size) return [...positions.values()];
-    return album.latitude !== null && album.longitude !== null
+    const location = tripLocation(album, photos);
+    return location
       ? [
           {
             id: album.id,
             albumId: album.id,
-            title: `${album.title} · ${album.place}`,
-            latitude: album.latitude,
-            longitude: album.longitude,
+            title: `${album.title}${album.place ? ` · ${album.place}` : ""}`,
+            ...location,
           },
         ]
       : [];
   });
+  if (mapConfig?.googleMapsApiKey)
+    return (
+      <div className="travel-atlas google-travel-atlas">
+        <div className="travel-atlas-caption">
+          <span className="mono">WORLD / 旅行地图</span>
+          <span>{albums.length} 次旅行 · 点击标记打开影集</span>
+        </div>
+        <GoogleMapView
+          apiKey={mapConfig.googleMapsApiKey}
+          mapId={mapConfig.googleMapsMapId}
+          pins={albums.map((album) => ({
+            id: album.id,
+            label: album.title,
+            location: tripLocation(album, photos),
+            googlePlaceId: album.googlePlaceId,
+          }))}
+          selected={selected}
+          onSelect={onSelect}
+        />
+      </div>
+    );
   return (
     <div className="travel-atlas">
       <div className="travel-atlas-caption">
         <span className="mono">WORLD / 世界足迹</span>
         <span>
           {places.length
-            ? `${places.length} 个地点已标记`
+            ? `${places.length} 次旅行已标记`
             : "足迹从你发布的旅行中生成"}
         </span>
       </div>
@@ -115,7 +119,9 @@ export default function WorldMap({
           );
         })}
       </svg>
-      <p className="atlas-credit">Natural Earth · 照片 GPS 与旅行参考点</p>
+      <p className="atlas-credit">
+        Natural Earth · 每次旅行一个标记 · 优先使用旅行地点
+      </p>
     </div>
   );
 }
