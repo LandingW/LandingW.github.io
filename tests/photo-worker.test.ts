@@ -109,6 +109,11 @@ test(
         place: "只公开手动地点",
         latitude: 0,
         longitude: 0,
+        equipmentDefaults: {
+          make: "Trip brand",
+          model: "Trip body",
+          lens: "Trip lens",
+        },
       });
       assert.equal(created.status, 201);
       const { id: albumId } = (await created.json()) as { id: string };
@@ -150,6 +155,11 @@ test(
         fingerprint,
       });
       const { id } = (await next.json()) as { id: string };
+      assert.equal(
+        (await request(`/admin/photos/${id}/equipment`, { model: "Too early" }))
+          .status,
+        409,
+      );
       const row = await db
         .prepare("SELECT * FROM photos WHERE id=?")
         .bind(id)
@@ -279,6 +289,11 @@ test(
       assert.equal(data.photos.length, 1);
       assert.equal(data.albums[0].latitude, 0);
       assert.equal(data.photos[0].camera.model, "Example Camera");
+      assert.equal(data.photos[0].camera.lens, "35mm Test Lens");
+      assert.deepEqual(data.photos[0].equipmentSources, {
+        camera: "exif",
+        lens: "exif",
+      });
       assert.deepEqual(data.photos[0].location, {
         latitude: -31.2,
         longitude: -121.5,
@@ -297,6 +312,46 @@ test(
         JSON.parse(await (await published.get("manifest.json"))!.text())
           .photos[0].location,
         null,
+      );
+      assert.equal(
+        (await request(`/admin/photos/${id}/equipment`, { model: {} })).status,
+        400,
+      );
+      const manualEquipment = { model: "Manual body", lens: "Manual lens" };
+      assert.equal(
+        (
+          await request(`/admin/photos/${id}/equipment`, {
+            ...manualEquipment,
+            iso: 12800,
+            serialNumber: "NEVER_PUBLIC",
+          })
+        ).status,
+        200,
+      );
+      const overriddenManifest = await (await published.get(
+        "manifest.json",
+      ))!.text();
+      const overridden = JSON.parse(overriddenManifest).photos[0];
+      assert.equal(overridden.camera.model, "Manual body");
+      assert.equal(overridden.camera.make, undefined);
+      assert.equal(overridden.camera.lens, "Manual lens");
+      assert.equal(overridden.camera.iso, 200);
+      assert.deepEqual(overridden.equipmentSources, {
+        camera: "photo",
+        lens: "photo",
+      });
+      assert.doesNotMatch(overriddenManifest, /NEVER_PUBLIC|serialNumber/);
+      const equipmentRow = await db
+        .prepare("SELECT camera_json,equipment_json FROM photos WHERE id=?")
+        .bind(id)
+        .first<{ camera_json: string; equipment_json: string }>();
+      assert.equal(
+        JSON.parse(equipmentRow!.camera_json).model,
+        "Example Camera",
+      );
+      assert.deepEqual(
+        JSON.parse(equipmentRow!.equipment_json),
+        manualEquipment,
       );
       const oldRevision = await db
         .prepare("SELECT revision,derived_bytes FROM photos WHERE id=?")
@@ -370,9 +425,41 @@ test(
       const updated = JSON.parse(
         await (await published.get("manifest.json"))!.text(),
       );
-      assert.equal(updated.photos[0].camera.model, "Updated EXIF");
+      assert.equal(updated.photos[0].camera.model, "Manual body");
+      assert.equal(updated.photos[0].camera.lens, "Manual lens");
+      assert.equal(updated.photos[0].camera.iso, 400);
+      assert.deepEqual(updated.photos[0].equipmentSources, {
+        camera: "photo",
+        lens: "photo",
+      });
       assert.equal(updated.photos[0].location, null);
       assert.equal(updated.photos[0].dzi, data.photos[0].dzi);
+      assert.equal(
+        (await request(`/admin/photos/${id}/equipment`, {})).status,
+        200,
+      );
+      const restored = JSON.parse(
+        await (await published.get("manifest.json"))!.text(),
+      ).photos[0];
+      assert.equal(restored.camera.model, "Updated EXIF");
+      assert.equal(restored.camera.lens, "Trip lens");
+      assert.equal(restored.camera.iso, 400);
+      assert.deepEqual(restored.equipmentSources, {
+        camera: "exif",
+        lens: "trip",
+      });
+      const adminState = (await (await request("/admin/state")).json()) as {
+        photos: {
+          id: string;
+          equipment: unknown;
+          camera: unknown;
+          equipmentSources: unknown;
+        }[];
+      };
+      const adminPhoto = adminState.photos.find((photo) => photo.id === id)!;
+      assert.deepEqual(adminPhoto.equipment, {});
+      assert.deepEqual(adminPhoto.camera, restored.camera);
+      assert.deepEqual(adminPhoto.equipmentSources, restored.equipmentSources);
       assert.equal(
         (await request(`/admin/photos/${id}/location`, { mode: "exact" }))
           .status,
@@ -424,6 +511,44 @@ test(
       ).albums[0];
       assert.equal(preserved.googlePlaceId, "ChIJ_test_place");
       assert.deepEqual(preserved.coverPhotoIds, [id]);
+      const preservedEquipment = await db
+        .prepare("SELECT equipment_json FROM albums WHERE id=?")
+        .bind(albumId)
+        .first<{ equipment_json: string }>();
+      assert.deepEqual(JSON.parse(preservedEquipment!.equipment_json), {
+        make: "Trip brand",
+        model: "Trip body",
+        lens: "Trip lens",
+      });
+      assert.equal(
+        (
+          await request(`/admin/albums/${albumId}/edit`, {
+            title: "Updated trip equipment",
+            equipmentDefaults: { lens: "New trip lens" },
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        JSON.parse(await (await published.get("manifest.json"))!.text())
+          .photos[0].camera.lens,
+        "New trip lens",
+      );
+      assert.equal(
+        (
+          await request(`/admin/albums/${albumId}/edit`, {
+            title: "Cleared trip equipment",
+            equipmentDefaults: {},
+          })
+        ).status,
+        200,
+      );
+      const noDefaults = JSON.parse(
+        await (await published.get("manifest.json"))!.text(),
+      ).photos[0];
+      assert.equal(noDefaults.camera.model, "Updated EXIF");
+      assert.equal(noDefaults.camera.lens, undefined);
+      assert.equal(noDefaults.equipmentSources.lens, null);
       assert.equal(
         (await request("/admin/maps", { apiKey: "a".repeat(64) })).status,
         400,

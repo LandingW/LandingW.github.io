@@ -3,6 +3,9 @@ import {
   normalizeLocation,
   type CameraMetadata,
   type PhotoLocation,
+  equipmentInput,
+  type CameraEquipment,
+  type EquipmentSources,
 } from "./photo-metadata";
 
 export const PHOTO_LIMIT = 64 * 1024 * 1024;
@@ -26,6 +29,7 @@ export interface TravelAlbum {
   longitude: number | null;
   googlePlaceId?: string | null;
   coverPhotoIds?: string[];
+  equipmentDefaults?: CameraEquipment;
 }
 
 export interface TravelPhoto {
@@ -39,6 +43,7 @@ export interface TravelPhoto {
   dzi: string;
   camera?: CameraMetadata | null;
   location?: PhotoLocation | null;
+  equipmentSources?: EquipmentSources;
 }
 
 export interface TravelManifest {
@@ -151,6 +156,7 @@ export function albumInput(value: unknown): Omit<TravelAlbum, "id"> {
     longitude: googlePlaceId ? null : longitude,
     googlePlaceId: googlePlaceId || null,
     coverPhotoIds: covers,
+    equipmentDefaults: equipmentInput(v.equipmentDefaults),
   };
 }
 

@@ -1,11 +1,17 @@
-import { cameraFacts, type CameraMetadata } from "@/lib/photo-metadata";
+import {
+  cameraFacts,
+  type CameraMetadata,
+  type EquipmentSources,
+} from "@/lib/photo-metadata";
 
 export default function PhotoFacts({
   camera,
+  sources,
 }: {
   camera: CameraMetadata | null | undefined;
+  sources?: EquipmentSources;
 }) {
-  const facts = cameraFacts(camera);
+  const facts = cameraFacts(camera, sources);
   if (!facts.length)
     return <p className="photo-facts-empty">照片没有记录可读取的摄影参数。</p>;
   return (
@@ -13,7 +19,12 @@ export default function PhotoFacts({
       {facts.map((fact) => (
         <div key={fact.label}>
           <dt>{fact.label}</dt>
-          <dd>{fact.value}</dd>
+          <dd>
+            {fact.value}
+            {fact.source && (
+              <small className="equipment-source">{fact.source}</small>
+            )}
+          </dd>
         </div>
       ))}
     </dl>

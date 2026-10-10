@@ -8,6 +8,9 @@ import {
   cameraFromJson,
   normalizePhotoMetadata,
   normalizeLocation,
+  equipmentInput,
+  equipmentFromJson,
+  resolveEquipment,
 } from "../../../src/lib/photo-metadata";
 import {
   albumInput,
@@ -58,6 +61,8 @@ interface PhotoRow {
   metadata_state: string;
   metadata_lease: string | null;
   metadata_updated_at: string | null;
+  equipment_json: string | null;
+  album_equipment_json?: string | null;
 }
 class HttpError extends Error {
   constructor(
@@ -209,7 +214,7 @@ export async function publishManifest(env: Env) {
     "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids FROM albums WHERE published=1 ORDER BY date DESC,created_at DESC",
   ).all();
   const photos = await env.DB.prepare(
-    "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
+    "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.equipment_json,a.equipment_json AS album_equipment_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
   ).all<PhotoRow>();
   const visible = new Set(photos.results.map((p) => p.album_id));
   const manifest: TravelManifest = {
@@ -238,7 +243,11 @@ export async function publishManifest(env: Env) {
       thumbnail: `photos/${p.id}/${p.revision}/thumbnail.jpg`,
       preview: `photos/${p.id}/${p.revision}/preview.jpg`,
       dzi: `photos/${p.id}/${p.revision}/image.dzi`,
-      camera: cameraFromJson(p.camera_json),
+      ...resolveEquipment(
+        cameraFromJson(p.camera_json),
+        equipmentFromJson(p.equipment_json),
+        equipmentFromJson(p.album_equipment_json),
+      ),
       location:
         p.location_mode === "exact"
           ? normalizeLocation({
@@ -320,7 +329,7 @@ async function admin(request: Request, env: Env, path: string) {
     const [albums, photos, usage] = await Promise.all([
       env.DB.prepare("SELECT * FROM albums ORDER BY created_at DESC").all(),
       env.DB.prepare(
-        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
+        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,equipment_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
       ).all<PhotoRow>(),
       env.DB.prepare(
         "SELECT COALESCE(SUM(bytes),0) AS bytes FROM photos WHERE state!='aborted'",
@@ -328,19 +337,34 @@ async function admin(request: Request, env: Env, path: string) {
     ]);
     return json({
       albums: albums.results.map(
-        ({ google_place_id, cover_photo_ids, ...album }) => ({
+        ({ google_place_id, cover_photo_ids, equipment_json, ...album }) => ({
           ...album,
           googlePlaceId: google_place_id || null,
           coverPhotoIds: parseCoverIds(cover_photo_ids),
+          equipmentDefaults: equipmentFromJson(equipment_json),
         }),
       ),
       photos: photos.results.map(
-        ({ camera_json, gps_latitude, gps_longitude, ...row }) => ({
+        ({
+          camera_json,
+          equipment_json,
+          gps_latitude,
+          gps_longitude,
+          ...row
+        }) => ({
           ...row,
           thumbnail: row.revision
             ? `photos/${row.id}/${row.revision}/thumbnail.jpg`
             : null,
-          camera: cameraFromJson(camera_json),
+          equipment: equipmentFromJson(equipment_json),
+          ...resolveEquipment(
+            cameraFromJson(camera_json),
+            equipmentFromJson(equipment_json),
+            equipmentFromJson(
+              albums.results.find((album) => album.id === row.album_id)
+                ?.equipment_json,
+            ),
+          ),
           gps: normalizeLocation({
             latitude: gps_latitude,
             longitude: gps_longitude,
@@ -372,7 +396,7 @@ async function admin(request: Request, env: Env, path: string) {
     if (data.coverPhotoIds?.length)
       throw new HttpError(400, "新旅行请先上传照片，再选择封面");
     await env.DB.prepare(
-      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,equipment_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
     )
       .bind(
         id,
@@ -384,6 +408,7 @@ async function admin(request: Request, env: Env, path: string) {
         data.longitude,
         data.googlePlaceId,
         "[]",
+        JSON.stringify(data.equipmentDefaults || {}),
         now(),
       )
       .run();
@@ -412,7 +437,7 @@ async function admin(request: Request, env: Env, path: string) {
           throw new HttpError(400, "封面只能选择当前旅行中已处理完成的照片");
       }
       await env.DB.prepare(
-        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=?,google_place_id=CASE WHEN ? THEN ? ELSE google_place_id END,cover_photo_ids=CASE WHEN ? THEN ? ELSE cover_photo_ids END WHERE id=?",
+        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=?,google_place_id=CASE WHEN ? THEN ? ELSE google_place_id END,cover_photo_ids=CASE WHEN ? THEN ? ELSE cover_photo_ids END,equipment_json=CASE WHEN ? THEN ? ELSE equipment_json END WHERE id=?",
       )
         .bind(
           d.title,
@@ -425,6 +450,8 @@ async function admin(request: Request, env: Env, path: string) {
           d.googlePlaceId,
           Object.hasOwn(input, "coverPhotoIds") ? 1 : 0,
           JSON.stringify(d.coverPhotoIds),
+          Object.hasOwn(input, "equipmentDefaults") ? 1 : 0,
+          JSON.stringify(d.equipmentDefaults || {}),
           id,
         )
         .run();
@@ -575,6 +602,17 @@ async function admin(request: Request, env: Env, path: string) {
       .run();
     if (!result.meta.changes)
       throw new HttpError(409, "只有失败的照片可以重试");
+    return json({ ok: true });
+  }
+  const equipmentAction = path.match(/^\/admin\/photos\/([\w-]+)\/equipment$/);
+  if (equipmentAction) {
+    const row = await photo(env, equipmentAction[1]);
+    if (row.state !== "ready") throw new HttpError(409, "请先等待照片处理完成");
+    const equipment = equipmentInput(input);
+    await env.DB.prepare("UPDATE photos SET equipment_json=? WHERE id=?")
+      .bind(JSON.stringify(equipment), row.id)
+      .run();
+    if (row.published) await publishManifest(env);
     return json({ ok: true });
   }
   const metadataAction = path.match(
@@ -833,7 +871,7 @@ const worker = {
           ? error.status
           : error instanceof TypeError ||
               (error instanceof Error &&
-                /格式|长度|日期|经纬度|HTTPS|缺少|封面|Google/.test(
+                /格式|长度|日期|经纬度|HTTPS|缺少|封面|Google|设备/.test(
                   error.message,
                 ))
             ? 400

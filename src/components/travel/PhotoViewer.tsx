@@ -5,7 +5,12 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import type OpenSeadragon from "openseadragon";
 import { mediaUrl, type TravelPhoto, type TravelConfig } from "@/lib/travel";
-import { cameraName, shootingSummary } from "@/lib/photo-metadata";
+import {
+  cameraName,
+  lensName,
+  lensSpecificationLabel,
+  shootingSummary,
+} from "@/lib/photo-metadata";
 import PhotoFacts from "./PhotoFacts";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
@@ -34,6 +39,15 @@ export default function PhotoViewer({
   const [status, setStatus] = useState("正在加载高清切片…");
   const [drawn, setDrawn] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const deviceLine = [
+    cameraName(photo.camera),
+    lensName(photo.camera) ||
+      (photo.camera?.lensSpec
+        ? `${lensSpecificationLabel(photo.camera.lensSpec)}（规格）`
+        : ""),
+  ]
+    .filter(Boolean)
+    .join(" / ");
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
@@ -170,7 +184,10 @@ export default function PhotoViewer({
             aria-label="摄影参数和拍摄地点"
           >
             <h2>拍摄信息</h2>
-            <PhotoFacts camera={photo.camera} />
+            <PhotoFacts
+              camera={photo.camera}
+              sources={photo.equipmentSources}
+            />
             {photo.location ? (
               <>
                 <p className="photo-gps mono">
@@ -195,13 +212,7 @@ export default function PhotoViewer({
           <p>{photo.caption}</p>
           {photo.camera && (
             <>
-              {(cameraName(photo.camera) || photo.camera.lens) && (
-                <p className="viewer-camera">
-                  {[cameraName(photo.camera), photo.camera.lens]
-                    .filter(Boolean)
-                    .join(" / ")}
-                </p>
-              )}
+              {deviceLine && <p className="viewer-camera">{deviceLine}</p>}
               <p className="viewer-settings mono">
                 {shootingSummary(photo.camera)}
               </p>

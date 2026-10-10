@@ -15,8 +15,12 @@ import {
   cameraName,
   type CameraMetadata,
   type PhotoLocation,
+  type CameraEquipment,
+  type EquipmentSources,
 } from "@/lib/photo-metadata";
 import PhotoFacts from "./PhotoFacts";
+import EquipmentFields from "./EquipmentFields";
+import PhotoEquipmentEditor from "./PhotoEquipmentEditor";
 import TripCover from "./TripCover";
 import { googleMapsLink } from "@/lib/trip-presentation";
 
@@ -41,6 +45,8 @@ type Photo = {
   height: number | null;
   thumbnail?: string | null;
   created_at: string;
+  equipment: CameraEquipment;
+  equipmentSources?: EquipmentSources;
 };
 interface State {
   albums: Album[];
@@ -57,6 +63,7 @@ const blank = {
   longitude: "",
   googlePlaceId: null as string | null,
   coverPhotoIds: [] as string[],
+  equipmentDefaults: {} as CameraEquipment,
 };
 const statuses: Record<string, string> = {
   uploading: "上传未完成",
@@ -162,6 +169,7 @@ export default function TravelManager() {
             longitude: album.longitude === null ? "" : String(album.longitude),
             googlePlaceId: album.googlePlaceId || null,
             coverPhotoIds: album.coverPhotoIds || [],
+            equipmentDefaults: album.equipmentDefaults || {},
           }
         : blank,
     );
@@ -200,6 +208,7 @@ export default function TravelManager() {
               : String(requestedAlbum.longitude),
           googlePlaceId: requestedAlbum.googlePlaceId || null,
           coverPhotoIds: requestedAlbum.coverPhotoIds || [],
+          equipmentDefaults: requestedAlbum.equipmentDefaults || {},
         });
       }
     });
@@ -653,6 +662,20 @@ export default function TravelManager() {
                       </div>
                     )
                   )}
+                  <details className="trip-equipment-defaults">
+                    <summary>这次旅行的默认设备</summary>
+                    <p className="manager-help">
+                      照片没有机身或镜头名称时，使用这里填写的设备并标为“旅行默认”；不会覆盖
+                      EXIF 中已有的名称。混用设备的照片可以在下方单独补录。
+                    </p>
+                    <EquipmentFields
+                      value={form.equipmentDefaults}
+                      onChange={(equipmentDefaults) =>
+                        setForm({ ...form, equipmentDefaults })
+                      }
+                      disabled={busy}
+                    />
+                  </details>
                   {active && (
                     <div className="manager-cover-preview">
                       <h3>
@@ -864,7 +887,29 @@ export default function TravelManager() {
                               ? " · 正在读取 EXIF…"
                               : ""}
                           </summary>
-                          <PhotoFacts camera={photo.camera} />
+                          <PhotoFacts
+                            camera={photo.camera}
+                            sources={photo.equipmentSources}
+                          />
+                          <PhotoEquipmentEditor
+                            key={`${photo.id}:${JSON.stringify(photo.equipment || {})}`}
+                            equipment={photo.equipment || {}}
+                            disabled={busy}
+                            onSave={async (equipment) => {
+                              await run(async () => {
+                                await photoApi(
+                                  config.apiUrl,
+                                  token,
+                                  `/admin/photos/${photo.id}/equipment`,
+                                  equipment,
+                                );
+                                await refresh();
+                                setMessage(
+                                  "设备信息已保存，原始 EXIF 和切片未修改。",
+                                );
+                              });
+                            }}
+                          />
                           {photo.metadata_error && (
                             <p role="status">{photo.metadata_error}</p>
                           )}
