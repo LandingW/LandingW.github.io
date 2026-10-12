@@ -140,7 +140,7 @@ export default function GrowingFractal() {
   return (
     <div
       ref={ref}
-      className="hero-fractal"
+      className="page-fractal"
       data-growth="booting"
       data-fractal="branching"
       data-phase="grow"
@@ -179,7 +179,7 @@ export default function GrowingFractal() {
       </svg>
       <noscript>
         <style>
-          {".hero-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}"}
+          {".page-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}"}
         </style>
       </noscript>
     </div>

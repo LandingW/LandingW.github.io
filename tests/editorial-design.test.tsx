@@ -18,7 +18,7 @@ test("opening is a copy and study composition while retaining headline and graph
   );
   assert.match(html, /aria-label="THINK IN PIXELS\."/);
   assert.match(html, /teapot-poster/);
-  assert.match(html, /hero-fractal/);
+  assert.doesNotMatch(html, /page-fractal|hero-fractal/);
   assert.match(html, /Varsapura/);
   assert.doesNotMatch(html, /class="hero-introduction"|class="hero-signature"/);
 });

@@ -29,10 +29,6 @@
 .editorial-site .hero {
   padding: 30px 0 76px;
 }
-.editorial-site .hero-fractal {
-  inset: 0 -20px 120px 30%;
-  opacity: 0.28;
-}
 .editorial-site .hero-topline {
   font-size: 9px;
   letter-spacing: 0.12em;
@@ -641,6 +637,19 @@
   margin-top: 0;
   padding-top: 42px;
 }
+.editorial-site .home-page .site-footer {
+  position: relative;
+  background: transparent;
+}
+/* Place the dark paper behind the shared drawing, not another animation. */
+.home-page .site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--ink);
+  pointer-events: none;
+}
 .editorial-site .footer-top {
   font-size: 10px;
 }
@@ -993,9 +1002,6 @@
   }
   .hero-exhibit-note > .mono {
     font-size: 7px;
-  }
-  .editorial-site .hero-fractal {
-    inset: 190px -22px 80px 0;
   }
   .hero-footer {
     grid-template-columns: 1fr;

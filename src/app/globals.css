@@ -300,38 +300,63 @@ svg {
   isolation: isolate;
   padding-top: 31px;
 }
-.hero-fractal {
-  position: absolute;
+.home-page {
+  position: relative;
+  isolation: isolate;
+  --fractal-ink: #5f7358;
+  --fractal-accent: #af6044;
+  --fractal-opacity: 0.95;
+}
+/* One viewport-sized drawing shared by every homepage chapter. Keeping it
+   outside the animated sections avoids transformed ancestors and extra loops. */
+.page-fractal {
+  position: fixed;
   z-index: -1;
-  inset: -31px calc(var(--page-gutter) * -1) 70px;
+  inset: 0;
+  height: 100lvh;
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 16%,
-    #000 71%,
-    transparent
+  opacity: var(--fractal-opacity);
+  mask-image: radial-gradient(
+    ellipse at 50% 45%,
+    rgb(0 0 0 / 62%) 12%,
+    #000 75%
   );
 }
-.hero-fractal > svg {
+.page-fractal > svg {
   display: block;
   width: 100%;
   height: 100%;
 }
 .fractal-branch {
-  stroke: #718469;
+  stroke: var(--fractal-ink);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   opacity: 0;
 }
 .fractal-branch-accent {
-  stroke: #be7051;
+  stroke: var(--fractal-accent);
 }
-.hero-fractal[data-growth="static"] .fractal-branch {
+.page-fractal[data-growth="static"] .fractal-branch {
   opacity: 1;
   stroke-dashoffset: 0;
+}
+@media (orientation: portrait) {
+  /* Rotate the composition rather than slicing away both branching edges. */
+  .page-fractal > svg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100lvh;
+    height: 100vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+}
+@media print {
+  .page-fractal {
+    display: none;
+  }
 }
 .hero-topline {
   display: flex;

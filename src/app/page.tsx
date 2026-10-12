@@ -7,10 +7,12 @@ import Footer from "@/components/Footer";
 import { getArticleSummaries, getSyncDate } from "@/lib/articles";
 import HomepageWarmup from "@/components/HomepageWarmup";
 import TravelPreview from "@/components/travel/TravelPreview";
+import GrowingFractal from "@/components/GrowingFractal";
 
 export default function Home() {
   return (
     <HomepageWarmup>
+      <GrowingFractal />
       <Header />
       <main id="main-content" className="page-container">
         <Hero />

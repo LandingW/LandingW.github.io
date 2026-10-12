@@ -1,6 +1,5 @@
 import { profile } from "@/lib/resume";
 import TeapotStudy from "./TeapotStudy";
-import GrowingFractal from "./GrowingFractal";
 import FractalMark from "./FractalMark";
 import { Arrow } from "./Icons";
 import { headlineTiming } from "@/lib/motion";
@@ -33,7 +32,6 @@ function letters(text: string, offset = 0) {
 export default function Hero() {
   return (
     <section id="home" className="hero">
-      <GrowingFractal />
       <div className="hero-topline mono">
         <span>GRAPHICS ENGINEER & ENGINE DEVELOPER</span>
         <span>A PERSONAL COLLECTION</span>

@@ -9,6 +9,8 @@ import {
   FRACTAL_TIMING,
 } from "../src/lib/fractal-growth";
 import GrowingFractal from "../src/components/GrowingFractal";
+import Home from "../src/app/page";
+import fs from "node:fs/promises";
 
 test("fractal growth is deterministic, finite and starts children after their parent", () => {
   const branches = buildFractalBranches();
@@ -77,6 +79,7 @@ test("four different fractals share the exact 2s / 1s / 2s cycle", () => {
 test("background contains four decorative SVG patterns and a no-script fallback", () => {
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
+  assert.match(html, /class="page-fractal"/);
   assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 4);
   assert.equal(
     (html.match(/<path /g) ?? []).length,
@@ -87,4 +90,39 @@ test("background contains four decorative SVG patterns and a no-script fallback"
   );
   assert.match(html, /<noscript>/);
   assert.doesNotMatch(html, /<canvas|<button|<a /);
+});
+
+test("one shared background lives above all homepage chapters, not inside the hero", () => {
+  const html = renderToStaticMarkup(createElement(Home));
+  assert.equal((html.match(/class="page-fractal"/g) || []).length, 1);
+  assert.ok(html.indexOf('class="page-fractal"') < html.indexOf("<header"));
+  for (const id of [
+    "home",
+    "experience",
+    "skills",
+    "articles",
+    "travel",
+    "contact",
+  ])
+    assert.ok(html.includes(`id="${id}"`));
+});
+
+test("fullscreen fractal is non-interactive, portrait-aware, and no longer attenuated by hero CSS", async () => {
+  const css = await fs.readFile("src/app/globals.css", "utf8");
+  const design = await fs.readFile("src/app/design.css", "utf8");
+  const component = await fs.readFile(
+    "src/components/GrowingFractal.tsx",
+    "utf8",
+  );
+  const backdrop = css.match(/\.page-fractal\s*\{([^}]+)\}/)?.[1] || "";
+  assert.match(backdrop, /position: fixed/);
+  assert.match(backdrop, /inset: 0/);
+  assert.match(backdrop, /pointer-events: none/);
+  assert.match(css, /--fractal-opacity: 0\.95/);
+  assert.match(css, /orientation: portrait/);
+  assert.match(css, /rotate\(90deg\)/);
+  assert.doesNotMatch(design, /hero-fractal/);
+  assert.match(component, /visibilitychange/);
+  assert.match(component, /prefers-reduced-motion/);
+  assert.match(component, /graphics.*static/);
 });
