@@ -151,7 +151,7 @@ export default function TravelGallery() {
               <Link href="/travel/manage/">记录一次旅行 ↗</Link>
             </div>
           </section>
-          <div className="travel-atlas-layout">
+          <div className="travel-atlas-layout" data-reveal>
             <aside className="travel-atlas-intro">
               <span className="eyebrow">THE TRAVEL INDEX</span>
               <h2>
@@ -269,6 +269,7 @@ export default function TravelGallery() {
                         photos={manifest.photos}
                         mediaBase={config.mediaUrl}
                         sharedTransition
+                        largePreview
                       />
                       <div className="trip-card-copy">
                         <div className="trip-card-meta">
@@ -304,11 +305,11 @@ export default function TravelGallery() {
           </>
         )}
       </section>
-      <div className="travel-end">
+      <footer className="travel-end">
         <Link href="/">← 回到主页</Link>
         <Link href="/travel/privacy/">地图与隐私说明</Link>
         <Link href="/travel/manage/">管理影集</Link>
-      </div>
+      </footer>
       {photo && (
         <PhotoViewer
           photo={photo}

@@ -61,6 +61,19 @@ test("trip covers use four distinct images spread through the album, or the owne
   );
 });
 
+test("wide public covers opt into desktop previews without increasing editor or mobile image sizes", () => {
+  const props = { album, photos, mediaBase: "https://media.example.com" };
+  const compact = renderToStaticMarkup(createElement(TripCover, props));
+  assert.doesNotMatch(compact, /<source/);
+  const wide = renderToStaticMarkup(
+    createElement(TripCover, { ...props, largePreview: true }),
+  );
+  assert.equal((wide.match(/<source /g) || []).length, 1);
+  assert.match(wide, /media="\(min-width: 761px\)"/);
+  assert.match(wide, /srcSet="https:\/\/media\.example\.com\/photos\/p0\/v1\/preview\.jpg"/);
+  assert.equal((wide.match(/src="[^"]*thumbnail\.jpg"/g) || []).length, 4);
+});
+
 test("each trip has one marker, with the manually selected location taking priority over photo GPS", () => {
   assert.deepEqual(tripLocation(album, photos), {
     latitude: 10,

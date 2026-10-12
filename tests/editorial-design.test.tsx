@@ -9,6 +9,7 @@ import Articles from "../src/components/Articles";
 import { getArticleSummaries, getSyncDate } from "../src/lib/articles";
 import { experiences } from "../src/lib/resume";
 import fs from "node:fs/promises";
+import TravelPage from "../src/app/travel/page";
 
 test("opening is a copy and study composition while retaining headline and graphics", () => {
   const html = renderToStaticMarkup(createElement(Hero));
@@ -44,12 +45,13 @@ test("work disclosures preserve every technical description and only the current
     }
 });
 
-test("only the homepage opens into a full-width canvas with protected reading surfaces", async () => {
+test("public portfolio canvases share width and paper tokens without widening article readers", async () => {
   const css = await fs.readFile("src/app/home.css", "utf8");
   const shared = await fs.readFile("src/app/globals.css", "utf8");
   assert.match(css, /\.home-page > \.page-container[\s\S]*?max-width: none/);
   assert.match(shared, /--page-width: 1180px/);
   assert.match(css, /--home-surface: #f7f5eff5/);
+  assert.match(css, /\.home-page,\s*\.editorial-site \.travel-page\s*\{/);
   assert.match(
     css,
     /\.home-page \.experience-list[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/,
@@ -62,6 +64,35 @@ test("only the homepage opens into a full-width canvas with protected reading su
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /safe-area-inset-left/);
   assert.doesNotMatch(css, /100vw|overflow-x: hidden/);
+});
+
+test("travel reuses the decorative scroll backdrop without applying homepage warmup to the gallery", () => {
+  const html = renderToStaticMarkup(createElement(TravelPage));
+  assert.match(html, /class="travel-page"/);
+  assert.equal((html.match(/class="page-fractal"/g) || []).length, 1);
+  assert.match(html, /<main id="main-content"/);
+  assert.match(html, /<footer class="travel-end"/);
+  assert.match(html, /role="status"/);
+  assert.doesNotMatch(html, /data-headline-warmup|data-type-reveal/);
+});
+
+test("travel geography has an opaque surface and detail views retain responsive layouts", async () => {
+  const css = await fs.readFile("src/app/travel/canvas.css", "utf8");
+  const atlas = css.match(/\.travel-atlas-layout\s*\{([^}]+)\}/)?.[1] || "";
+  assert.match(atlas, /background: var\(--paper\)/);
+  assert.match(css, /\.atlas-canvas\s*\{[^}]*max-width: none/);
+  assert.match(
+    css,
+    /\.journey-cover-composition\[data-has-cover="false"\]\s*\{\s*grid-template-columns: 1fr/,
+  );
+  assert.match(
+    css,
+    /\.editorial-site:has\(\.photo-viewer\) \.travel-page > \.page-fractal\s*\{\s*display: none/,
+  );
+  assert.match(css, /@media \(max-width: 760px\)/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /safe-area-inset-left/);
+  assert.doesNotMatch(css, /100vw|overflow-x: hidden|\.travel-manager/);
 });
 
 test("focus and writing have separate chapter rails and content regions", () => {

@@ -300,7 +300,8 @@ svg {
   isolation: isolate;
   padding-top: 31px;
 }
-.home-page {
+.home-page,
+.travel-page {
   position: relative;
   isolation: isolate;
   --fractal-ink: #5f7358;

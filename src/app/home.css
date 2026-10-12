@@ -1,6 +1,7 @@
-/* The homepage is a full-width canvas. Reading pages retain their own measure.
-   Geometry lives behind the page; paper surfaces belong to the content itself. */
-.editorial-site .home-page {
+/* Shared exhibition tokens for the homepage and travel journal. Article readers
+   and the editing workspace retain their own measure. Layouts below are scoped. */
+.editorial-site .home-page,
+.editorial-site .travel-page {
   --page-gutter: clamp(24px, 4vw, 104px);
   --home-space: clamp(72px, 7vw, 136px);
   --home-panel: clamp(24px, 3vw, 58px);
@@ -10,7 +11,9 @@
   --fractal-accent: #c28c62;
 }
 .editorial-site .home-page > .page-container,
-.editorial-site .home-page .header-inner {
+.editorial-site .home-page .header-inner,
+.editorial-site .travel-page > .page-container,
+.editorial-site .travel-page .header-inner {
   width: 100%;
   max-width: none;
 }
@@ -401,7 +404,8 @@
 }
 
 @media (max-width: 760px) {
-  .editorial-site .home-page {
+  .editorial-site .home-page,
+  .editorial-site .travel-page {
     --page-gutter: clamp(20px, 5vw, 32px);
     --home-space: 60px;
     --home-panel: 24px;
@@ -518,7 +522,8 @@
 }
 
 @media (max-width: 380px) {
-  .editorial-site .home-page {
+  .editorial-site .home-page,
+  .editorial-site .travel-page {
     --home-panel: 18px;
   }
   .editorial-site .home-page .hero-title {

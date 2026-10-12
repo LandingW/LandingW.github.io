@@ -7,11 +7,13 @@ export default function TripCover({
   photos,
   mediaBase,
   sharedTransition = false,
+  largePreview = false,
 }: {
   album: TravelAlbum;
   photos: TravelPhoto[];
   mediaBase: string;
   sharedTransition?: boolean;
+  largePreview?: boolean;
 }) {
   const cover = tripCoverPhotos(album, photos);
   return (
@@ -27,15 +29,22 @@ export default function TripCover({
                 : undefined
             }
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={mediaUrl(mediaBase, photo.thumbnail)}
-              alt=""
-              width={photo.width}
-              height={photo.height}
-              loading="lazy"
-              decoding="async"
-            />
+            <picture>
+              {index === 0 && largePreview && (
+                <source
+                  media="(min-width: 761px)"
+                  srcSet={mediaUrl(mediaBase, photo.preview)}
+                />
+              )}
+              <img
+                src={mediaUrl(mediaBase, photo.thumbnail)}
+                alt=""
+                width={photo.width}
+                height={photo.height}
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
           </div>
         ))
       ) : (

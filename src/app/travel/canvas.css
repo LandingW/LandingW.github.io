@@ -1,0 +1,378 @@
+/* The public travel page uses the homepage's shared exhibition tokens.
+   Deliberately scoped: no restyling of the private editor or photo lightbox. */
+.editorial-site .travel-page .travel-intro {
+  padding-block: var(--home-space) calc(var(--home-space) * 0.7);
+  align-items: end;
+  gap: var(--home-gap);
+}
+.travel-page .travel-intro > div {
+  min-width: 0;
+  background: var(--home-surface);
+  padding-block: 14px;
+}
+.editorial-site .travel-page .travel-intro h1 {
+  font: 400 clamp(48px, 6.2vw, 118px)/1.2 var(--serif-cjk);
+  letter-spacing: -0.06em;
+  margin-top: 24px;
+}
+.travel-page .travel-intro-aside {
+  font-size: 14px;
+  line-height: 1.95;
+  flex-shrink: 0;
+}
+.travel-page .travel-intro-aside > a {
+  min-height: 44px;
+  padding-block: 8px;
+}
+
+/* A full-width atlas, with its own opaque paper under the geographical lines. */
+.editorial-site .travel-page .travel-atlas-layout {
+  display: block;
+  padding: var(--home-panel);
+  margin-bottom: var(--home-space);
+  border: 0;
+  background: var(--paper);
+}
+.travel-page .travel-atlas-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  gap: 14px 40px;
+  align-items: end;
+  padding-bottom: 30px;
+}
+.travel-page .travel-atlas-intro > .eyebrow {
+  grid-column: 1 / -1;
+  font-size: 10px;
+}
+.travel-page .travel-atlas-intro h2 {
+  font-size: clamp(36px, 3.6vw, 64px);
+  margin: 0;
+}
+.travel-page .travel-atlas-intro h2 br {
+  display: none;
+}
+.travel-page .travel-atlas-intro h2 em::before {
+  content: " ";
+  white-space: pre;
+}
+.travel-page .travel-atlas-intro > p {
+  font-size: 14px;
+  padding-bottom: 4px;
+}
+.travel-page .travel-atlas-intro dl {
+  margin: 0;
+  gap: clamp(25px, 3vw, 55px);
+}
+.travel-page .travel-atlas-intro dt {
+  font-size: 11px;
+}
+.travel-page .travel-atlas-intro dd {
+  font-size: clamp(36px, 3vw, 54px);
+  line-height: 1.1;
+  margin-top: 10px;
+}
+.editorial-site .travel-page .travel-atlas-caption {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.travel-page .atlas-canvas {
+  max-width: none;
+  width: 100%;
+  margin-block: 24px;
+}
+.travel-page .atlas-land {
+  fill: #d5dfd3;
+  stroke: #8d9d8d;
+}
+.travel-page .atlas-graticule {
+  stroke: #bcc7bb;
+  opacity: 0.48;
+}
+.editorial-site .travel-page .atlas-credit {
+  font-size: 11px;
+}
+
+/* Each trip is a photographic spread, rather than a narrow row in an index. */
+.editorial-site .travel-page .travel-filter {
+  padding: 24px var(--home-panel);
+  background: var(--home-surface);
+  border: 0;
+}
+.editorial-site .travel-page .travel-filter h2 {
+  font: 400 clamp(28px, 2.6vw, 44px)/1.4 var(--serif-cjk);
+}
+.travel-page .travel-filter > .mono {
+  font-size: 10px;
+}
+.editorial-site .travel-page .trip-card-grid {
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--home-gap);
+  margin-block: var(--home-gap) var(--home-space);
+  align-items: start;
+}
+.editorial-site .travel-page .trip-card {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: var(--home-surface);
+}
+.editorial-site .travel-page .trip-card:nth-child(even) {
+  padding: 0;
+  margin-top: clamp(32px, 5vw, 88px);
+}
+.editorial-site .travel-page .trip-card:only-child {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 0;
+}
+.editorial-site .travel-page .trip-card .trip-cover {
+  aspect-ratio: 1.5;
+  gap: 4px;
+}
+.travel-page .trip-card-copy {
+  padding: var(--home-panel);
+}
+.editorial-site .travel-page .trip-card-heading h2 {
+  font-size: clamp(30px, 3vw, 54px);
+}
+.editorial-site .travel-page .trip-card-meta {
+  font-size: 11px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.editorial-site .travel-page .trip-card-place,
+.editorial-site .travel-page .trip-card-description {
+  font-size: 14px;
+  line-height: 1.95;
+}
+.travel-page .trip-card-cta {
+  font-size: 13px;
+  min-height: 44px;
+  margin-top: 28px;
+  gap: 50px;
+}
+.travel-page .trip-card-cta > span {
+  transition: transform var(--motion-medium) var(--ease-out);
+}
+.travel-page .trip-card:is(:hover, :focus-visible) .trip-card-cta > span {
+  transform: translate(4px, -4px);
+}
+.travel-page .travel-empty {
+  background: var(--home-surface);
+  min-height: 280px;
+  margin-block: 30px;
+}
+.travel-page .travel-end {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  margin-left: calc(-1 * max(var(--page-gutter), env(safe-area-inset-left)));
+  margin-right: calc(-1 * max(var(--page-gutter), env(safe-area-inset-right)));
+  padding: 30px var(--page-gutter);
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+  padding-bottom: max(30px, env(safe-area-inset-bottom));
+  gap: 15px 30px;
+  flex-wrap: wrap;
+}
+.travel-page .travel-end a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* The same canvas continues into a trip. Photos and map geometry stay opaque. */
+.travel-page .journey-story {
+  --journey-surface: var(--paper-deep);
+  --journey-dark: var(--ink);
+}
+.editorial-site .travel-page .story-breadcrumb {
+  background: var(--home-surface);
+  padding-inline: 20px;
+}
+.editorial-site .travel-page .journey-story .story-title-block {
+  background: var(--home-surface);
+  border: 0;
+  padding: var(--home-panel);
+  margin-block: 30px var(--home-gap);
+  gap: var(--home-gap);
+}
+.editorial-site .travel-page .journey-story .story-title-block h1 {
+  font-size: clamp(48px, 6vw, 114px);
+}
+.editorial-site .travel-page .journey-story .story-description {
+  font-size: 15px;
+  max-width: 42em;
+}
+.travel-page .journey-cover-composition {
+  grid-template-columns: minmax(0, 2.25fr) minmax(280px, 0.8fr);
+  gap: var(--home-gap);
+}
+.travel-page .journey-cover-composition[data-has-cover="false"] {
+  grid-template-columns: 1fr;
+}
+.travel-page .journey-cover-note {
+  background: var(--home-surface);
+  padding: 24px;
+}
+.travel-page .journey-chapters {
+  padding-inline: 20px;
+}
+.travel-page .journey-section {
+  padding-top: var(--home-space);
+}
+.travel-page .journey-section-heading {
+  background: var(--home-surface);
+  padding: 25px var(--home-panel);
+  margin-bottom: var(--home-gap);
+}
+.travel-page .journey-section-heading h2,
+.travel-page .journey-equipment-intro h2 {
+  font-size: clamp(32px, 3.5vw, 60px);
+}
+.travel-page .journey-section-heading > p {
+  font-size: 14px;
+}
+.travel-page .journey-atlas-layout,
+.travel-page .journey-point-panel {
+  background: var(--paper);
+}
+.editorial-site .travel-page .journey-story .story-toolbar {
+  padding-inline: 20px;
+}
+.editorial-site .travel-page .journey-story .story-frame figcaption {
+  background: var(--home-surface);
+  padding: 16px 20px;
+}
+.travel-page .journey-equipment {
+  background: var(--home-surface);
+  border: 0;
+  padding: var(--home-panel);
+  margin-top: var(--home-space);
+  gap: var(--home-gap);
+}
+.editorial-site .travel-page .journey-story .story-colophon {
+  padding-block: var(--home-space);
+  margin-block: var(--home-space) 0;
+}
+/* Hiding the decoration also pauses its IntersectionObserver-controlled loop. */
+.editorial-site:has(.photo-viewer) .travel-page > .page-fractal {
+  display: none;
+}
+
+@media (max-width: 1050px) {
+  .travel-page .travel-atlas-intro {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px 25px;
+  }
+  .travel-page .travel-atlas-intro > p {
+    display: none;
+  }
+  .travel-page .journey-cover-composition {
+    grid-template-columns: minmax(0, 1.8fr) minmax(240px, 0.9fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .editorial-site .travel-page .travel-intro {
+    flex-direction: column;
+    align-items: start;
+    padding-block: 38px 32px;
+    gap: 20px;
+  }
+  .editorial-site .travel-page .travel-intro h1 {
+    font-size: clamp(43px, 10vw, 70px);
+    margin-top: 18px;
+  }
+  .travel-page .travel-intro-aside {
+    font-size: 13px;
+    flex-shrink: 1;
+  }
+  .editorial-site .travel-page .travel-atlas-layout {
+    padding: 22px 14px;
+  }
+  .travel-page .travel-atlas-intro {
+    grid-template-columns: 1fr;
+    padding-bottom: 24px;
+    gap: 16px;
+  }
+  .travel-page .travel-atlas-intro > .eyebrow,
+  .travel-page .travel-atlas-intro h2,
+  .travel-page .travel-atlas-intro dl {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .travel-page .travel-atlas-intro h2 {
+    font-size: 34px;
+  }
+  .travel-page .travel-atlas-intro dl {
+    gap: 35px;
+    margin-top: 4px;
+  }
+  .travel-page .travel-atlas-intro dd {
+    font-size: 32px;
+  }
+  .editorial-site .travel-page .travel-atlas-caption,
+  .editorial-site .travel-page .atlas-credit {
+    font-size: 10px;
+    line-height: 1.9;
+  }
+  .travel-page .atlas-credit {
+    text-align: left;
+  }
+  .editorial-site .travel-page .travel-filter {
+    padding: 20px;
+  }
+  .travel-page .travel-filter > .mono {
+    display: none;
+  }
+  .editorial-site .travel-page .trip-card-grid,
+  .editorial-site .travel-page .trip-card:only-child {
+    grid-template-columns: 1fr;
+  }
+  .editorial-site .travel-page .trip-card:nth-child(even) {
+    margin-top: 0;
+  }
+  .editorial-site .travel-page .journey-story .story-title-block {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    margin-top: 20px;
+  }
+  .editorial-site .travel-page .journey-story .story-title-block h1 {
+    font-size: clamp(40px, 9vw, 66px);
+  }
+  .editorial-site .travel-page .story-breadcrumb {
+    padding-inline: 12px;
+  }
+  .travel-page .journey-cover-composition {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .travel-page .journey-chapters {
+    padding-inline: 0;
+  }
+  .travel-page .journey-section-heading {
+    padding: 22px 20px;
+  }
+  .travel-page .journey-section-heading h2,
+  .travel-page .journey-equipment-intro h2 {
+    font-size: 32px;
+  }
+  .travel-page .journey-section-heading > p {
+    font-size: 12px;
+  }
+  .editorial-site .travel-page .journey-story .story-frame figcaption {
+    padding: 12px;
+  }
+  .editorial-site .travel-page .journey-story .story-toolbar {
+    padding-inline: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .travel-page .trip-card-cta > span {
+    transition: none;
+    transform: none;
+  }
+}
