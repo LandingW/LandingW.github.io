@@ -41,13 +41,6 @@ export default function Header({
             Land1ngW<span className="accent">.</span>
           </span>
         </Link>
-        <Link
-          href="/travel/"
-          className="header-travel-link"
-          aria-current={travel ? "page" : undefined}
-        >
-          <span aria-hidden="true">↗</span> 旅行足迹
-        </Link>
         <button
           type="button"
           className="menu-toggle"
@@ -77,11 +70,17 @@ export default function Header({
               href={`/#${section.id}`}
               onClick={() => setOpen(false)}
               className={
-                active === section.id || (article && section.id === "articles")
+                active === section.id ||
+                (article && section.id === "articles") ||
+                (travel && section.id === "travel")
                   ? "is-active"
                   : ""
               }
-              aria-current={active === section.id ? "location" : undefined}
+              aria-current={
+                active === section.id || (travel && section.id === "travel")
+                  ? "location"
+                  : undefined
+              }
             >
               <span className="nav-index">0{index + 1}</span>
               {section.label}

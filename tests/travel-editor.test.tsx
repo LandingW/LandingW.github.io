@@ -87,8 +87,15 @@ test("travel story uses a chosen hero, real photo proportions and no fabricated 
   assert.doesNotMatch(html, /目的地|拍摄设备 \/|Google 地点/);
   assert.equal((html.match(/<figure/g) || []).length, 2);
 });
-test("travel entry is a first-level header link outside the collapsed menu", () => {
+test("travel is the fourth menu item linked to the homepage preview", () => {
   const html = renderToStaticMarkup(createElement(Header));
-  assert.ok(html.indexOf('class="header-travel-link"') < html.indexOf("<nav"));
-  assert.match(html, /旅行足迹/);
+  const menu = html.slice(html.indexOf("<nav"), html.indexOf("</nav>"));
+  const links = [...menu.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(links.slice(0, 4), [
+    "/#experience",
+    "/#skills",
+    "/#articles",
+    "/#travel",
+  ]);
+  assert.doesNotMatch(html, /header-travel-link/);
 });

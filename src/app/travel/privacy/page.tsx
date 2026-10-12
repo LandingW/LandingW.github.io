@@ -27,46 +27,49 @@ export default function TravelPrivacyPage() {
           </p>
         </section>
         <section>
-          <h2>Google 地图</h2>
+          <h2>开源地图与图钉</h2>
           <p>
-            启用 Google 地图后，地点搜索、地图显示及相关网络请求由 Google Maps
-            Platform 提供。使用地图功能须遵守{" "}
+            世界概览使用随网站加载的 Natural Earth 数据，不请求外部地图
+            API。图钉只来自本人设置的旅行坐标或已公开的照片
+            GPS，地点名称不会自动转换成位置；相近地点的多次旅行会合并为可展开预览的图钉。
+          </p>
+          <p>
+            详细地图与选点使用开源 Leaflet 和 OpenStreetMap 标准瓦片，不需要
+            Google 账号、API key
+            或地图付费配置。打开详细地图时，浏览器会向地图服务请求当前视野的瓦片；服务方会收到
+            IP、网站来源等常规网络信息。
+          </p>
+          <p>
+            OpenStreetMap
+            的数据开放，但公共瓦片服务器是社区资助服务，不保证无限访问或可用性。本站保留地图署名、遵守浏览器缓存，不提供离线下载和批量预取。使用须遵守{" "}
             <a
-              href="https://maps.google.com/help/terms_maps/"
+              href="https://operations.osmfoundation.org/policies/tiles/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Google Maps / Google Earth 附加服务条款
+              瓦片使用政策
             </a>
-            ；相关数据处理适用{" "}
+            与{" "}
             <a
-              href="https://policies.google.com/privacy"
+              href="https://osmfoundation.org/wiki/Privacy_Policy"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Google 隐私政策
+              隐私政策
             </a>
             。
           </p>
           <p>
-            网站长期保存所选地点的 Place ID，不把 Google
-            返回的地名、地址和坐标另存为永久数据库。Google 地点内容在 Google
-            地图内按需加载；手动添加的旅行标记与照片 GPS 属于独立的影集数据。
-          </p>
-          <p>
-            Google 地图费用与额度由网站所有者的 Google Cloud
-            项目管理。未配置或无法访问 Google
-            时，照片浏览仍可使用；本地世界概览采用 Natural Earth
-            数据，临时详情底图可使用保留署名的 OpenStreetMap。
+            查找地名的链接会打开 OpenStreetMap
+            网站；本站不调用自动补全或批量地名解析服务。没有坐标的旅行不会被猜测定位。
           </p>
         </section>
         <section>
           <h2>管理页面</h2>
           <p>
             管理密码仅保留在当前页面内存。上传续传会在当前标签页保存照片编号、文件指纹及分片进度，不保存
-            R2 或 GitHub 服务密钥。Google 浏览器 API key
-            本来就会发送到访客浏览器，必须限制网站来源、API
-            范围，并设置合适的配额。
+            R2 或 GitHub
+            服务密钥。地图不需要输入密钥；修改旅行地点后保存即可更新足迹，无需重新构建网站。
           </p>
         </section>
         <p>

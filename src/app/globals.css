@@ -143,76 +143,82 @@ svg {
   border-bottom: 1px solid var(--line);
   pointer-events: none;
 }
-.header-travel-link {
+.home-travel {
+  padding-block: var(--section-space);
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 98px;
+}
+.home-travel .section-aside a {
   display: inline-flex;
-  gap: 9px;
   align-items: center;
-  margin-right: auto;
-  padding: 6px 13px;
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  white-space: nowrap;
-  font-size: 12px;
-  transition:
-    border-color 180ms ease,
-    color 180ms ease;
-}
-.header-travel-link > span {
-  color: var(--accent);
-}
-.header-travel-link:hover,
-.header-travel-link[aria-current] {
-  border-color: var(--accent);
-}
-.hero-travel-entry {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
+  gap: 12px;
   font-size: 13px;
 }
-.hero-travel-entry > .mono {
-  color: var(--accent);
+.home-travel-summary {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 24px 0;
+}
+.home-travel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+.home-trip {
+  display: block;
+  min-width: 0;
+}
+.home-trip-image {
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--paper-deep);
+}
+.home-trip-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 450ms cubic-bezier(0.22, 0.68, 0, 1);
+}
+.home-trip:hover img {
+  transform: scale(1.025);
+}
+.home-trip-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 16px;
+}
+.home-trip-caption .mono {
   font-size: 10px;
-  letter-spacing: 0.08em;
-}
-.hero-travel-entry > svg {
-  margin-left: auto;
-  transition: transform 220ms ease;
-}
-.hero-travel-entry:hover > svg {
-  transform: translate(3px, -3px);
-}
-.hero-travel-subtitle {
   color: var(--muted);
 }
-@media (max-width: 900px) {
-  .header-travel-link {
-    margin-right: 0;
-    padding: 5px 9px;
-  }
-  .header-inner {
-    gap: 16px;
-  }
+.home-trip-caption h3 {
+  font-size: 22px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+.home-trip-caption > svg {
+  color: var(--accent);
+}
+.home-travel-empty {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
 }
 @media (max-width: 760px) {
-  .header-travel-link {
-    margin-left: auto;
-  }
-  .hero-travel-entry {
-    gap: 14px;
-  }
-  .hero-travel-subtitle {
-    display: none;
+  .home-travel-grid {
+    gap: 28px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-travel-entry > svg {
+  .home-trip-image img {
     transition: none;
-    transform: none !important;
+    transform: none;
   }
 }
 .brand {

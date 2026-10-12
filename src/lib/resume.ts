@@ -147,4 +147,5 @@ export const navSections = [
   { id: "experience", label: "经历" },
   { id: "skills", label: "专注" },
   { id: "articles", label: "文字" },
+  { id: "travel", label: "旅行" },
 ];

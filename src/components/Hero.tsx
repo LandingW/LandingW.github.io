@@ -5,7 +5,6 @@ import FractalMark from "./FractalMark";
 import { Arrow } from "./Icons";
 import { headlineTiming } from "@/lib/motion";
 import type { CSSProperties } from "react";
-import Link from "next/link";
 
 function letters(text: string, offset = 0) {
   return [...text].map((letter, index) => {
@@ -39,17 +38,6 @@ export default function Hero() {
         <span>GRAPHICS ENGINEER / ENGINE DEVELOPER</span>
         <span>FORM / LIGHT / CODE</span>
       </div>
-      <Link className="hero-travel-entry" href="/travel/">
-        <span className="mono">FIELD NOTES / 04</span>
-        <span>
-          旅行足迹
-          <span className="hero-travel-subtitle">
-            {" "}
-            · 在代码之外，记录真实世界的光。
-          </span>
-        </span>
-        <Arrow diagonal />
-      </Link>
       <div className="hero-stage">
         <h1 className="hero-title" aria-label="THINK IN PIXELS.">
           <span aria-hidden="true">{letters("THINK IN")}</span>

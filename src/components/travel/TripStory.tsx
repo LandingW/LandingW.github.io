@@ -113,7 +113,7 @@ export default function TripStory({
             照片索引
           </button>
         </div>
-        {(location || album.googlePlaceId) && (
+        {location && (
           <button
             className="story-map-toggle"
             onClick={() => setShowMap(!showMap)}
@@ -123,13 +123,11 @@ export default function TripStory({
           </button>
         )}
       </div>
-      {showMap && (location || album.googlePlaceId) && (
+      {showMap && location && (
         <LocationMap
           latitude={location?.latitude || 0}
           longitude={location?.longitude || 0}
-          googlePlaceId={album.googlePlaceId}
           place={album.place}
-          mapConfig={config}
         />
       )}
       <div

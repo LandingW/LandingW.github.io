@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer id="contact" className="site-footer">
       <div className="footer-top">
-        <span className="mono">04 / KEEP IN TOUCH</span>
+        <span className="mono">05 / KEEP IN TOUCH</span>
         <span>有趣的想法，值得一次交流。</span>
       </div>
       <div className="footer-contact">

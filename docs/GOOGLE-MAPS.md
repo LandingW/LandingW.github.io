@@ -1,5 +1,7 @@
 # Google 地图接入
 
+> 历史方案，已于 2026-10-12 按所有者要求停用。当前前端已移除 Google SDK、API key 设置和相关请求，改为 Leaflet / OpenStreetMap 免费地图点选；不需要执行以下步骤。旧数据库字段仅保留兼容性，重新手动选点保存时可清除旧关联。当前用法见 [照片服务配置](PHOTOS-SETUP.md)。
+
 ## 当前状态
 
 网站已实现 Google Maps JavaScript 地图、Places API（New）地点选择，以及按旅行显示地图标记。当前尚未提供有效的 Google 浏览器 API key，因此不会加载 Google SDK 或发起 Google Places 请求；现有图片和本地世界概览仍可使用。

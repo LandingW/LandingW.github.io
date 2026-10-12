@@ -5,7 +5,6 @@ import {
   serviceUrl,
   type TravelConfig,
 } from "./travel";
-import { normalizeMapsConfig } from "./trip-presentation";
 
 export async function loadTravelConfig(): Promise<TravelConfig> {
   const response = await fetch("/travel-config.json", {
@@ -18,23 +17,6 @@ export async function loadTravelConfig(): Promise<TravelConfig> {
     apiUrl: serviceUrl(config.apiUrl),
     mediaUrl: serviceUrl(config.mediaUrl),
   };
-  if (!base.mediaUrl) return base;
-  try {
-    const maps = await fetch(`${base.mediaUrl}/maps-config.json`, {
-      cache: "no-cache",
-      signal: AbortSignal.timeout(5000),
-    });
-    if (maps.ok) {
-      const settings = normalizeMapsConfig(await maps.json());
-      return {
-        ...base,
-        googleMapsApiKey: settings.apiKey,
-        googleMapsMapId: settings.mapId,
-      };
-    }
-  } catch {
-    /* The gallery remains usable when map configuration is unavailable. */
-  }
   return base;
 }
 

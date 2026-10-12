@@ -56,8 +56,6 @@ export interface TravelManifest {
 export interface TravelConfig {
   apiUrl: string;
   mediaUrl: string;
-  googleMapsApiKey?: string;
-  googleMapsMapId?: string;
 }
 
 export const EMPTY_MANIFEST: TravelManifest = {

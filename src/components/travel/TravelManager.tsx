@@ -28,7 +28,6 @@ import PhotoFacts from "./PhotoFacts";
 import EquipmentFields from "./EquipmentFields";
 import PhotoEquipmentEditor from "./PhotoEquipmentEditor";
 import TripCover from "./TripCover";
-import { googleMapsLink } from "@/lib/trip-presentation";
 import {
   albumForm,
   formFingerprint,
@@ -37,7 +36,6 @@ import {
 } from "@/lib/travel-editor";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
-const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
 type Album = TravelAlbum & { published: number };
 type Photo = {
   id: string;
@@ -105,8 +103,6 @@ export default function TravelManager() {
     value: number;
   } | null>(null);
   const [gpsPreview, setGpsPreview] = useState("");
-  const [mapsOpen, setMapsOpen] = useState(false);
-  const [mapsForm, setMapsForm] = useState({ apiKey: "", mapId: "" });
   const abort = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -146,10 +142,6 @@ export default function TravelManager() {
       .then((value) => {
         if (alive) {
           setConfig(value);
-          setMapsForm({
-            apiKey: value.googleMapsApiKey || "",
-            mapId: value.googleMapsMapId || "",
-          });
         }
       })
       .catch(() => {
@@ -463,70 +455,6 @@ export default function TravelManager() {
               </button>
             </div>
           </div>
-          <details
-            className="manager-map-settings"
-            open={mapsOpen}
-            onToggle={(event) => setMapsOpen(event.currentTarget.open)}
-          >
-            <summary>
-              Google 地图服务 ·{" "}
-              {config.googleMapsApiKey ? "已配置" : "待配置 API key"}
-            </summary>
-            <p>
-              启用 Maps JavaScript API 和 Places API（New），并将浏览器 key
-              限制到本网站。Google
-              的账单、配额和费用由你的账号管理，不会自动替你开通。
-            </p>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void run(async () => {
-                  const saved = await photoApi<{
-                    apiKey: string;
-                    mapId: string;
-                  }>(config.apiUrl, token, "/admin/maps", mapsForm);
-                  setConfig({
-                    ...config,
-                    googleMapsApiKey: saved.apiKey,
-                    googleMapsMapId: saved.mapId,
-                  });
-                  setMessage(
-                    "Google 地图设置已保存，无需构建网站。若更换了已加载的 key，请刷新页面。",
-                  );
-                });
-              }}
-            >
-              <label>
-                受网站限制的 Google Maps 浏览器 API key
-                <input
-                  type="password"
-                  value={mapsForm.apiKey}
-                  onChange={(event) =>
-                    setMapsForm({ ...mapsForm, apiKey: event.target.value })
-                  }
-                  placeholder="AIza…"
-                  autoComplete="off"
-                />
-              </label>
-              <label>
-                Map ID（可选）
-                <input
-                  value={mapsForm.mapId}
-                  onChange={(event) =>
-                    setMapsForm({ ...mapsForm, mapId: event.target.value })
-                  }
-                  placeholder="留空使用 DEMO_MAP_ID；正式使用建议设置自己的 Map ID"
-                />
-              </label>
-              <p className="manager-help">
-                此 key 会发给访客浏览器，必须设置 HTTP 网站来源和 API
-                限制。不要填写服务账号私钥、R2 或 GitHub 密钥。
-              </p>
-              <button className="travel-button" disabled={busy}>
-                保存地图配置
-              </button>
-            </form>
-          </details>
           <div className="manager-trip-selector">
             <div className="manager-section-title">
               <h2>{active ? active.title : "新建一次旅行"}</h2>
@@ -671,13 +599,16 @@ export default function TravelManager() {
                       纬度
                       <input
                         type="number"
-                        disabled={Boolean(form.googlePlaceId)}
                         min={-90}
                         max={90}
                         step="any"
                         value={form.latitude}
                         onChange={(e) =>
-                          setForm({ ...form, latitude: e.target.value })
+                          setForm({
+                            ...form,
+                            latitude: e.target.value,
+                            googlePlaceId: null,
+                          })
                         }
                         placeholder="可留空"
                       />
@@ -686,13 +617,16 @@ export default function TravelManager() {
                       经度
                       <input
                         type="number"
-                        disabled={Boolean(form.googlePlaceId)}
                         min={-180}
                         max={180}
                         step="any"
                         value={form.longitude}
                         onChange={(e) =>
-                          setForm({ ...form, longitude: e.target.value })
+                          setForm({
+                            ...form,
+                            longitude: e.target.value,
+                            googlePlaceId: null,
+                          })
                         }
                         placeholder="可留空"
                       />
@@ -700,100 +634,54 @@ export default function TravelManager() {
                   </div>
                   <p className="manager-help">
                     每次旅行一个标记：优先使用你选择的旅行地点，否则取首张公开
-                    GPS 照片的位置。选择 Google 地点时不必手填坐标。
+                    GPS
+                    照片的位置。没有坐标时不会生成图钉；地点名称本身不会自动转换成坐标。
                   </p>
                   <div className="manager-actions">
                     <button type="button" onClick={() => setShowMap(!showMap)}>
-                      {showMap ? "收起选点地图" : "在 Google 地图选择地点"}
+                      {showMap ? "收起选点地图" : "在免费地图上放置图钉"}
                     </button>
                     {form.place && (
                       <a
-                        href={googleMapsLink(
-                          form.place,
-                          null,
-                          form.googlePlaceId,
-                        )}
+                        href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(form.place)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        打开 Google 地图 ↗
+                        在 OpenStreetMap 查找地点 ↗
                       </a>
                     )}
                   </div>
                   {form.googlePlaceId && (
                     <p className="manager-help">
-                      已保存一个 Google 地点。
+                      这条记录关联了旧地图服务，需重新点选或填写坐标才能显示为免费地图图钉。
                       <button
                         type="button"
                         onClick={() =>
                           setForm({ ...form, googlePlaceId: null })
                         }
                       >
-                        清除地点关联，改用手动标记
+                        清除旧地点关联
                       </button>
                     </p>
                   )}
-                  {showMap && config.googleMapsApiKey ? (
-                    <GoogleMapView
-                      apiKey={config.googleMapsApiKey}
-                      mapId={config.googleMapsMapId}
-                      pins={[
-                        {
-                          id: "trip",
-                          label: form.title || "旅行地点",
-                          googlePlaceId: form.googlePlaceId,
-                          location:
-                            form.latitude !== "" && form.longitude !== ""
-                              ? {
-                                  latitude: Number(form.latitude),
-                                  longitude: Number(form.longitude),
-                                }
-                              : null,
-                        },
-                      ]}
-                      selected="trip"
-                      onPick={(value) =>
+                  {showMap && (
+                    <LocationMap
+                      latitude={
+                        form.latitude === "" ? null : Number(form.latitude)
+                      }
+                      longitude={
+                        form.longitude === "" ? null : Number(form.longitude)
+                      }
+                      place={form.place}
+                      onPick={(latitude, longitude) =>
                         setForm((old) => ({
                           ...old,
-                          googlePlaceId: value.googlePlaceId,
-                          latitude: value.googlePlaceId
-                            ? ""
-                            : value.location.latitude.toFixed(6),
-                          longitude: value.googlePlaceId
-                            ? ""
-                            : value.location.longitude.toFixed(6),
+                          latitude: latitude.toFixed(5),
+                          longitude: longitude.toFixed(5),
+                          googlePlaceId: null,
                         }))
                       }
                     />
-                  ) : (
-                    showMap && (
-                      <div className="map-picker-fallback">
-                        <p className="manager-help">
-                          Google 地图尚未配置。
-                          <button
-                            type="button"
-                            onClick={() => setMapsOpen(true)}
-                          >
-                            配置 API key
-                          </button>{" "}
-                          后可直接搜索景点；现在也可使用临时手动选点。
-                        </p>
-                        <LocationMap
-                          latitude={Number(form.latitude) || 0}
-                          longitude={Number(form.longitude) || 0}
-                          place={form.place}
-                          googlePlaceId={form.googlePlaceId}
-                          onPick={(latitude, longitude) =>
-                            setForm((old) => ({
-                              ...old,
-                              latitude: latitude.toFixed(5),
-                              longitude: longitude.toFixed(5),
-                              googlePlaceId: null,
-                            }))
-                          }
-                        />
-                      </div>
-                    )
                   )}
                   <details className="trip-equipment-defaults">
                     <summary>这次旅行的默认设备</summary>
@@ -986,7 +874,7 @@ export default function TravelManager() {
                   <span>↗</span>
                   {active?.place ||
                     (active?.googlePlaceId
-                      ? "已关联 Google 地点"
+                      ? "旧地点关联尚未转换，请重新点选坐标"
                       : "未填写旅行地点；有公开 GPS 的照片仍可生成足迹")}
                 </li>
               </ul>
@@ -1209,7 +1097,6 @@ export default function TravelManager() {
                                 latitude={photo.gps.latitude}
                                 longitude={photo.gps.longitude}
                                 place="照片 GPS 拍摄位置"
-                                mapConfig={config}
                               />
                             )}
                           </>

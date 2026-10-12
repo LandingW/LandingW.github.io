@@ -277,7 +277,6 @@ export default function TravelGallery() {
         <PhotoViewer
           photo={photo}
           mediaBase={config.mediaUrl}
-          mapConfig={config}
           position={index}
           count={photos.length}
           onClose={() => navigate(selected)}

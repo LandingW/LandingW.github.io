@@ -1,180 +1,159 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap, CircleMarker } from "leaflet";
-import dynamic from "next/dynamic";
-import type { TravelConfig } from "@/lib/travel";
-import { googleMapsLink } from "@/lib/trip-presentation";
+import type { Map as LeafletMap, Marker } from "leaflet";
+import { normalizeLocation } from "@/lib/photo-metadata";
 
-const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
-
-type LocationMapProps = {
-  latitude: number;
-  longitude: number;
-  place: string;
-  onPick?: (latitude: number, longitude: number) => void;
-  googlePlaceId?: string | null;
-  mapConfig?: TravelConfig;
-};
-
-export default function LocationMap(props: LocationMapProps) {
-  const location = { latitude: props.latitude, longitude: props.longitude };
-  if (props.mapConfig?.googleMapsApiKey)
-    return (
-      <div className="travel-location">
-        <GoogleMapView
-          apiKey={props.mapConfig.googleMapsApiKey}
-          mapId={props.mapConfig.googleMapsMapId}
-          pins={[
-            {
-              id: "location",
-              label: props.place || "拍摄位置",
-              location,
-              googlePlaceId: props.googlePlaceId,
-            },
-          ]}
-        />
-        <a
-          href={googleMapsLink(props.place, location, props.googlePlaceId)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          在 Google 地图中打开 ↗
-        </a>
-      </div>
-    );
-  if (props.googlePlaceId)
-    return (
-      <div className="travel-location">
-        <p className="map-service-note">Google 地图尚未配置或暂不可用。</p>
-        <a
-          href={googleMapsLink(props.place, null, props.googlePlaceId)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          在 Google 地图中查看所选地点 ↗
-        </a>
-      </div>
-    );
-  return <OsmLocationMap {...props} />;
-}
-
-function OsmLocationMap({
+export default function LocationMap({
   latitude,
   longitude,
   place,
   onPick,
 }: {
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   place: string;
   onPick?: (latitude: number, longitude: number) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const pickRef = useRef(onPick);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const markerRef = useRef<CircleMarker | null>(null);
-  const locationRef = useRef({ latitude, longitude });
-  const previousLocation = useRef({ latitude, longitude });
+  const container = useRef<HTMLDivElement>(null);
+  const map = useRef<LeafletMap | null>(null);
+  const marker = useRef<Marker | null>(null);
+  const updateMarker = useRef<
+    ((latitude: number | null, longitude: number | null) => void) | null
+  >(null);
+  const pick = useRef(onPick);
+  const latest = useRef({ latitude, longitude });
+  const picked = useRef(false);
   const [failed, setFailed] = useState(false);
+  const location = normalizeLocation({ latitude, longitude });
   useEffect(() => {
-    pickRef.current = onPick;
+    pick.current = onPick;
   }, [onPick]);
   useEffect(() => {
-    locationRef.current = { latitude, longitude };
-    const previous = previousLocation.current;
+    latest.current = { latitude, longitude };
+    updateMarker.current?.(latitude, longitude);
     if (
-      mapRef.current &&
-      (previous.latitude !== latitude || previous.longitude !== longitude)
-    ) {
-      const point: [number, number] = [
-        Math.max(-85, Math.min(85, latitude)),
-        longitude,
-      ];
-      markerRef.current?.setLatLng(point);
-      mapRef.current.setView(point, 11, {
-        animate: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-      });
-    }
-    previousLocation.current = { latitude, longitude };
+      map.current &&
+      latitude !== null &&
+      longitude !== null &&
+      !picked.current
+    )
+      map.current.setView(
+        [Math.max(-85, Math.min(85, latitude)), longitude],
+        11,
+        { animate: false },
+      );
+    picked.current = false;
   }, [latitude, longitude]);
   useEffect(() => {
-    if (!ref.current) return;
-    const container = ref.current;
+    if (!container.current) return;
+    const element = container.current;
     let disposed = false;
-    let cleanup: (() => void) | undefined;
+    let resize: ResizeObserver | undefined;
     void import("leaflet")
       .then((L) => {
         if (disposed) return;
-        const current = locationRef.current;
-        const point: [number, number] = [
-          Math.max(-85, Math.min(85, current.latitude)),
-          current.longitude,
-        ];
-        const map = L.map(container, {
+        const initial = normalizeLocation(latest.current);
+        const instance = L.map(element, {
           scrollWheelZoom: false,
           attributionControl: true,
         }).setView(
-          point,
-          onPick && current.latitude === 0 && current.longitude === 0 ? 2 : 11,
+          initial
+            ? [Math.max(-85, Math.min(85, initial.latitude)), initial.longitude]
+            : [20, 0],
+          initial ? 11 : 2,
         );
-        mapRef.current = map;
-        const marker = L.circleMarker(point, {
-          color: "#df4b30",
-          fillColor: "#df4b30",
-          fillOpacity: 1,
-          radius: 6,
-          weight: 2,
-        }).addTo(map);
-        markerRef.current = marker;
-        const tiles = L.tileLayer(
-          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {
-            maxZoom: 19,
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
-          },
-        ).addTo(map);
-        tiles.on("tileerror", () => setFailed(true));
-        if (pickRef.current)
-          map.on("click", (event) => {
-            const lat = Math.max(-85, Math.min(85, event.latlng.lat));
-            const lon = ((((event.latlng.lng + 180) % 360) + 360) % 360) - 180;
-            marker.setLatLng([lat, lon]);
-            previousLocation.current = { latitude: lat, longitude: lon };
-            pickRef.current?.(lat, lon);
-          });
-        cleanup = () => {
-          map.remove();
-          mapRef.current = null;
-          markerRef.current = null;
+        map.current = instance;
+        const icon = L.divIcon({
+          className: "osm-trip-pin",
+          html: '<svg viewBox="0 0 32 42" aria-hidden="true"><path d="M16 40C13 35 2 23 2 16a14 14 0 1 1 28 0c0 7-11 19-14 24Z"/><circle cx="16" cy="16" r="5"/></svg>',
+          iconSize: [28, 37],
+          iconAnchor: [14, 37],
+        });
+        updateMarker.current = (lat, lon) => {
+          const point = normalizeLocation({ latitude: lat, longitude: lon });
+          if (!point) {
+            marker.current?.remove();
+            marker.current = null;
+            return;
+          }
+          const coords: [number, number] = [
+            Math.max(-85, Math.min(85, point.latitude)),
+            point.longitude,
+          ];
+          if (marker.current) marker.current.setLatLng(coords);
+          else
+            marker.current = L.marker(coords, {
+              icon,
+              title: "旅行地点",
+              keyboard: false,
+            }).addTo(instance);
         };
+        updateMarker.current(latest.current.latitude, latest.current.longitude);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+        })
+          .addTo(instance)
+          .on("tileerror", () => setFailed(true));
+        instance.on("click", (event) => {
+          if (!pick.current) return;
+          const lat = Math.max(-85, Math.min(85, event.latlng.lat));
+          const lon = ((((event.latlng.lng + 180) % 360) + 360) % 360) - 180;
+          updateMarker.current?.(lat, lon);
+          picked.current = true;
+          pick.current(lat, lon);
+        });
+        resize = new ResizeObserver(() => {
+          if (element.clientWidth && element.clientHeight)
+            instance.invalidateSize({ pan: false });
+        });
+        resize.observe(element);
       })
-      .catch(() => setFailed(true));
+      .catch(() => {
+        if (!disposed) setFailed(true);
+      });
     return () => {
       disposed = true;
-      cleanup?.();
+      resize?.disconnect();
+      map.current?.remove();
+      map.current = null;
+      marker.current = null;
+      updateMarker.current = null;
     };
-    // The picker owns its camera while a user is dragging it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <div className="travel-location">
+      {onPick && (
+        <p className="map-picker-instructions">
+          放大到目的地后点击地图放置图钉，再保存旅行。
+          {!location && "当前尚未选择地点。"}
+        </p>
+      )}
       <div
-        ref={ref}
+        ref={container}
         className="location-map"
-        aria-label={onPick ? "点击地图选择公开地点" : `${place}位置地图`}
+        aria-label={onPick ? "点击地图选择旅行地点" : `${place}位置地图`}
       />
-      {failed && <p role="status">部分地图暂时无法加载。地点文字仍可使用。</p>}
-      {Math.abs(latitude) > 85 && (
-        <p>该位置位于极区，街道地图按可显示纬度定位；原始坐标仍保留。</p>
+      {failed && (
+        <p role="status">
+          地图瓦片暂时无法加载，可以稍后重试或手动填写经纬度。
+        </p>
+      )}
+      {location && Math.abs(location.latitude) > 85 && (
+        <p>极区地图按可显示纬度定位；原始坐标保留。</p>
       )}
       <a
-        href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=12/${latitude}/${longitude}`}
+        href={
+          location
+            ? `https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=12/${location.latitude}/${location.longitude}`
+            : `https://www.openstreetmap.org/search?query=${encodeURIComponent(place)}`
+        }
         target="_blank"
         rel="noopener noreferrer"
       >
-        在 OpenStreetMap 中打开 ↗
+        {location ? "在 OpenStreetMap 中打开 ↗" : "在 OpenStreetMap 查找地点 ↗"}
       </a>
     </div>
   );

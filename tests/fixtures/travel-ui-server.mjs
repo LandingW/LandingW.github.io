@@ -6,6 +6,17 @@ import path from "node:path";
 const root = await realpath("out");
 const config = JSON.parse(await readFile("public/travel-config.json", "utf8"));
 const manifest = await (await fetch(`${config.mediaUrl}/manifest.json`)).json();
+// Explicit opt-in sample coordinates for pin/preview tests; never user travel data.
+if (process.env.PHOTO_UI_MAP_FIXTURE === "1") {
+  manifest.albums = manifest.albums.map((album, i) => ({
+    ...album,
+    title: `本机图钉样例 ${i + 1}`,
+    place: "仅用于本机地图测试",
+    latitude: i ? 36 : 50,
+    longitude: i ? 105 : -95,
+    googlePlaceId: null,
+  }));
+}
 const albums = manifest.albums.map((album, i) => ({
   ...album,
   title: `本机测试 ${i + 1} · 不保存到云端`,
@@ -44,7 +55,9 @@ createServer(async (req, res) => {
     const route =
       url.searchParams.get("page") === "home"
         ? "/"
-        : "/travel/?trip=48e497df-f629-4026-873c-973472f6ceb6";
+        : url.searchParams.get("page") === "map"
+          ? "/travel/"
+          : "/travel/?trip=48e497df-f629-4026-873c-973472f6ceb6";
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(
       `<html><body style="margin:0;background:#ddd"><iframe id="mobile-preview" title="390px responsive preview" src="${route}" style="display:block;border:0;width:390px;height:844px"></iframe></body></html>`,
