@@ -189,6 +189,9 @@ async function main() {
         Number(existing[0].bytes) !== item.bytes
       )
         throw new Error("照片编号与已有记录冲突");
+      await query(
+        `INSERT OR IGNORE INTO album_photos(album_id,photo_id,position) VALUES(${sql(plan.albumId)},${sql(item.id)},(SELECT COALESCE(MAX(position),-1)+1 FROM album_photos WHERE album_id=${sql(plan.albumId)}));`,
+      );
       item.registered = true;
       await save();
       console.log(`${index}/${plan.files.length}: already registered`);
@@ -218,6 +221,9 @@ async function main() {
       throw new Error(
         "额度已被其他上传占用，原片已在私有桶，稍后可用清单继续注册",
       );
+    await query(
+      `INSERT OR IGNORE INTO album_photos(album_id,photo_id,position) VALUES(${sql(plan.albumId)},${sql(item.id)},(SELECT COALESCE(MAX(position),-1)+1 FROM album_photos WHERE album_id=${sql(plan.albumId)}));`,
+    );
     item.registered = true;
     await save();
     console.log(`${index}/${plan.files.length}: uploaded privately and queued`);

@@ -196,8 +196,11 @@ export function parseManifest(input: unknown): TravelManifest {
       location: normalizeLocation(photo.location),
     };
   });
-  if (new Set(photos.map((photo) => photo.id)).size !== photos.length)
-    throw new Error("照片编号重复");
+  if (
+    new Set(photos.map((photo) => `${photo.albumId}:${photo.id}`)).size !==
+    photos.length
+  )
+    throw new Error("同一旅行中的照片编号重复");
   return {
     version: 1,
     updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,

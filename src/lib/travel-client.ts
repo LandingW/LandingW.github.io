@@ -112,6 +112,7 @@ export async function uploadPhoto(
   file: File,
   onProgress: (value: number) => void,
   signal: AbortSignal,
+  folderId?: string | null,
 ) {
   if (!PHOTO_TYPES.has(file.type) || file.size < 1 || file.size > PHOTO_LIMIT)
     throw new Error(
@@ -129,7 +130,7 @@ export async function uploadPhoto(
   ]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
-  const key = `photo-upload:${base}:${albumId}:${fingerprint}`;
+  const key = `photo-upload:${base}:${albumId}:${folderId || ""}:${fingerprint}`;
   let session: UploadSession | null = null;
   try {
     session = JSON.parse(sessionStorage.getItem(key) || "null");
@@ -154,6 +155,7 @@ export async function uploadPhoto(
             "/admin/uploads/start",
             {
               albumId,
+              folderId,
               filename: file.name,
               mime: file.type,
               bytes: file.size,

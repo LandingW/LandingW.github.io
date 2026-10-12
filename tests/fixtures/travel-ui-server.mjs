@@ -53,6 +53,21 @@ const photos = manifest.photos.map((photo, i) => ({
   metadata_error: null,
   created_at: String(i).padStart(3, "0"),
   equipment: {},
+  rawCamera: photo.camera,
+  folder_id: photo.albumId,
+  deleted_at: null,
+  revision: photo.thumbnail.split("/")[2],
+}));
+const folders = albums.map((album) => ({
+  id: album.id,
+  name: album.title,
+  created_at: "2026-10-12",
+}));
+const memberships = photos.map((photo, position) => ({
+  album_id: photo.album_id,
+  photo_id: photo.id,
+  position,
+  published: 0,
 }));
 const token = `Basic ${Buffer.from("admin:local-preview-only").toString("base64")}`;
 const mime = {
@@ -124,6 +139,13 @@ createServer(async (req, res) => {
       return json({
         albums,
         photos,
+        folders,
+        memberships,
+        libraryVersion: 1,
+        derivedBytes: photos.reduce(
+          (sum, photo) => sum + photo.derived_bytes,
+          0,
+        ),
         usedBytes: 130000000,
         maxBytes: 2000000000,
       });
@@ -134,6 +156,101 @@ createServer(async (req, res) => {
     }
     try {
       const data = JSON.parse(raw || "{}");
+      // Library mutations below affect these in-memory copies only; no R2 calls.
+      if (url.pathname === "/admin/library/folders") {
+        const id = `local-folder-${Date.now()}`;
+        folders.push({
+          id,
+          name: data.name,
+          created_at: new Date().toISOString(),
+        });
+        return json({ id });
+      }
+      const folderAction = url.pathname.match(
+        /^\/admin\/library\/folders\/([\w-]+)\/(rename|delete)$/,
+      );
+      if (folderAction) {
+        const folder = folders.find((item) => item.id === folderAction[1]);
+        if (!folder) return json({ error: "文件夹不存在" }, 404);
+        if (folderAction[2] === "rename") folder.name = data.name;
+        else {
+          if (photos.some((photo) => photo.folder_id === folder.id))
+            return json({ error: "文件夹仍有照片" }, 409);
+          folders.splice(folders.indexOf(folder), 1);
+        }
+        return json({ ok: true });
+      }
+      const libraryAction = url.pathname.match(
+        /^\/admin\/library\/photos\/(move|trash|restore)$/,
+      );
+      if (libraryAction) {
+        for (const photo of photos.filter((item) =>
+          data.photoIds.includes(item.id),
+        )) {
+          if (libraryAction[1] === "move") photo.folder_id = data.folderId;
+          else {
+            photo.deleted_at =
+              libraryAction[1] === "trash" ? new Date().toISOString() : null;
+            if (photo.deleted_at)
+              memberships
+                .filter((link) => link.photo_id === photo.id)
+                .forEach((link) => (link.published = 0));
+          }
+        }
+        return json({ ok: true });
+      }
+      const purge = url.pathname.match(
+        /^\/admin\/library\/photos\/([\w-]+)\/purge$/,
+      );
+      if (purge) {
+        const index = photos.findIndex((photo) => photo.id === purge[1]);
+        if (index >= 0) {
+          if (!photos[index].deleted_at)
+            return json({ error: "请先移入回收站" }, 409);
+          photos.splice(index, 1);
+          for (let i = memberships.length - 1; i >= 0; i--)
+            if (memberships[i].photo_id === purge[1]) memberships.splice(i, 1);
+        }
+        return json({ ok: true, done: true });
+      }
+      const tripAction = url.pathname.match(
+        /^\/admin\/albums\/([\w-]+)\/(trash|restore)$/,
+      );
+      if (tripAction) {
+        const album = albums.find((item) => item.id === tripAction[1]);
+        album.deleted_at =
+          tripAction[2] === "trash" ? new Date().toISOString() : null;
+        album.published = 0;
+        return json({ ok: true });
+      }
+      const memberAction = url.pathname.match(
+        /^\/admin\/albums\/([\w-]+)\/photos\/(add|remove|reorder)$/,
+      );
+      if (memberAction) {
+        const [, id, action] = memberAction;
+        for (const [position, photoId] of data.photoIds.entries()) {
+          const index = memberships.findIndex(
+            (link) => link.album_id === id && link.photo_id === photoId,
+          );
+          if (action === "add" && index < 0)
+            memberships.push({
+              album_id: id,
+              photo_id: photoId,
+              published: 0,
+              position: memberships.length,
+            });
+          if (action === "remove" && index >= 0) memberships.splice(index, 1);
+          if (action === "reorder" && index >= 0)
+            memberships[index].position = position;
+        }
+        if (action === "remove") {
+          const album = albums.find((item) => item.id === id);
+          album.coverPhotoIds = (album.coverPhotoIds || []).filter(
+            (photoId) => !data.photoIds.includes(photoId),
+          );
+        }
+        return json({ ok: true });
+      }
       const edit = url.pathname.match(/^\/admin\/albums\/([\w-]+)\/edit$/);
       if (edit) {
         Object.assign(

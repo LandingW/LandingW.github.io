@@ -38,7 +38,7 @@ export default function TravelPreview() {
             setManifest(data);
             setStatus(
               data.albums.length
-                ? `${data.albums.length} 次旅行 · ${data.photos.length} 张照片`
+                ? `${data.albums.length} 次旅行 · ${new Set(data.photos.map((photo) => photo.id)).size} 张照片`
                 : "第一段旅程，慢慢记录。",
             );
           } catch {

@@ -171,7 +171,11 @@ export default function TravelGallery() {
                 </div>
                 <div>
                   <dt>影像记录</dt>
-                  <dd>{String(manifest.photos.length).padStart(2, "0")}</dd>
+                  <dd>
+                    {String(
+                      new Set(manifest.photos.map((photo) => photo.id)).size,
+                    ).padStart(2, "0")}
+                  </dd>
                 </div>
               </dl>
             </aside>

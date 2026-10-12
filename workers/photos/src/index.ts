@@ -1,4 +1,12 @@
 import { AwsClient } from "aws4fetch";
+import { HttpError } from "./http";
+import {
+  libraryAction,
+  requireFolder,
+  requireTrip,
+  syncPublishedFlags,
+} from "./library";
+import { LIBRARY_ALBUM_ID } from "../../../src/lib/photo-library";
 import {
   normalizeMapsConfig,
   parseCoverIds,
@@ -63,14 +71,9 @@ interface PhotoRow {
   metadata_updated_at: string | null;
   equipment_json: string | null;
   album_equipment_json?: string | null;
-}
-class HttpError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
+  folder_id?: string | null;
+  deleted_at?: string | null;
+  purging?: number;
 }
 const now = () => new Date().toISOString();
 const json = (data: unknown, status = 200) =>
@@ -160,6 +163,7 @@ async function photo(env: Env, id: string) {
     .bind(id)
     .first<PhotoRow>();
   if (!row) throw new HttpError(404, "照片不存在");
+  if (row.deleted_at) throw new HttpError(409, "照片已在回收站，请先恢复");
   return row;
 }
 async function signed(
@@ -211,10 +215,10 @@ export async function publishManifest(env: Env) {
   if (!serviceUrl(env.PUBLIC_MEDIA_URL))
     throw new HttpError(503, "公开图片地址尚未配置");
   const albums = await env.DB.prepare(
-    "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids FROM albums WHERE published=1 ORDER BY date DESC,created_at DESC",
+    "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids FROM albums WHERE published=1 AND deleted_at IS NULL AND is_library=0 ORDER BY date DESC,created_at DESC",
   ).all();
   const photos = await env.DB.prepare(
-    "SELECT p.id,p.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.equipment_json,a.equipment_json AS album_equipment_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN albums a ON a.id=p.album_id WHERE a.published=1 AND p.published=1 AND p.state='ready' ORDER BY p.created_at,p.id",
+    "SELECT p.id,ap.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.equipment_json,a.equipment_json AS album_equipment_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN album_photos ap ON ap.photo_id=p.id JOIN albums a ON a.id=ap.album_id WHERE a.published=1 AND a.deleted_at IS NULL AND a.is_library=0 AND ap.published=1 AND p.state='ready' AND p.deleted_at IS NULL ORDER BY ap.album_id,ap.position,p.created_at,p.id",
   ).all<PhotoRow>();
   const visible = new Set(photos.results.map((p) => p.album_id));
   const manifest: TravelManifest = {
@@ -326,14 +330,22 @@ async function storeMetadata(
 async function admin(request: Request, env: Env, path: string) {
   await authorizeAdmin(request, env);
   if (request.method === "GET" && path === "/admin/state") {
-    const [albums, photos, usage] = await Promise.all([
-      env.DB.prepare("SELECT * FROM albums ORDER BY created_at DESC").all(),
+    const [albums, photos, usage, folders, memberships] = await Promise.all([
       env.DB.prepare(
-        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,equipment_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
+        "SELECT * FROM albums WHERE is_library=0 ORDER BY created_at DESC",
+      ).all(),
+      env.DB.prepare(
+        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,equipment_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error,folder_id,deleted_at,purging FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
       ).all<PhotoRow>(),
       env.DB.prepare(
-        "SELECT COALESCE(SUM(bytes),0) AS bytes FROM photos WHERE state!='aborted'",
-      ).first<{ bytes: number }>(),
+        "SELECT COALESCE(SUM(bytes),0) AS bytes,COALESCE(SUM(derived_bytes),0) AS derived FROM photos WHERE state!='aborted'",
+      ).first<{ bytes: number; derived: number }>(),
+      env.DB.prepare(
+        "SELECT * FROM photo_folders ORDER BY created_at,id",
+      ).all(),
+      env.DB.prepare(
+        "SELECT * FROM album_photos ORDER BY album_id,position,photo_id",
+      ).all(),
     ]);
     return json({
       albums: albums.results.map(
@@ -357,6 +369,7 @@ async function admin(request: Request, env: Env, path: string) {
             ? `photos/${row.id}/${row.revision}/thumbnail.jpg`
             : null,
           equipment: equipmentFromJson(equipment_json),
+          rawCamera: cameraFromJson(camera_json),
           ...resolveEquipment(
             cameraFromJson(camera_json),
             equipmentFromJson(equipment_json),
@@ -372,12 +385,20 @@ async function admin(request: Request, env: Env, path: string) {
         }),
       ),
       usedBytes: usage?.bytes || 0,
+      derivedBytes: usage?.derived || 0,
+      folders: folders.results,
+      memberships: memberships.results,
+      libraryVersion: 1,
       maxBytes: Number(env.MAX_ORIGINAL_BYTES),
       mediaUrl: env.PUBLIC_MEDIA_URL,
     });
   }
   if (request.method !== "POST") throw new HttpError(405, "不支持的操作");
   const input = await body(request);
+  const libraryResult = await libraryAction(path, input, env, () =>
+    publishManifest(env),
+  );
+  if (libraryResult) return json(libraryResult);
   if (path === "/admin/maps") {
     const settings = normalizeMapsConfig(input);
     // This is an intentionally public, website-restricted browser key, never a
@@ -419,17 +440,12 @@ async function admin(request: Request, env: Env, path: string) {
   );
   if (albumAction) {
     const [, id, action] = albumAction;
-    if (
-      !(await env.DB.prepare("SELECT id FROM albums WHERE id=?")
-        .bind(id)
-        .first())
-    )
-      throw new HttpError(404, "旅行不存在");
+    await requireTrip(env, id);
     if (action === "edit") {
       const d = albumInput(input);
       if (d.coverPhotoIds?.length) {
         const picked = await env.DB.prepare(
-          `SELECT id FROM photos WHERE album_id=? AND state='ready' AND id IN (${d.coverPhotoIds.map(() => "?").join(",")})`,
+          `SELECT p.id FROM photos p JOIN album_photos ap ON ap.photo_id=p.id WHERE ap.album_id=? AND p.state='ready' AND p.deleted_at IS NULL AND p.id IN (${d.coverPhotoIds.map(() => "?").join(",")})`,
         )
           .bind(id, ...d.coverPhotoIds)
           .all();
@@ -456,21 +472,36 @@ async function admin(request: Request, env: Env, path: string) {
         )
         .run();
     } else {
+      if (action === "publish") {
+        const count = await env.DB.prepare(
+          "SELECT COUNT(*) AS total,SUM(CASE WHEN p.state!='ready' THEN 1 ELSE 0 END) AS unfinished FROM album_photos ap JOIN photos p ON p.id=ap.photo_id WHERE ap.album_id=? AND p.deleted_at IS NULL AND p.state!='aborted'",
+        )
+          .bind(id)
+          .first<{ total: number; unfinished: number }>();
+        if (!count?.total || count.unfinished)
+          throw new HttpError(
+            409,
+            "请先加入照片，并完成当前旅行的全部处理任务",
+          );
+      }
       await env.DB.batch([
         env.DB.prepare("UPDATE albums SET published=? WHERE id=?").bind(
           action === "publish" ? 1 : 0,
           id,
         ),
         env.DB.prepare(
-          "UPDATE photos SET published=? WHERE album_id=? AND state='ready'",
+          "UPDATE album_photos SET published=? WHERE album_id=? AND photo_id IN (SELECT id FROM photos WHERE state='ready' AND deleted_at IS NULL)",
         ).bind(action === "publish" ? 1 : 0, id),
       ]);
+      await syncPublishedFlags(env);
     }
     await publishManifest(env);
     return json({ ok: true });
   }
   if (path === "/admin/uploads/start") {
-    const { albumId, filename, mime, bytes, fingerprint } = input;
+    const { filename, mime, bytes, fingerprint } = input;
+    const albumId = input.albumId || LIBRARY_ALBUM_ID;
+    const folderId = await requireFolder(env, input.folderId);
     if (
       !validId(albumId) ||
       typeof filename !== "string" ||
@@ -486,17 +517,12 @@ async function admin(request: Request, env: Env, path: string) {
       !/^[a-f0-9]{64}$/.test(fingerprint)
     )
       throw new HttpError(400, "仅支持 64MiB 以内的 JPEG、PNG、WebP 照片");
-    if (
-      !(await env.DB.prepare("SELECT id FROM albums WHERE id=?")
-        .bind(albumId)
-        .first())
-    )
-      throw new HttpError(404, "请先创建旅行");
+    if (albumId !== LIBRARY_ALBUM_ID) await requireTrip(env, albumId);
     const id = crypto.randomUUID(),
       key = `originals/${id}/source`,
       timestamp = now();
     const reservation = await env.DB.prepare(
-      "INSERT INTO photos(id,album_id,original_key,filename,mime,bytes,fingerprint,state,created_at,updated_at) SELECT ?,?,?,?,?,?,?,'uploading',?,? WHERE (SELECT COALESCE(SUM(bytes),0) FROM photos WHERE state!='aborted') + ? <= ?",
+      "INSERT INTO photos(id,album_id,original_key,filename,mime,bytes,fingerprint,state,created_at,updated_at,folder_id) SELECT ?,?,?,?,?,?,?,'uploading',?,?,? WHERE (SELECT COALESCE(SUM(bytes),0) FROM photos WHERE state!='aborted') + ? <= ?",
     )
       .bind(
         id,
@@ -508,6 +534,7 @@ async function admin(request: Request, env: Env, path: string) {
         fingerprint,
         timestamp,
         timestamp,
+        folderId,
         bytes,
         Number(env.MAX_ORIGINAL_BYTES),
       )
@@ -522,6 +549,12 @@ async function admin(request: Request, env: Env, path: string) {
       await env.DB.prepare("UPDATE photos SET upload_id=? WHERE id=?")
         .bind(upload.uploadId, id)
         .run();
+      if (albumId !== LIBRARY_ALBUM_ID)
+        await env.DB.prepare(
+          "INSERT INTO album_photos(album_id,photo_id,position) VALUES(?,?,(SELECT COALESCE(MAX(position),-1)+1 FROM album_photos WHERE album_id=?))",
+        )
+          .bind(albumId, id, albumId)
+          .run();
       return json(await uploadInfo(env, await photo(env, id)), 201);
     } catch (error) {
       if (upload) await upload.abort().catch(() => {});
@@ -555,6 +588,9 @@ async function admin(request: Request, env: Env, path: string) {
         "UPDATE photos SET state='aborted',updated_at=? WHERE id=? AND state='uploading'",
       )
         .bind(now(), id)
+        .run();
+      await env.DB.prepare("DELETE FROM album_photos WHERE photo_id=?")
+        .bind(id)
         .run();
       return json({ ok: true });
     }
@@ -596,7 +632,7 @@ async function admin(request: Request, env: Env, path: string) {
   const retry = path.match(/^\/admin\/photos\/([\w-]+)\/retry$/);
   if (retry) {
     const result = await env.DB.prepare(
-      "UPDATE photos SET state='queued',error=NULL,updated_at=? WHERE id=? AND state='failed'",
+      "UPDATE photos SET state='queued',error=NULL,updated_at=? WHERE id=? AND state='failed' AND deleted_at IS NULL",
     )
       .bind(now(), retry[1])
       .run();
@@ -651,7 +687,7 @@ async function admin(request: Request, env: Env, path: string) {
     if (typeof albumId !== "string" || (albumId && !validId(albumId)))
       throw new HttpError(400, "旅行编号不正确");
     const queued = await env.DB.prepare(
-      "SELECT COUNT(*) AS count FROM photos WHERE (state='queued' OR (state='processing' AND updated_at < ?) OR (state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)))) AND (?='' OR album_id=?)",
+      "SELECT COUNT(*) AS count FROM photos WHERE deleted_at IS NULL AND (state='queued' OR (state='processing' AND updated_at < ?) OR (state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)))) AND (?='' OR id IN (SELECT photo_id FROM album_photos WHERE album_id=?))",
     )
       .bind(
         new Date(Date.now() - 3600_000).toISOString(),
@@ -680,7 +716,7 @@ async function internal(request: Request, env: Env, path: string) {
       throw new HttpError(400, "旅行编号不正确");
     const lease = crypto.randomUUID();
     const row = await env.DB.prepare(
-      "UPDATE photos SET metadata_state='processing',metadata_lease=?,metadata_updated_at=?,metadata_error=NULL WHERE id=(SELECT id FROM photos WHERE state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)) AND (?='' OR id=?) AND (?='' OR album_id=?) ORDER BY created_at LIMIT 1) RETURNING *",
+      "UPDATE photos SET metadata_state='processing',metadata_lease=?,metadata_updated_at=?,metadata_error=NULL WHERE id=(SELECT id FROM photos WHERE deleted_at IS NULL AND state='ready' AND (metadata_state='queued' OR (metadata_state='processing' AND metadata_updated_at < ?)) AND (?='' OR id=?) AND (?='' OR id IN (SELECT photo_id FROM album_photos WHERE album_id=?)) ORDER BY created_at LIMIT 1) RETURNING *",
     )
       .bind(
         lease,
@@ -754,7 +790,7 @@ async function internal(request: Request, env: Env, path: string) {
       revision = crypto.randomUUID(),
       timestamp = now();
     const row = await env.DB.prepare(
-      "UPDATE photos SET state='processing',lease=?,revision=?,updated_at=?,error=NULL WHERE id=(SELECT id FROM photos WHERE (state='queued' OR (state='processing' AND updated_at < ?)) AND (?='' OR id=?) AND (?='' OR album_id=?) ORDER BY created_at LIMIT 1) RETURNING *",
+      "UPDATE photos SET state='processing',lease=?,revision=?,updated_at=?,error=NULL WHERE id=(SELECT id FROM photos WHERE deleted_at IS NULL AND (state='queued' OR (state='processing' AND updated_at < ?)) AND (?='' OR id=?) AND (?='' OR id IN (SELECT photo_id FROM album_photos WHERE album_id=?)) ORDER BY created_at LIMIT 1) RETURNING *",
     )
       .bind(
         lease,
