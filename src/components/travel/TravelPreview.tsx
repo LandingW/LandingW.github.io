@@ -57,17 +57,28 @@ export default function TravelPreview() {
   }, []);
   return (
     <section id="travel" ref={section} className="home-travel">
-      <SectionHeading number="04" english="TRAVEL NOTES" title="旅行足迹">
-        <Link href="/travel/">
-          全部旅行与世界地图 <Arrow diagonal />
-        </Link>
-      </SectionHeading>
-      <p className="home-travel-summary" role="status">
-        {status}
-      </p>
+      <div className="home-travel-intro">
+        <SectionHeading
+          number="04"
+          english="Away from the screen"
+          title="旅行足迹"
+        >
+          <Link href="/travel/">
+            全部旅行与世界地图 <Arrow diagonal />
+          </Link>
+        </SectionHeading>
+        <p className="home-travel-summary" role="status">
+          {status}
+        </p>
+        <p className="home-travel-description">
+          换一种方式看见世界。
+          <br />
+          一些风景，一些留在光里的记忆。
+        </p>
+      </div>
       {manifest.albums.length > 0 ? (
         <div className="home-travel-grid">
-          {manifest.albums.slice(0, 3).map((album, index) => {
+          {manifest.albums.slice(0, 2).map((album, index) => {
             const photo = tripCoverPhotos(album, manifest.photos)[0];
             return (
               <Link

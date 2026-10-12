@@ -1,0 +1,1255 @@
+/* Editorial portfolio system. Shared tokens live in globals.css; this file
+   defines the new composition rather than adding decorative motion. */
+.editorial-site .site-header {
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+}
+.editorial-site .brand {
+  gap: 12px;
+}
+.editorial-site .brand-mark {
+  width: 23px;
+  height: 23px;
+}
+.editorial-site .brand-name {
+  font: 600 25px/1 var(--serif);
+  letter-spacing: -0.065em;
+}
+.editorial-site .header-inner::after {
+  opacity: 0.65;
+}
+.editorial-site .reading-progress {
+  height: 1px;
+}
+.editorial-site .nav-tracker {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--paper-deep) 70%, transparent);
+}
+
+/* Opening spread: copy and an independent study, on a common baseline. */
+.editorial-site .hero {
+  padding: 30px 0 76px;
+}
+.editorial-site .hero-fractal {
+  inset: 0 -20px 120px 30%;
+  opacity: 0.28;
+}
+.editorial-site .hero-topline {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.editorial-site .hero-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 6vw, 86px);
+  align-items: center;
+  min-height: 0;
+  padding: 56px 0 60px;
+}
+.hero-copy {
+  min-width: 0;
+}
+.hero-author {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  margin-bottom: 28px;
+}
+.hero-author > span {
+  color: var(--muted);
+  font: 10px var(--mono);
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.editorial-site .hero-title {
+  font-family: var(--serif);
+  font-size: clamp(78px, 8.2vw, 122px);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+}
+.editorial-site .hero-title .title-second {
+  margin: 0 0 0 30px;
+  font-style: italic;
+}
+.editorial-site .hero-title .accent {
+  color: var(--accent);
+}
+.hero-lead {
+  font-family: var(--serif-cjk);
+  font-size: clamp(20px, 2vw, 25px);
+  line-height: 1.65;
+  margin: 28px 0 13px;
+}
+.editorial-site .hero-bio p {
+  color: var(--muted);
+  max-width: 35em;
+  font-size: 13px;
+  line-height: 1.95;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 26px;
+}
+.hero-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+  font-size: 12px;
+}
+.hero-actions a:first-child {
+  border-color: var(--ink);
+}
+.hero-actions svg {
+  width: 14px;
+  height: 14px;
+}
+.hero-exhibit {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 23px 25px 20px;
+  background: color-mix(in srgb, var(--paper-deep) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+}
+.hero-exhibit::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 70%;
+  aspect-ratio: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  opacity: 0.65;
+}
+.hero-exhibit-top,
+.hero-exhibit-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.hero-exhibit-top {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.hero-exhibit-top > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+.hero-exhibit-note {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+}
+.hero-exhibit-note > .mono {
+  font-size: 8px;
+}
+.editorial-site .hero-exhibit .teapot-study {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  margin-top: 12px;
+}
+.editorial-site .hero-exhibit .teapot-surface {
+  aspect-ratio: 1.15;
+}
+.editorial-site .hero-exhibit .teapot-study figcaption {
+  margin-top: -12px;
+  padding: 0;
+  justify-content: center;
+}
+.editorial-site .hero-exhibit .study-hint {
+  display: none;
+}
+.hero-footer {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 50px;
+  border-top: 1px solid var(--line);
+}
+.editorial-site .current-strip {
+  margin: 0;
+  padding: 22px 0;
+  background: transparent;
+  grid-template-columns: 95px 1fr auto;
+  gap: 20px;
+}
+.editorial-site .current-strip > .mono {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  color: var(--muted);
+}
+.editorial-site .current-strip-company {
+  font: 400 23px/1.3 var(--serif);
+  letter-spacing: -0.03em;
+}
+.editorial-site .current-strip-company > span {
+  font: 11px var(--font-sans);
+  margin-top: 4px;
+  color: var(--muted);
+}
+.editorial-site .current-strip > svg {
+  width: 16px;
+  height: 16px;
+}
+.editorial-site .current-strip:hover {
+  color: var(--accent);
+}
+.editorial-site .hero-social {
+  justify-content: end;
+  margin: 0;
+  gap: 24px;
+}
+.hero-social-label {
+  color: var(--muted);
+  font-size: 10px;
+  margin-right: auto;
+}
+
+/* A quiet chapter rail, then content at reading width. */
+.editorial-site .editorial-section {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: clamp(38px, 6vw, 80px);
+  align-items: start;
+  padding-block: var(--section-space);
+  border-top: 1px solid var(--line);
+}
+.editorial-site .section-heading {
+  display: block;
+  margin-bottom: 0;
+}
+.editorial-section > .section-heading {
+  position: sticky;
+  top: 118px;
+}
+.editorial-site .section-heading .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.editorial-site .section-heading h2 {
+  font: 400 clamp(36px, 3.6vw, 48px)/1.12 var(--serif);
+  letter-spacing: -0.045em;
+  margin-top: 20px;
+  text-wrap: balance;
+}
+.editorial-site .section-heading h2 .accent {
+  font-style: normal;
+  font-size: 0.7em;
+}
+.editorial-site .section-aside {
+  font-size: 12px;
+  line-height: 1.9;
+  margin-top: 28px;
+  max-width: 24em;
+  padding: 0;
+}
+.editorial-site .experience-list {
+  border-top: 0;
+  min-width: 0;
+}
+.editorial-site .experience {
+  display: block;
+  padding: 34px 0;
+}
+.editorial-site .experience:first-child {
+  padding-top: 0;
+}
+.editorial-site .experience-time {
+  flex-direction: row;
+  align-items: center;
+  justify-content: start;
+  gap: 18px;
+  margin-bottom: 25px;
+  font-size: 10px;
+}
+.editorial-site .experience-index {
+  margin: 0 0 0 auto;
+  font-size: 10px;
+}
+.editorial-site .company-logo {
+  width: 60px;
+  flex-basis: 60px;
+}
+.editorial-site .company-logo img {
+  max-height: 35px;
+}
+.editorial-site .experience-company {
+  gap: 20px;
+  margin-bottom: 23px;
+}
+.editorial-site .experience-company h3 {
+  font-size: clamp(24px, 2.7vw, 32px);
+  font-weight: 500;
+}
+.editorial-site .company-name {
+  font-size: 10px;
+}
+.editorial-site .experience-body h4 {
+  font: 400 21px/1.65 var(--serif-cjk);
+  margin-bottom: 15px;
+}
+.editorial-site .experience-description {
+  font-size: 13px;
+  line-height: 1.95;
+  max-width: 60em;
+}
+.editorial-site .tags {
+  gap: 8px 15px;
+  margin-top: 17px;
+}
+.editorial-site .tags span {
+  border: 0;
+  padding: 0;
+  font-size: 9px;
+  color: var(--muted);
+}
+.editorial-site .tags span + span::before {
+  content: "/";
+  color: var(--line);
+  margin-right: 12px;
+}
+.work-detail {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.work-detail > summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+}
+.work-detail-count {
+  margin-left: auto;
+  color: var(--muted);
+  font: 10px var(--mono);
+}
+.work-detail-toggle {
+  font-size: 19px;
+  color: var(--accent);
+  transition: rotate 200ms;
+}
+.work-detail[open] .work-detail-toggle {
+  rotate: 45deg;
+}
+.editorial-site .work-highlights {
+  display: block;
+  margin: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.editorial-site .work-highlights > div {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 28px;
+  padding: 18px 0;
+  border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+}
+.editorial-site .work-highlights h5 {
+  font-size: 11px;
+  font-weight: 400;
+  margin: 0;
+}
+.editorial-site .work-highlights p {
+  font-size: 12px;
+  line-height: 1.95;
+}
+.editorial-site .disclosure-note {
+  font-size: 10px;
+  margin-top: 15px;
+}
+.focus-content {
+  min-width: 0;
+}
+.editorial-site .focus-grid {
+  display: block;
+  border: 0;
+}
+.editorial-site .focus-item {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 35px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+.editorial-site .focus-item:first-child {
+  padding-top: 0;
+}
+.editorial-site .focus-item:hover {
+  background: transparent;
+}
+.editorial-site .focus-top {
+  font-size: 9px;
+  justify-content: start;
+  gap: 12px;
+}
+.editorial-site .focus-item h3 {
+  font-size: 21px;
+  font-weight: 500;
+  margin: 13px 0 10px;
+}
+.focus-intro p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.85;
+}
+.editorial-site .focus-item ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 7px 18px;
+  margin: 25px 0 0;
+  line-height: 1.8;
+  font-size: 10px;
+}
+.editorial-site .focus-item li::before {
+  content: "—";
+  color: var(--accent);
+  margin-right: 8px;
+}
+.editorial-site .education {
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding-top: 25px;
+}
+.editorial-site .education .eyebrow {
+  width: 100%;
+  font-size: 9px;
+}
+.editorial-site .education p span {
+  margin-left: 8px;
+}
+
+/* Essay lead + index, instead of equally weighted cards. */
+.writing-content {
+  min-width: 0;
+}
+.editorial-site .writing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 25px;
+}
+.editorial-site .featured-article {
+  grid-template-columns: 0.7fr 1.3fr;
+  background: transparent;
+  border: 1px solid var(--line);
+  margin: 0 0 32px;
+}
+.editorial-site .article-art {
+  min-height: 0;
+}
+.editorial-site .article-art > img {
+  min-height: 300px;
+}
+.editorial-site .art-label {
+  padding: 10px 12px;
+  font-size: 8px;
+  background: rgb(25 30 25 / 80%);
+}
+.editorial-site .featured-copy {
+  padding: 25px 28px;
+}
+.editorial-site .featured-copy > .eyebrow {
+  font-size: 9px;
+}
+.editorial-site .featured-copy h3 {
+  font: 400 25px/1.55 var(--serif-cjk);
+  margin: 18px 0 15px;
+}
+.editorial-site .featured-copy > p {
+  font-size: 12px;
+  line-height: 1.9;
+}
+.editorial-site .featured-copy .article-meta {
+  margin-top: 23px;
+  gap: 9px 15px;
+  font-size: 10px;
+}
+.editorial-site .article-meta .read-label {
+  margin-left: 0;
+  width: 100%;
+  padding-top: 10px;
+}
+.editorial-site .writing-toolbar {
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  margin-top: 18px;
+}
+.editorial-site .article-filters {
+  flex-wrap: wrap;
+  gap: 5px 19px;
+}
+.editorial-site .article-filters button {
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
+  padding: 9px 0;
+  color: var(--muted);
+  font-size: 11px;
+  border-radius: 0;
+}
+.editorial-site .article-filters button[aria-pressed="true"] {
+  background: none;
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.editorial-site .article-search {
+  max-width: none;
+  min-width: 170px;
+  flex: 1;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+.editorial-site .article-search input {
+  min-width: 0;
+  font-size: 12px;
+  width: 100%;
+}
+.editorial-site .results-label {
+  font-size: 10px;
+  padding-block: 16px;
+}
+.editorial-site .article-list {
+  border-top: 1px solid var(--line);
+}
+.editorial-site .article-row {
+  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  gap: 18px;
+  padding: 22px 0;
+}
+.editorial-site .article-row:hover {
+  background: transparent;
+}
+.editorial-site .article-row h3 {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.75;
+}
+.editorial-site .article-row > .mono {
+  font-size: 9px;
+}
+.editorial-site .article-row .article-meta {
+  font-size: 10px;
+  gap: 10px 17px;
+  margin-top: 8px;
+}
+.editorial-site .article-row .article-meta time {
+  font-size: 9px;
+}
+.editorial-site .article-row > svg {
+  width: 14px;
+  height: 14px;
+}
+.editorial-site .article-list-footer {
+  align-items: start;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 24px;
+}
+.editorial-site .article-list-footer > p {
+  max-width: none;
+  font-size: 10px;
+}
+.editorial-site .button {
+  min-height: 42px;
+  font-size: 11px;
+  padding: 9px 18px;
+}
+
+/* A short photographic coda remains the fourth homepage section. */
+.editorial-site .home-travel {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: clamp(38px, 6vw, 80px);
+  align-items: start;
+  padding-block: 84px;
+}
+.home-travel-intro {
+  min-width: 0;
+}
+.editorial-site .home-travel .section-aside a {
+  font-size: 11px;
+  gap: 10px;
+  line-height: 1.9;
+}
+.editorial-site .home-travel-summary {
+  font-size: 10px;
+  margin: 30px 0 12px;
+}
+.home-travel-description {
+  font-size: 12px;
+  line-height: 1.95;
+  color: var(--muted);
+}
+.editorial-site .home-travel-grid {
+  grid-template-columns: 1.3fr 1fr;
+  gap: 25px;
+  align-items: end;
+}
+.editorial-site .home-trip:first-child .home-trip-image {
+  aspect-ratio: 5 / 4;
+}
+.editorial-site .home-trip:not(:first-child) .home-trip-image {
+  aspect-ratio: 4 / 3;
+}
+.editorial-site .home-trip-caption {
+  padding-top: 17px;
+  gap: 12px;
+}
+.editorial-site .home-trip-caption .mono {
+  font-size: 9px;
+  line-height: 1.9;
+  display: block;
+}
+.editorial-site .home-trip-caption h3 {
+  font:
+    400 23px/1.35 var(--serif),
+    var(--serif-cjk);
+  margin-top: 7px;
+}
+.editorial-site .home-trip-caption > svg {
+  width: 14px;
+  height: 14px;
+}
+.editorial-site .home-travel-empty {
+  align-self: center;
+}
+
+/* Contact is a quiet closing page. */
+.editorial-site .site-footer {
+  background: var(--ink);
+  margin-top: 0;
+  padding-top: 42px;
+}
+.editorial-site .footer-top {
+  font-size: 10px;
+}
+.editorial-site .footer-contact {
+  padding: 48px 0;
+  gap: 60px;
+  align-items: center;
+}
+.editorial-site .footer-contact h2 {
+  font: 400 clamp(46px, 6vw, 76px)/1.15 var(--serif);
+  letter-spacing: -0.05em;
+}
+.footer-invitation {
+  font-size: 12px;
+  color: #c6cbbf;
+  margin-top: 20px;
+}
+.editorial-site .contact-email {
+  font: 400 19px/1.6 var(--font-sans);
+  margin-top: 26px;
+  letter-spacing: 0;
+}
+.editorial-site .contact-email svg {
+  width: 18px;
+  height: 18px;
+}
+.editorial-site .spline-study {
+  width: 260px;
+  opacity: 0.7;
+}
+.editorial-site .contact-details {
+  margin-top: 22px;
+}
+.editorial-site .contact-handle dd > span {
+  font-size: 12px;
+}
+.editorial-site .footer-bottom {
+  border-color: #52594f;
+}
+.editorial-site .reader {
+  max-width: 740px;
+}
+.editorial-site .reader h1 {
+  font-family: var(--serif-cjk);
+  font-weight: 400;
+}
+.editorial-site .reader-header {
+  border-bottom-width: 1px;
+}
+
+/* Travel atlas as a sidebar spread; stories as panoramic opening pages. */
+.editorial-site .travel-intro {
+  padding-block: 58px 38px;
+}
+.editorial-site .travel-intro h1 {
+  font: 400 clamp(34px, 4.5vw, 58px)/1.3 var(--serif-cjk);
+  letter-spacing: -0.055em;
+}
+.travel-atlas-layout {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  gap: 55px;
+  align-items: center;
+  padding: 25px 0 35px;
+  border-block: 1px solid var(--line);
+}
+.travel-atlas-intro {
+  min-width: 0;
+}
+.travel-atlas-intro .eyebrow {
+  font-size: 9px;
+  color: var(--muted);
+}
+.travel-atlas-intro h2 {
+  font: 400 40px/1.15 var(--serif);
+  letter-spacing: -0.045em;
+  margin: 21px 0;
+}
+.travel-atlas-intro h2 em {
+  font-weight: 400;
+}
+.travel-atlas-intro p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.travel-atlas-intro dl {
+  display: flex;
+  gap: 35px;
+  margin: 25px 0 0;
+}
+.travel-atlas-intro dt {
+  font-size: 9px;
+  color: var(--muted);
+}
+.travel-atlas-intro dd {
+  font: 400 29px/1.4 var(--serif);
+  margin: 5px 0 0;
+}
+.editorial-site .travel-atlas-layout .travel-atlas {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.editorial-site .travel-atlas-caption {
+  font-size: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.editorial-site .atlas-credit {
+  font-size: 9px;
+}
+.editorial-site .travel-filter {
+  padding-block: 30px 18px;
+  border: 0;
+}
+.editorial-site .travel-filter h2 {
+  font-size: 18px;
+  font-weight: 400;
+}
+.editorial-site .trip-card-grid {
+  grid-template-columns: 1fr;
+  gap: 44px;
+  margin: 20px 0 65px;
+}
+.editorial-site .trip-card {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 42px;
+  align-items: center;
+  padding: 0 0 44px;
+  border-bottom: 1px solid var(--line);
+}
+.editorial-site .trip-card:nth-child(even) {
+  padding-top: 0;
+}
+.editorial-site .trip-card .trip-cover {
+  aspect-ratio: 16 / 10;
+  gap: 3px;
+}
+.trip-card-copy {
+  min-width: 0;
+  padding-right: 12px;
+}
+.editorial-site .trip-card-meta {
+  margin: 0 0 22px;
+  font-size: 10px;
+}
+.editorial-site .trip-card-heading h2 {
+  font:
+    400 clamp(24px, 3vw, 36px)/1.35 var(--serif),
+    var(--serif-cjk);
+}
+.editorial-site .trip-card-arrow {
+  display: none;
+}
+.editorial-site .trip-card-place {
+  font-size: 12px;
+  line-height: 1.9;
+  margin-top: 15px;
+}
+.editorial-site .trip-card-description {
+  -webkit-line-clamp: 3;
+  font-size: 12px;
+  line-height: 1.95;
+  margin-top: 13px;
+}
+.trip-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 40px;
+  font-size: 11px;
+  margin-top: 26px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.trip-card-cta > span {
+  color: var(--accent);
+}
+.editorial-site .story-breadcrumb {
+  font-size: 10px;
+  padding-block: 22px;
+}
+.editorial-site .story-opening {
+  display: block;
+  min-height: 0;
+  border: 0;
+}
+.editorial-site .story-title-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 70px;
+  padding: 30px 0 40px;
+  border-top: 1px solid var(--line);
+  align-items: end;
+}
+.story-title-copy {
+  min-width: 0;
+}
+.editorial-site .story-title-block h1 {
+  font:
+    400 clamp(36px, 5vw, 64px)/1.25 var(--serif),
+    var(--serif-cjk);
+  letter-spacing: -0.05em;
+  margin: 22px 0 15px;
+}
+.editorial-site .story-description {
+  font-size: 13px;
+  max-width: 38em;
+}
+.story-detail-aside {
+  min-width: 0;
+  width: 100%;
+}
+.editorial-site .story-facts {
+  padding: 0;
+  gap: 20px 25px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.editorial-site .story-facts > div:first-child {
+  grid-column: 1 / -1;
+}
+.editorial-site .story-facts dd {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.editorial-site .story-read-link {
+  margin-top: 25px;
+  width: fit-content;
+  font-size: 11px;
+}
+.editorial-site .story-cover-photo {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  max-height: 700px;
+}
+.editorial-site .story-toolbar {
+  padding-block: 17px;
+}
+.editorial-site .story-frames {
+  gap: 70px 7%;
+  margin-block: 52px 75px;
+}
+.editorial-site .story-frame figcaption {
+  font-size: 10px;
+}
+.editorial-site .story-colophon {
+  padding-block: 50px 70px;
+}
+.editorial-site .story-colophon h2 {
+  font: 400 clamp(24px, 3vw, 36px)/1.55 var(--serif-cjk);
+}
+.editorial-site .manager-heading h1 {
+  font-family: var(--serif-cjk);
+  font-weight: 400;
+}
+.editorial-site .manager-publish h2 {
+  font-family: var(--serif-cjk);
+  font-weight: 400;
+}
+
+@media (max-width: 1050px) {
+  .editorial-site .hero-stage {
+    gap: 35px;
+  }
+  .editorial-site .editorial-section,
+  .editorial-site .home-travel {
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 36px;
+  }
+  .editorial-site .section-heading h2 {
+    font-size: 39px;
+  }
+  .editorial-site .work-highlights > div {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 22px;
+  }
+  .editorial-site .focus-item {
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 24px;
+  }
+  .editorial-site .focus-item ul {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+  .editorial-site .featured-copy {
+    padding: 22px;
+  }
+  .editorial-site .featured-copy h3 {
+    font-size: 22px;
+  }
+  .editorial-site .travel-atlas-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 30px;
+  }
+}
+@media (max-width: 760px) {
+  .editorial-site .brand-name {
+    font-size: 22px;
+  }
+  .editorial-site .brand-mark {
+    width: 20px;
+    height: 20px;
+  }
+  .editorial-site .hero {
+    padding-top: 24px;
+    padding-bottom: 50px;
+  }
+  .editorial-site .hero-topline {
+    font-size: 8px;
+  }
+  .editorial-site .hero-topline > span:last-child {
+    display: none;
+  }
+  .editorial-site .hero-stage {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 35px 0;
+  }
+  .editorial-site .hero-title {
+    font-size: clamp(78px, 15vw, 110px);
+  }
+  .editorial-site .hero-title .title-second {
+    margin-left: 32px;
+  }
+  .hero-author {
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+  .hero-lead {
+    margin-top: 22px;
+    font-size: 22px;
+  }
+  .hero-actions {
+    margin-top: 20px;
+  }
+  .hero-exhibit {
+    max-width: 470px;
+    width: 100%;
+    justify-self: center;
+    padding: 18px 22px;
+  }
+  .editorial-site .hero-exhibit .teapot-surface {
+    aspect-ratio: 1.4;
+  }
+  .hero-exhibit-note {
+    margin-top: 15px;
+  }
+  .hero-exhibit-note > .mono {
+    font-size: 7px;
+  }
+  .editorial-site .hero-fractal {
+    inset: 190px -22px 80px 0;
+  }
+  .hero-footer {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .editorial-site .current-strip {
+    grid-template-columns: 90px 1fr auto;
+    padding: 20px 0;
+  }
+  .editorial-site .hero-social {
+    justify-content: start;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+  }
+  .hero-social-label {
+    font-size: 10px;
+  }
+  .editorial-site .editorial-section,
+  .editorial-site .home-travel {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-block: 58px;
+  }
+  .editorial-section > .section-heading {
+    position: static;
+  }
+  .editorial-site .section-heading h2 {
+    font-size: 40px;
+    margin-top: 13px;
+    text-wrap: initial;
+  }
+  .editorial-site .section-aside {
+    margin-top: 17px;
+    max-width: none;
+  }
+  .editorial-site .section-aside br {
+    display: none;
+  }
+  .editorial-site .experience {
+    padding-block: 30px;
+  }
+  .editorial-site .experience-time {
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .editorial-site .experience-company h3 {
+    font-size: 26px;
+  }
+  .editorial-site .company-logo {
+    width: 48px;
+    flex-basis: 48px;
+  }
+  .editorial-site .experience-body h4 {
+    font-size: 20px;
+  }
+  .editorial-site .work-highlights > div {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-block: 17px;
+  }
+  .editorial-site .work-highlights h5 {
+    font-size: 11px;
+  }
+  .editorial-site .focus-item {
+    grid-template-columns: 1fr 1.1fr;
+    gap: 22px;
+    padding-block: 25px;
+  }
+  .editorial-site .focus-item h3 {
+    font-size: 19px;
+  }
+  .editorial-site .focus-top {
+    flex-direction: column;
+    align-items: start;
+    gap: 5px;
+  }
+  .editorial-site .focus-item ul {
+    font-size: 9px;
+    line-height: 1.9;
+  }
+  .editorial-site .education {
+    font-size: 11px;
+  }
+  .editorial-site .featured-article {
+    grid-template-columns: 1fr;
+  }
+  .editorial-site .article-art {
+    aspect-ratio: 16 / 10;
+  }
+  .editorial-site .article-art > img {
+    min-height: 0;
+  }
+  .editorial-site .featured-copy {
+    padding: 25px;
+  }
+  .editorial-site .featured-copy h3 {
+    font-size: 25px;
+  }
+  .editorial-site .writing-toolbar {
+    gap: 15px;
+  }
+  .editorial-site .article-search {
+    flex-basis: 100%;
+  }
+  .editorial-site .article-row {
+    grid-template-columns: 23px minmax(0, 1fr) 16px;
+    gap: 12px;
+  }
+  .editorial-site .article-row > svg {
+    display: block;
+  }
+  .editorial-site .article-row h3 {
+    font-size: 16px;
+  }
+  .editorial-site .home-travel-grid {
+    gap: 18px;
+  }
+  .editorial-site .home-trip-caption h3 {
+    font-size: 20px;
+  }
+  .editorial-site .home-trip-caption > svg {
+    display: none;
+  }
+  .editorial-site .home-travel-summary {
+    margin-top: 20px;
+  }
+  .home-travel-description {
+    display: none;
+  }
+  .editorial-site .footer-top {
+    flex-direction: column;
+    align-items: start;
+    gap: 10px;
+  }
+  .editorial-site .footer-contact {
+    padding-block: 35px;
+    gap: 25px;
+  }
+  .editorial-site .footer-contact h2 {
+    font-size: 50px;
+  }
+  .editorial-site .spline-study {
+    display: none;
+  }
+  .editorial-site .contact-email {
+    font-size: 17px;
+  }
+  .editorial-site .travel-intro {
+    padding-block: 38px 28px;
+  }
+  .editorial-site .travel-atlas-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-block: 28px;
+  }
+  .travel-atlas-intro {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 25px;
+  }
+  .travel-atlas-intro .eyebrow {
+    grid-column: 1;
+    font-size: 8px;
+  }
+  .travel-atlas-intro h2 {
+    grid-column: 1;
+    font-size: 30px;
+    margin: 10px 0;
+  }
+  .travel-atlas-intro > p {
+    display: none;
+  }
+  .travel-atlas-intro dl {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    gap: 20px;
+    align-self: center;
+    margin: 0;
+  }
+  .travel-atlas-intro dd {
+    font-size: 25px;
+  }
+  .editorial-site .trip-card {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding-bottom: 30px;
+  }
+  .editorial-site .trip-card-grid {
+    gap: 32px;
+    margin-bottom: 45px;
+  }
+  .trip-card-copy {
+    padding: 0;
+  }
+  .editorial-site .trip-card-meta {
+    margin-bottom: 12px;
+  }
+  .editorial-site .trip-card-heading h2 {
+    font-size: 28px;
+  }
+  .trip-card-cta {
+    margin-top: 20px;
+  }
+  .editorial-site .story-title-block {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-block: 23px 30px;
+  }
+  .editorial-site .story-title-block h1 {
+    font-size: 39px;
+  }
+  .editorial-site .story-facts {
+    gap: 16px 25px;
+  }
+  .editorial-site .story-facts > div:first-child {
+    grid-column: 1 / -1;
+  }
+  .editorial-site .story-read-link {
+    margin-top: 18px;
+  }
+  .editorial-site .story-cover-photo {
+    aspect-ratio: 4 / 3;
+  }
+  .editorial-site .story-frames {
+    gap: 36px 17px;
+    margin-block: 32px 45px;
+  }
+}
+@media (max-width: 380px) {
+  .editorial-site .hero-title {
+    font-size: 75px;
+  }
+  .editorial-site .hero-exhibit {
+    padding-inline: 16px;
+  }
+  .editorial-site .hero-exhibit-note > .mono {
+    display: none;
+  }
+  .editorial-site .focus-item {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .editorial-site .focus-item ul {
+    grid-template-columns: 1fr 1fr;
+  }
+  .editorial-site .home-travel-grid {
+    grid-template-columns: 1fr;
+  }
+  .editorial-site .home-trip:first-child .home-trip-image {
+    aspect-ratio: 4 / 3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .work-detail-toggle {
+    transition: none;
+  }
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./motion.css";
+import "./design.css";
 import SiteMotion from "@/components/SiteMotion";
 
 export const metadata: Metadata = {
@@ -44,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>
+      <body className="editorial-site">
         <a className="skip-link" href="#main-content">
           跳至主要内容
         </a>

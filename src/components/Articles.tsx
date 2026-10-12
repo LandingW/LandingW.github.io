@@ -91,8 +91,8 @@ export default function Articles({
   };
 
   return (
-    <section id="articles" className="section">
-      <SectionHeading number="03" english="FIELD NOTES" title="思考的切片">
+    <section id="articles" className="section editorial-section">
+      <SectionHeading number="03" english="Field notes" title="思考的切片">
         <div className="writing-links">
           <a className="text-link" href="/feed.xml">
             RSS 订阅 <Arrow diagonal />
@@ -107,128 +107,130 @@ export default function Articles({
           </a>
         </div>
       </SectionHeading>
-      {featured && !normalizedQuery && category === "全部" && (
-        <Link
-          href={`/writing/${featured.slug}/`}
-          className="featured-article"
-          data-reveal
-          data-motion-card
-        >
-          <LightStudy />
-          <div className="featured-copy">
-            <span className="eyebrow">LATEST WRITING / 最新文章</span>
-            <h3>{featured.title}</h3>
-            <p>{featured.excerpt}</p>
-            <ArticleMeta article={featured} featured />
+      <div className="writing-content">
+        {featured && !normalizedQuery && category === "全部" && (
+          <Link
+            href={`/writing/${featured.slug}/`}
+            className="featured-article"
+            data-reveal
+            data-motion-card
+          >
+            <LightStudy />
+            <div className="featured-copy">
+              <span className="eyebrow">LATEST WRITING / 最新文章</span>
+              <h3>{featured.title}</h3>
+              <p>{featured.excerpt}</p>
+              <ArticleMeta article={featured} featured />
+            </div>
+          </Link>
+        )}
+        <div className="writing-toolbar" ref={toolbar}>
+          <div className="article-filters" role="group" aria-label="文章分类">
+            {filters.map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                aria-pressed={category === filter}
+                onClick={() => {
+                  keepToolbarPosition(() => {
+                    setCategory(filter);
+                    setLimit(PAGE_SIZE);
+                  });
+                }}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
-        </Link>
-      )}
-      <div className="writing-toolbar" ref={toolbar}>
-        <div className="article-filters" role="group" aria-label="文章分类">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              aria-pressed={category === filter}
-              onClick={() => {
+          <label className="article-search">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+            >
+              <circle cx="10" cy="10" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <input
+              type="search"
+              aria-label="搜索文章"
+              placeholder="搜索标题、内容或关键词"
+              value={query}
+              onChange={(event) => {
+                const value = event.target.value;
                 keepToolbarPosition(() => {
-                  setCategory(filter);
+                  setQuery(value);
                   setLimit(PAGE_SIZE);
                 });
               }}
+            />
+          </label>
+        </div>
+        <p className="results-label" role="status" aria-live="polite">
+          {filtered.length} 篇文字{query.trim() && ` · 搜索「${query.trim()}」`}
+        </p>
+        <div className="article-list" key={category}>
+          {filtered.slice(0, limit).map((article, index) => (
+            <Link
+              className="article-row"
+              data-reveal
+              data-reveal-index={index % 4}
+              key={article.slug}
+              href={`/writing/${article.slug}/`}
             >
-              {filter}
-            </button>
+              <span className="mono">{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h3>{article.title}</h3>
+                <ArticleMeta article={article} />
+              </div>
+              <Arrow diagonal />
+            </Link>
           ))}
         </div>
-        <label className="article-search">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <circle cx="10" cy="10" r="6" />
-            <path d="m15 15 5 5" />
-          </svg>
-          <input
-            type="search"
-            aria-label="搜索文章"
-            placeholder="搜索标题、内容或关键词"
-            value={query}
-            onChange={(event) => {
-              const value = event.target.value;
-              keepToolbarPosition(() => {
-                setQuery(value);
-                setLimit(PAGE_SIZE);
-              });
-            }}
-          />
-        </label>
-      </div>
-      <p className="results-label" role="status" aria-live="polite">
-        {filtered.length} 篇文字{query.trim() && ` · 搜索「${query.trim()}」`}
-      </p>
-      <div className="article-list" key={category}>
-        {filtered.slice(0, limit).map((article, index) => (
-          <Link
-            className="article-row"
-            data-reveal
-            data-reveal-index={index % 4}
-            key={article.slug}
-            href={`/writing/${article.slug}/`}
-          >
-            <span className="mono">{String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <h3>{article.title}</h3>
-              <ArticleMeta article={article} />
-            </div>
-            <Arrow diagonal />
-          </Link>
-        ))}
-      </div>
-      {filtered.length === 0 && (
-        <div className="empty-state">
-          <h3>还没有找到这篇文字。</h3>
-          <p>换一个关键词，或回到全部文章看看。</p>
-          <button
-            type="button"
-            className="button button-outline"
-            onClick={reset}
-          >
-            清除筛选 <Arrow />
-          </button>
-        </div>
-      )}
-      <div className="article-list-footer">
-        <p>
-          知乎索引更新于 {syncedAt.replaceAll("-", ".")} · 已存档{" "}
-          {articles.filter((article) => article.hasFullContent).length}{" "}
-          篇全文，其余保留摘要
-        </p>
-        {filtered.length > limit ? (
-          <button
-            className="button button-outline"
-            type="button"
-            onClick={() => setLimit(limit + PAGE_SIZE)}
-          >
-            继续阅读 · 还有 {filtered.length - limit} 篇{" "}
-            <span aria-hidden="true">+</span>
-          </button>
-        ) : (
-          filtered.length > PAGE_SIZE && (
+        {filtered.length === 0 && (
+          <div className="empty-state">
+            <h3>还没有找到这篇文字。</h3>
+            <p>换一个关键词，或回到全部文章看看。</p>
+            <button
+              type="button"
+              className="button button-outline"
+              onClick={reset}
+            >
+              清除筛选 <Arrow />
+            </button>
+          </div>
+        )}
+        <div className="article-list-footer">
+          <p>
+            知乎索引更新于 {syncedAt.replaceAll("-", ".")} · 已存档{" "}
+            {articles.filter((article) => article.hasFullContent).length}{" "}
+            篇全文，其余保留摘要
+          </p>
+          {filtered.length > limit ? (
             <button
               className="button button-outline"
               type="button"
-              onClick={() => setLimit(PAGE_SIZE)}
+              onClick={() => setLimit(limit + PAGE_SIZE)}
             >
-              收起列表 −
+              继续阅读 · 还有 {filtered.length - limit} 篇{" "}
+              <span aria-hidden="true">+</span>
             </button>
-          )
-        )}
+          ) : (
+            filtered.length > PAGE_SIZE && (
+              <button
+                className="button button-outline"
+                type="button"
+                onClick={() => setLimit(PAGE_SIZE)}
+              >
+                收起列表 −
+              </button>
+            )
+          )}
+        </div>
       </div>
     </section>
   );

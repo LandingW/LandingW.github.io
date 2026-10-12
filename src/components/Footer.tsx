@@ -14,10 +14,11 @@ export default function Footer() {
       <div className="footer-contact" data-reveal>
         <div>
           <h2>
-            LET’S
-            <br />
-            BUILD<span>.</span>
+            Let’s talk<span>.</span>
           </h2>
+          <p className="footer-invitation">
+            关于图形、引擎，或下一个有趣的想法。
+          </p>
           <a href={`mailto:${profile.email}`} className="contact-email">
             {profile.email}
             <Arrow diagonal />

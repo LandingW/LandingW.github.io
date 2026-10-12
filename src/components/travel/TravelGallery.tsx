@@ -149,13 +149,38 @@ export default function TravelGallery() {
               <Link href="/travel/manage/">记录一次旅行 ↗</Link>
             </div>
           </section>
-          <WorldMap
-            albums={manifest.albums}
-            photos={manifest.photos}
-            mapConfig={config}
-            selected={selected}
-            onSelect={(id) => navigate(id)}
-          />
+          <div className="travel-atlas-layout">
+            <aside className="travel-atlas-intro">
+              <span className="eyebrow">THE TRAVEL INDEX</span>
+              <h2>
+                Places,
+                <br />
+                <em>remembered.</em>
+              </h2>
+              <p>
+                在地图上回看，
+                <br />
+                在照片里走近。
+              </p>
+              <dl>
+                <div>
+                  <dt>旅行手记</dt>
+                  <dd>{String(manifest.albums.length).padStart(2, "0")}</dd>
+                </div>
+                <div>
+                  <dt>影像记录</dt>
+                  <dd>{String(manifest.photos.length).padStart(2, "0")}</dd>
+                </div>
+              </dl>
+            </aside>
+            <WorldMap
+              albums={manifest.albums}
+              photos={manifest.photos}
+              mapConfig={config}
+              selected={selected}
+              onSelect={(id) => navigate(id)}
+            />
+          </div>
         </>
       )}
       <section
@@ -243,27 +268,32 @@ export default function TravelGallery() {
                         mediaBase={config.mediaUrl}
                         sharedTransition
                       />
-                      <div className="trip-card-meta">
-                        <span className="mono">
-                          {String(tripIndex + 1).padStart(2, "0")} /{" "}
-                          {trip.date || "旅行记录"}
+                      <div className="trip-card-copy">
+                        <div className="trip-card-meta">
+                          <span className="mono">
+                            {String(tripIndex + 1).padStart(2, "0")} /{" "}
+                            {trip.date || "旅行记录"}
+                          </span>
+                          <span>{count} 张照片</span>
+                        </div>
+                        <div className="trip-card-heading">
+                          <h2>{trip.title}</h2>
+                          <span className="trip-card-arrow" aria-hidden="true">
+                            ↗
+                          </span>
+                        </div>
+                        {trip.place && (
+                          <p className="trip-card-place">{trip.place}</p>
+                        )}
+                        {trip.description && (
+                          <p className="trip-card-description">
+                            {trip.description}
+                          </p>
+                        )}
+                        <span className="trip-card-cta">
+                          翻开这段旅程 <span aria-hidden="true">↗</span>
                         </span>
-                        <span>{count} 张照片</span>
                       </div>
-                      <div className="trip-card-heading">
-                        <h2>{trip.title}</h2>
-                        <span className="trip-card-arrow" aria-hidden="true">
-                          ↗
-                        </span>
-                      </div>
-                      {trip.place && (
-                        <p className="trip-card-place">{trip.place}</p>
-                      )}
-                      {trip.description && (
-                        <p className="trip-card-description">
-                          {trip.description}
-                        </p>
-                      )}
                     </a>
                   );
                 })}

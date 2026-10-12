@@ -4,8 +4,8 @@ import SectionHeading from "./SectionHeading";
 
 export default function Experience() {
   return (
-    <section id="experience" className="section">
-      <SectionHeading number="01" english="SELECTED WORK" title="工作与经历">
+    <section id="experience" className="section editorial-section">
+      <SectionHeading number="01" english="Selected work" title="工作与经历">
         <p>
           从理解光，到构建世界。
           <br />
@@ -54,18 +54,29 @@ export default function Experience() {
                 ))}
               </div>
               {item.highlights.length > 0 && (
-                <div className="work-highlights">
-                  {item.highlights.map((highlight, index) => (
-                    <div
-                      key={highlight.title}
-                      data-reveal
-                      data-reveal-index={index % 2}
-                    >
-                      <h5>{highlight.title}</h5>
-                      <p>{highlight.desc}</p>
-                    </div>
-                  ))}
-                </div>
+                <details className="work-detail" open={item.current}>
+                  <summary>
+                    <span>技术职责与实践</span>
+                    <span className="work-detail-count">
+                      {item.highlights.length} 个方向
+                    </span>
+                    <span className="work-detail-toggle" aria-hidden="true">
+                      +
+                    </span>
+                  </summary>
+                  <div className="work-highlights">
+                    {item.highlights.map((highlight, index) => (
+                      <div
+                        key={highlight.title}
+                        data-reveal
+                        data-reveal-index={index % 2}
+                      >
+                        <h5>{highlight.title}</h5>
+                        <p>{highlight.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
               )}
               {item.current && (
                 <p className="disclosure-note">

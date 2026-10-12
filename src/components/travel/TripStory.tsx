@@ -47,37 +47,41 @@ export default function TripStory({
       </div>
       <header className="story-opening">
         <div className="story-title-block">
-          <p className="eyebrow">
-            <span className="status-dot" /> 旅行手记
-          </p>
-          <h1 tabIndex={-1}>
-            {album.title}
-            <span className="accent">.</span>
-          </h1>
-          {album.description && (
-            <p className="story-description">{album.description}</p>
-          )}
-          <dl className="story-facts">
-            {album.place && (
-              <div>
-                <dt>目的地</dt>
-                <dd>{album.place}</dd>
-              </div>
+          <div className="story-title-copy">
+            <p className="eyebrow">
+              <span className="status-dot" /> 旅行手记
+            </p>
+            <h1 tabIndex={-1}>
+              {album.title}
+              <span className="accent">.</span>
+            </h1>
+            {album.description && (
+              <p className="story-description">{album.description}</p>
             )}
-            {album.date && (
+          </div>
+          <div className="story-detail-aside">
+            <dl className="story-facts">
+              {album.place && (
+                <div>
+                  <dt>目的地</dt>
+                  <dd>{album.place}</dd>
+                </div>
+              )}
+              {album.date && (
+                <div>
+                  <dt>旅行日期</dt>
+                  <dd className="mono">{album.date}</dd>
+                </div>
+              )}
               <div>
-                <dt>旅行日期</dt>
-                <dd className="mono">{album.date}</dd>
+                <dt>影像记录</dt>
+                <dd>{String(photos.length).padStart(2, "0")} 张照片</dd>
               </div>
-            )}
-            <div>
-              <dt>影像记录</dt>
-              <dd>{String(photos.length).padStart(2, "0")} 张照片</dd>
-            </div>
-          </dl>
-          <a className="story-read-link" href="#story-frames">
-            翻开这段旅程 <span aria-hidden="true">↓</span>
-          </a>
+            </dl>
+            <a className="story-read-link" href="#story-frames">
+              翻开这段旅程 <span aria-hidden="true">↓</span>
+            </a>
+          </div>
         </div>
         {cover && (
           <button
