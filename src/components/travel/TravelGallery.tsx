@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -75,8 +75,9 @@ export default function TravelGallery() {
     return () => window.removeEventListener("popstate", sync);
   }, []);
   const album = manifest.albums.find((item) => item.id === selected);
-  const photos = manifest.photos.filter(
-    (item) => !album || item.albumId === album.id,
+  const photos = useMemo(
+    () => manifest.photos.filter((item) => !album || item.albumId === album.id),
+    [manifest.photos, album],
   );
   const photo = photos.find((item) => item.id === photoId);
   const index = photo ? photos.indexOf(photo) : -1;
@@ -91,6 +92,7 @@ export default function TravelGallery() {
     if (trip && !selected) overviewScroll.current = window.scrollY;
     const update = () => {
       const url = new URL(window.location.href);
+      if (trip !== selected) url.hash = "";
       if (trip) url.searchParams.set("trip", trip);
       else url.searchParams.delete("trip");
       if (id) url.searchParams.set("photo", id);

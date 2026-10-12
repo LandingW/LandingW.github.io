@@ -11,6 +11,8 @@ Next.js 16 / React 19 / TypeScript，静态导出到 GitHub Pages。
 
 全站增加一套原生动效：导航跟随底色、手机菜单分层展开、阅读进度线、滚动错落入场、照片卡片轻视差及旅行封面共享元素过渡。动画参数集中于 `src/lib/ui-motion.ts` / `src/app/motion.css`；`SiteMotion` 只增强标记节点，不隐藏服务端正文，处理动态照片、键盘聚焦和清理。粗指针不启用鼠标视差，减少动态效果与静态模式会跳过装饰性动画。从 `#travel` 等内容锚点进入时不重播开场降噪。文章筛选保持工具栏位置，避免置顶卡片变化造成跳动。验证记录见 [动效与 UI 验收](docs/MOTION-QA.md)。
 
+旅行详情升级为地图册式摄影手记：照片与国家轮廓并列、地点／影像／拍摄档案章节导航、详细地图与编号地点列表联动、GPS 同地照片预览和真实 EXIF 参数汇总。国家轮廓使用按需加载的 Natural Earth 50m 数据；小岛缺失时仅以明确国家名称回退，不猜测点位。旅行定位不会代替单张 GPS，也不连线虚构行程。样式位于 `src/app/travel/journey.css`，组件位于 `src/components/travel/Trip*`；继续直接读取 R2 清单，不增加管理步骤、付费地图服务或每次上传后的重新构建。详见 [旅行详情验收](docs/JOURNEY-QA.md)。
+
 置顶文章自动选择最新发布时间；工作历史显示公司图标和公开技术职责。联系方式在 `src/lib/resume.ts` 中集中维护，QQ / 微信支持点击复制。
 
 THINK IN PIXELS 首屏背景轮流绘制递归分枝、Sierpiński 三角形、Koch 雪花和 Heighway 龙曲线。每种为 2 秒生长、1 秒保持、2 秒消退，四种一轮约 20 秒；离屏和后台暂停，静态模式或减少动态效果偏好下显示静态图。算法、顺序与时长集中在 `src/lib/fractal-growth.ts`，播放控制位于 `src/components/GrowingFractal.tsx`。

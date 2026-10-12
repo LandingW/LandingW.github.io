@@ -84,8 +84,10 @@ test("travel story uses a chosen hero, real photo proportions and no fabricated 
   assert.match(html, /b\/revision\/preview.jpg/);
   assert.match(html, /story-frame is-portrait|story-frame  is-portrait/);
   assert.match(html, /照片索引/);
-  assert.doesNotMatch(html, /目的地|拍摄设备 \/|Google 地点/);
-  assert.equal((html.match(/<figure/g) || []).length, 2);
+  assert.doesNotMatch(html, /<dt>目的地<\/dt>|拍摄设备 \/|Google 地点/);
+  assert.match(html, /这段旅程还没有公开的坐标/);
+  assert.match(html, /机身型号未记录/);
+  assert.equal((html.match(/<figure class="story-frame/g) || []).length, 2);
 });
 test("travel is the fourth menu item linked to the homepage preview", () => {
   const html = renderToStaticMarkup(createElement(Header));

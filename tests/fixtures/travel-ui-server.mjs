@@ -6,6 +6,22 @@ import path from "node:path";
 const root = await realpath("out");
 const config = JSON.parse(await readFile("public/travel-config.json", "utf8"));
 const manifest = await (await fetch(`${config.mediaUrl}/manifest.json`)).json();
+// Synthetic GPS for exercising detail-map linking; never written to the service.
+if (process.env.PHOTO_UI_DETAIL_FIXTURE === "1") {
+  const target = manifest.albums.find((album) => album.latitude !== null);
+  if (target) {
+    const samples = manifest.photos.filter(
+      (photo) => photo.albumId === target.id,
+    );
+    samples.slice(0, 3).forEach((photo, index) => {
+      photo.caption = `仅本机测试 · 点位 ${index + 1}`;
+      photo.location = {
+        latitude: target.latitude + (index < 2 ? 0.015 : -0.02),
+        longitude: target.longitude + (index < 2 ? 0.035 : -0.03),
+      };
+    });
+  }
+}
 // Explicit opt-in sample coordinates for pin/preview tests; never user travel data.
 if (process.env.PHOTO_UI_MAP_FIXTURE === "1") {
   manifest.albums = manifest.albums.map((album, i) => ({
