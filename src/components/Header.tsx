@@ -41,6 +41,13 @@ export default function Header({
             Land1ngW<span className="accent">.</span>
           </span>
         </Link>
+        <Link
+          href="/travel/"
+          className="header-travel-link"
+          aria-current={travel ? "page" : undefined}
+        >
+          <span aria-hidden="true">↗</span> 旅行足迹
+        </Link>
         <button
           type="button"
           className="menu-toggle"
@@ -81,15 +88,6 @@ export default function Header({
               <span className="nav-dot" />
             </Link>
           ))}
-          <Link
-            href="/travel/"
-            className={travel ? "is-active" : ""}
-            aria-current={travel ? "page" : undefined}
-            onClick={() => setOpen(false)}
-          >
-            <span className="nav-index">04</span>旅行
-            <span className="nav-dot" />
-          </Link>
           <Link
             className="nav-contact"
             href="/#contact"

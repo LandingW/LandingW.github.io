@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -23,6 +29,12 @@ import EquipmentFields from "./EquipmentFields";
 import PhotoEquipmentEditor from "./PhotoEquipmentEditor";
 import TripCover from "./TripCover";
 import { googleMapsLink } from "@/lib/trip-presentation";
+import {
+  albumForm,
+  formFingerprint,
+  moveCover,
+  publicationCheck,
+} from "@/lib/travel-editor";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
 const GoogleMapView = dynamic(() => import("./GoogleMapView"), { ssr: false });
@@ -54,17 +66,7 @@ interface State {
   usedBytes: number;
   maxBytes: number;
 }
-const blank = {
-  title: "",
-  description: "",
-  place: "",
-  date: "",
-  latitude: "",
-  longitude: "",
-  googlePlaceId: null as string | null,
-  coverPhotoIds: [] as string[],
-  equipmentDefaults: {} as CameraEquipment,
-};
+const blank = albumForm();
 const statuses: Record<string, string> = {
   uploading: "上传未完成",
   queued: "等待处理",
@@ -81,6 +83,20 @@ export default function TravelManager() {
     [selected, setSelected] = useState("");
   const [form, setForm] = useState(blank),
     [showMap, setShowMap] = useState(false);
+  const [savedForm, setSavedForm] = useState(blank);
+  const [step, setStep] = useState<"details" | "photos" | "publish">("details");
+  const [photoFilter, setPhotoFilter] = useState("all");
+  const [pendingSwitch, setPendingSwitch] = useState<string | null>(null);
+  const [dirtyEquipment, setDirtyEquipment] = useState<Record<string, boolean>>(
+    {},
+  );
+  const equipmentDirty = useCallback((id: string, dirty: boolean) => {
+    setDirtyEquipment((old) =>
+      old[id] === dirty ? old : { ...old, [id]: dirty },
+    );
+  }, []);
+  const dirty = formFingerprint(form) !== formFingerprint(savedForm);
+  const unsaved = dirty || Object.values(dirtyEquipment).some(Boolean);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -93,6 +109,37 @@ export default function TravelManager() {
   const [mapsForm, setMapsForm] = useState({ apiKey: "", mapId: "" });
   const abort = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!unsaved && !progress) return;
+    const guard = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const linkGuard = (event: MouseEvent) => {
+      const link = (event.target as Element).closest<HTMLAnchorElement>(
+        "a[href]",
+      );
+      if (
+        !link ||
+        link.target === "_blank" ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      )
+        return;
+      if (new URL(link.href).pathname === window.location.pathname) return;
+      if (!window.confirm("有未保存的修改或上传任务，确定离开编辑页？")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", guard);
+    document.addEventListener("click", linkGuard, true);
+    return () => {
+      window.removeEventListener("beforeunload", guard);
+      document.removeEventListener("click", linkGuard, true);
+    };
+  }, [unsaved, progress]);
   useEffect(() => {
     let alive = true;
     void loadTravelConfig()
@@ -155,24 +202,55 @@ export default function TravelManager() {
     }
   }
   function selectAlbum(id: string) {
+    if (id === selected && id) return;
+    if (unsaved) {
+      setPendingSwitch(id);
+      return;
+    }
+    applyAlbumSelection(id);
+  }
+  function applyAlbumSelection(id: string) {
+    setPendingSwitch(null);
     setSelected(id);
     setShowMap(false);
     const album = state?.albums.find((a) => a.id === id);
-    setForm(
-      album
-        ? {
-            title: album.title,
-            description: album.description,
-            place: album.place,
-            date: album.date,
-            latitude: album.latitude === null ? "" : String(album.latitude),
-            longitude: album.longitude === null ? "" : String(album.longitude),
-            googlePlaceId: album.googlePlaceId || null,
-            coverPhotoIds: album.coverPhotoIds || [],
-            equipmentDefaults: album.equipmentDefaults || {},
-          }
-        : blank,
-    );
+    const next = albumForm(album);
+    setForm(next);
+    setSavedForm(next);
+    setDirtyEquipment({});
+    setPhotoFilter("all");
+    setStep("details");
+    setError("");
+    setMessage("");
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("trip", id);
+    else url.searchParams.delete("trip");
+    window.history.replaceState({}, "", url);
+  }
+  async function saveAlbum() {
+    const data = albumInput(form);
+    let id = selected;
+    if (id)
+      await photoApi(config!.apiUrl, token, `/admin/albums/${id}/edit`, data);
+    else {
+      const created = await photoApi<{ id: string }>(
+        config!.apiUrl,
+        token,
+        "/admin/albums",
+        data,
+      );
+      id = created.id;
+      setSelected(id);
+      setStep("photos");
+      const url = new URL(window.location.href);
+      url.searchParams.set("trip", id);
+      window.history.replaceState({}, "", url);
+    }
+    const next = albumForm({ id, ...data });
+    setForm(next);
+    setSavedForm(next);
+    await refresh();
+    setMessage("旅行信息与封面已保存。");
   }
   function login(event: FormEvent) {
     event.preventDefault();
@@ -188,28 +266,13 @@ export default function TravelManager() {
       const requestedTrip = new URLSearchParams(window.location.search).get(
         "trip",
       );
-      const requestedAlbum = next.albums.find(
-        (album) => album.id === requestedTrip,
-      );
+      const requestedAlbum =
+        next.albums.find((album) => album.id === requestedTrip) ||
+        next.albums[0];
       if (requestedAlbum) {
         setSelected(requestedAlbum.id);
-        setForm({
-          title: requestedAlbum.title,
-          description: requestedAlbum.description,
-          place: requestedAlbum.place,
-          date: requestedAlbum.date,
-          latitude:
-            requestedAlbum.latitude === null
-              ? ""
-              : String(requestedAlbum.latitude),
-          longitude:
-            requestedAlbum.longitude === null
-              ? ""
-              : String(requestedAlbum.longitude),
-          googlePlaceId: requestedAlbum.googlePlaceId || null,
-          coverPhotoIds: requestedAlbum.coverPhotoIds || [],
-          equipmentDefaults: requestedAlbum.equipmentDefaults || {},
-        });
+        setForm(albumForm(requestedAlbum));
+        setSavedForm(albumForm(requestedAlbum));
       }
     });
   }
@@ -231,9 +294,18 @@ export default function TravelManager() {
             controller.signal,
           );
         }
-        setMessage(
-          `${picked.length} 张已上传。点击“处理待办照片”开始生成高清切片。`,
-        );
+        try {
+          await photoApi(config!.apiUrl, token, "/admin/process", {
+            albumId: selected,
+          });
+          setMessage(
+            `${picked.length} 张已上传，高清处理已启动。你可以继续编辑，处理完成后再发布。`,
+          );
+        } catch {
+          setMessage(
+            `${picked.length} 张原片已安全上传，但自动处理未启动。请点击“处理当前旅行的待办照片”重试，不必重复上传。`,
+          );
+        }
       } finally {
         setProgress(null);
         abort.current = null;
@@ -243,6 +315,17 @@ export default function TravelManager() {
     });
   }
   const active = state?.albums.find((album) => album.id === selected);
+  const tripPhotos = (state?.photos || []).filter(
+    (photo) => photo.album_id === selected,
+  );
+  const check = publicationCheck(tripPhotos, unsaved);
+  const visiblePhotos = tripPhotos.filter(
+    (photo) =>
+      photoFilter === "all" ||
+      (photoFilter === "covers"
+        ? form.coverPhotoIds.includes(photo.id)
+        : photo.state !== "ready"),
+  );
   const previewPhotos: TravelPhoto[] = (state?.photos || [])
     .filter((photo) => photo.state === "ready" && photo.thumbnail)
     .sort(
@@ -363,9 +446,17 @@ export default function TravelManager() {
               <button
                 disabled={busy}
                 onClick={() => {
+                  if (
+                    unsaved &&
+                    !window.confirm("放弃未保存的修改并退出管理？")
+                  )
+                    return;
                   setToken("");
                   setState(null);
                   setSelected("");
+                  setForm(blank);
+                  setSavedForm(blank);
+                  setDirtyEquipment({});
                 }}
               >
                 退出
@@ -436,54 +527,96 @@ export default function TravelManager() {
               </button>
             </form>
           </details>
-          <div className="manager-layout">
-            <section className="manager-album">
-              <div className="manager-section-title">
-                <h2>01 / 旅行信息</h2>
-                <button disabled={busy} onClick={() => selectAlbum("")}>
-                  新建 ＋
+          <div className="manager-trip-selector">
+            <div className="manager-section-title">
+              <h2>{active ? active.title : "新建一次旅行"}</h2>
+              <button disabled={busy} onClick={() => selectAlbum("")}>
+                新建 ＋
+              </button>
+            </div>
+            <label>
+              选择旅行
+              <select
+                value={selected}
+                disabled={busy}
+                onChange={(event) => selectAlbum(event.target.value)}
+              >
+                <option value="">新建一次旅行</option>
+                {state?.albums.map((album) => (
+                  <option key={album.id} value={album.id}>
+                    {album.title}
+                    {album.published ? " · 已发布" : " · 草稿"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <nav className="manager-steps" aria-label="旅行编辑步骤">
+            {(
+              [
+                ["details", "01", "旅行信息"],
+                ["photos", "02", "照片与封面"],
+                ["publish", "03", "发布检查"],
+              ] as const
+            ).map(([id, number, label]) => (
+              <button
+                key={id}
+                disabled={busy || (id !== "details" && !selected)}
+                aria-current={step === id ? "step" : undefined}
+                onClick={() => setStep(id)}
+              >
+                <span className="mono">{number}</span>
+                {label}
+                {id === "photos" && <small>{tripPhotos.length}</small>}
+              </button>
+            ))}
+          </nav>
+          {pendingSwitch !== null && (
+            <div className="manager-switch-guard" role="alert">
+              <strong>当前旅行还有未保存的修改</strong>
+              <p>切换前可以先保存，或留在这里继续编辑。</p>
+              <div className="manager-actions">
+                <button
+                  className="travel-button"
+                  onClick={() => setPendingSwitch(null)}
+                >
+                  继续编辑
+                </button>
+                <button
+                  disabled={busy || Object.values(dirtyEquipment).some(Boolean)}
+                  onClick={() =>
+                    void run(async () => {
+                      const id = pendingSwitch;
+                      await saveAlbum();
+                      applyAlbumSelection(id);
+                    })
+                  }
+                >
+                  保存旅行后切换
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() => applyAlbumSelection(pendingSwitch)}
+                >
+                  放弃修改并切换
                 </button>
               </div>
-              <label>
-                选择旅行
-                <select
-                  value={selected}
-                  disabled={busy}
-                  onChange={(event) => selectAlbum(event.target.value)}
-                >
-                  <option value="">新建一次旅行</option>
-                  {state?.albums.map((album) => (
-                    <option key={album.id} value={album.id}>
-                      {album.title}
-                      {album.published ? " · 已发布" : " · 草稿"}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {Object.values(dirtyEquipment).some(Boolean) && (
+                <p>单张设备修改请先回到对应照片保存。</p>
+              )}
+            </div>
+          )}
+          <div className="manager-layout">
+            <section className="manager-album" hidden={step !== "details"}>
+              <h2>给这段旅程一个名字</h2>
+              <p className="manager-help">
+                先写下地点与简短记录。日期、坐标和设备可以稍后补充。
+              </p>
               <form
+                id="trip-editor"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  void run(async () => {
-                    const data = albumInput(form);
-                    if (selected)
-                      await photoApi(
-                        config.apiUrl,
-                        token,
-                        `/admin/albums/${selected}/edit`,
-                        data,
-                      );
-                    else {
-                      const created = await photoApi<{ id: string }>(
-                        config.apiUrl,
-                        token,
-                        "/admin/albums",
-                        data,
-                      );
-                      setSelected(created.id);
-                    }
-                    await refresh();
-                    setMessage("旅行信息已保存，可以继续上传照片。");
-                  });
+                  void run(saveAlbum);
                 }}
               >
                 <fieldset disabled={busy}>
@@ -676,32 +809,88 @@ export default function TravelManager() {
                       disabled={busy}
                     />
                   </details>
-                  {active && (
-                    <div className="manager-cover-preview">
-                      <h3>
-                        旅行封面 ·{" "}
-                        {form.coverPhotoIds.length
-                          ? `${form.coverPhotoIds.length} 张已选`
-                          : "自动组合四张"}
-                      </h3>
-                      <TripCover
-                        album={{ ...active, coverPhotoIds: form.coverPhotoIds }}
-                        photos={previewPhotos}
-                        mediaBase={config.mediaUrl}
-                      />
-                      <p className="manager-help">
-                        在下方照片列表勾选最多四张封面；不勾选时自动选择不同位置的照片。
-                      </p>
-                    </div>
-                  )}
-                  <button className="travel-button" type="submit">
-                    {selected ? "保存旅行信息" : "创建旅行"}
-                  </button>
                 </fieldset>
               </form>
             </section>
-            <section className="manager-upload">
-              <h2>02 / 上传照片</h2>
+            <section className="manager-upload" hidden={step !== "photos"}>
+              <h2>照片与封面</h2>
+              {active && (
+                <div className="manager-cover-workspace">
+                  <div className="manager-cover-preview">
+                    <TripCover
+                      album={{ ...active, coverPhotoIds: form.coverPhotoIds }}
+                      photos={previewPhotos}
+                      mediaBase={config.mediaUrl}
+                    />
+                  </div>
+                  <div>
+                    <h3>
+                      {form.coverPhotoIds.length
+                        ? `${form.coverPhotoIds.length} 张封面已选`
+                        : "自动组合封面"}
+                    </h3>
+                    <p className="manager-help">
+                      在下方勾选最多四张。第一张也是旅行手记的大幅封面，使用箭头调整顺序。
+                    </p>
+                    <ol className="cover-order">
+                      {form.coverPhotoIds.map((id, index) => (
+                        <li key={id}>
+                          <span>
+                            {index + 1}.{" "}
+                            {tripPhotos.find((photo) => photo.id === id)
+                              ?.filename || "照片"}
+                          </span>
+                          <button
+                            disabled={busy || index === 0}
+                            aria-label={`封面 ${index + 1} 前移`}
+                            onClick={() =>
+                              setForm((old) => ({
+                                ...old,
+                                coverPhotoIds: moveCover(
+                                  old.coverPhotoIds,
+                                  id,
+                                  -1,
+                                ),
+                              }))
+                            }
+                          >
+                            ↑
+                          </button>
+                          <button
+                            disabled={
+                              busy || index === form.coverPhotoIds.length - 1
+                            }
+                            aria-label={`封面 ${index + 1} 后移`}
+                            onClick={() =>
+                              setForm((old) => ({
+                                ...old,
+                                coverPhotoIds: moveCover(
+                                  old.coverPhotoIds,
+                                  id,
+                                  1,
+                                ),
+                              }))
+                            }
+                          >
+                            ↓
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                    {form.coverPhotoIds.length > 0 && (
+                      <button
+                        className="travel-text-button"
+                        disabled={busy}
+                        onClick={() =>
+                          setForm((old) => ({ ...old, coverPhotoIds: [] }))
+                        }
+                      >
+                        恢复自动封面
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <p>
                 JPEG、PNG、WebP · 单张最多 64MiB
                 <br />
@@ -752,7 +941,7 @@ export default function TravelManager() {
                 className="travel-button is-secondary"
                 disabled={
                   busy ||
-                  !state?.photos.some(
+                  !tripPhotos.some(
                     (photo) =>
                       ["queued", "processing"].includes(photo.state) ||
                       ["queued", "processing"].includes(photo.metadata_state),
@@ -773,41 +962,329 @@ export default function TravelManager() {
               >
                 {selected ? "处理当前旅行的待办照片" : "处理全部待办照片"}
               </button>
-              <div className="manager-publish">
-                <h2>03 / 确认发布</h2>
-                <p>
-                  处理完成不代表公开。点发布后，当前旅行中已准备好的照片才会出现在网站。
-                </p>
-                <div className="manager-actions">
-                  <button
-                    className="travel-button"
-                    disabled={
-                      busy ||
-                      !active ||
-                      !state?.photos.some(
-                        (photo) =>
-                          photo.album_id === selected &&
-                          photo.state === "ready",
+            </section>
+            <section className="manager-publish" hidden={step !== "publish"}>
+              <p className="eyebrow">READY WHEN YOU ARE</p>
+              <h2>最后看一眼，再分享。</h2>
+              <ul className="publish-checklist">
+                <li data-ok={!unsaved}>
+                  <span>{unsaved ? "○" : "✓"}</span>
+                  {unsaved
+                    ? "还有未保存的旅行或单张设备修改"
+                    : "所有编辑已保存"}
+                </li>
+                <li data-ok={check.ready > 0 && !check.unfinished}>
+                  <span>
+                    {check.ready > 0 && !check.unfinished ? "✓" : "○"}
+                  </span>
+                  {check.ready} 张照片准备完成
+                  {check.unfinished
+                    ? `，${check.unfinished} 张尚未完成，请先处理或取消未完成上传`
+                    : ""}
+                </li>
+                <li>
+                  <span>↗</span>
+                  {active?.place ||
+                    (active?.googlePlaceId
+                      ? "已关联 Google 地点"
+                      : "未填写旅行地点；有公开 GPS 的照片仍可生成足迹")}
+                </li>
+              </ul>
+              <p>
+                发布将公开当前旅行全部已完成照片，以及你允许公开的设备信息和精确
+                GPS。
+              </p>
+              <p>
+                处理完成不代表公开。点发布后，当前旅行中已准备好的照片才会出现在网站。
+              </p>
+              <div className="manager-actions">
+                <button
+                  className="travel-button"
+                  disabled={busy || !active || !check.canPublish}
+                  onClick={() =>
+                    void run(async () => {
+                      if (
+                        !window.confirm(
+                          `确认发布「${active?.title}」的 ${check.ready} 张照片？公开清单约 60 秒刷新。`,
+                        )
                       )
-                    }
+                        return;
+                      await photoApi(
+                        config.apiUrl,
+                        token,
+                        `/admin/albums/${selected}/publish`,
+                        {},
+                      );
+                      await refresh();
+                      setMessage(
+                        "已发布。公开列表缓存约 60 秒，之后刷新旅行页即可看到。",
+                      );
+                    })
+                  }
+                >
+                  {active?.published ? "更新已发布旅行" : "确认发布旅行"}
+                </button>
+                {active?.published === 1 && (
+                  <button
+                    disabled={busy}
                     onClick={() =>
                       void run(async () => {
                         await photoApi(
                           config.apiUrl,
                           token,
-                          `/admin/albums/${selected}/publish`,
+                          `/admin/albums/${selected}/unpublish`,
                           {},
                         );
                         await refresh();
                         setMessage(
-                          "已发布。公开列表缓存约 60 秒，之后刷新旅行页即可看到。",
+                          "已从旅行列表撤下。已公开图片的直链和缓存不会因此失效。",
                         );
                       })
                     }
                   >
-                    发布当前旅行
+                    从列表撤下
                   </button>
-                  {active?.published === 1 && (
+                )}
+              </div>
+            </section>
+          </div>
+          <section className="manager-jobs" hidden={step !== "photos"}>
+            <div className="manager-section-title">
+              <h2>
+                这次旅行的照片{" "}
+                <span className="mono">/ {tripPhotos.length}</span>
+              </h2>
+              <div className="photo-filters" aria-label="筛选照片">
+                {[
+                  ["all", "全部"],
+                  ["covers", "已选封面"],
+                  ["pending", "待处理"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    aria-pressed={photoFilter === id}
+                    onClick={() => setPhotoFilter(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!visiblePhotos.length && (
+              <p className="manager-help">
+                {tripPhotos.length
+                  ? "当前筛选没有照片。"
+                  : "还没有照片，上传后会在这里显示。"}
+              </p>
+            )}
+            {tripPhotos.length ? (
+              tripPhotos.map((photo) => (
+                <div
+                  className="manager-job"
+                  key={photo.id}
+                  hidden={!visiblePhotos.includes(photo)}
+                >
+                  <div>
+                    {photo.thumbnail && (
+                      <div className="manager-photo-preview">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`${config.mediaUrl}/${photo.thumbnail}`}
+                          alt=""
+                          width={96}
+                          height={72}
+                          loading="lazy"
+                        />
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={(selected === photo.album_id
+                              ? form.coverPhotoIds
+                              : state?.albums.find(
+                                  (album) => album.id === photo.album_id,
+                                )?.coverPhotoIds || []
+                            ).includes(photo.id)}
+                            disabled={busy || photo.state !== "ready"}
+                            onChange={() => toggleCover(photo)}
+                          />
+                          选作旅行封面
+                        </label>
+                      </div>
+                    )}
+                    <strong>{photo.filename}</strong>
+                    <span>
+                      {(photo.bytes / 1_000_000).toFixed(1)} MB
+                      {photo.derived_bytes
+                        ? ` · 展示文件 ${(photo.derived_bytes / 1_000_000).toFixed(1)} MB`
+                        : ""}
+                    </span>
+                    {photo.error && <p>{photo.error}</p>}
+                    {photo.state === "ready" && (
+                      <details className="manager-exif">
+                        <summary>
+                          拍摄信息
+                          {cameraName(photo.camera)
+                            ? ` · ${cameraName(photo.camera)}`
+                            : ""}
+                          {["queued", "processing"].includes(
+                            photo.metadata_state,
+                          )
+                            ? " · 正在读取 EXIF…"
+                            : ""}
+                        </summary>
+                        <PhotoFacts
+                          camera={photo.camera}
+                          sources={photo.equipmentSources}
+                        />
+                        <PhotoEquipmentEditor
+                          key={`${photo.id}:${JSON.stringify(photo.equipment || {})}`}
+                          equipment={photo.equipment || {}}
+                          photoId={photo.id}
+                          onDirtyChange={equipmentDirty}
+                          disabled={busy}
+                          onSave={async (equipment) => {
+                            await run(async () => {
+                              await photoApi(
+                                config.apiUrl,
+                                token,
+                                `/admin/photos/${photo.id}/equipment`,
+                                equipment,
+                              );
+                              await refresh();
+                              setMessage(
+                                "设备信息已保存，原始 EXIF 和切片未修改。",
+                              );
+                            });
+                          }}
+                        />
+                        {photo.metadata_error && (
+                          <p role="status">{photo.metadata_error}</p>
+                        )}
+                        {photo.gps ? (
+                          <>
+                            <p className="mono">
+                              GPS {photo.gps.latitude.toFixed(6)},{" "}
+                              {photo.gps.longitude.toFixed(6)}
+                            </p>
+                            <label>
+                              照片位置
+                              <select
+                                disabled={busy}
+                                value={photo.location_mode || "exact"}
+                                onChange={(event) =>
+                                  void run(async () => {
+                                    await photoApi(
+                                      config.apiUrl,
+                                      token,
+                                      `/admin/photos/${photo.id}/location`,
+                                      { mode: event.target.value },
+                                    );
+                                    await refresh();
+                                    setMessage("照片位置显示方式已更新。");
+                                  })
+                                }
+                              >
+                                <option value="exact">
+                                  随照片公开精确 GPS
+                                </option>
+                                <option value="hidden">
+                                  不公开这张照片的 GPS
+                                </option>
+                              </select>
+                            </label>
+                            <button
+                              disabled={busy}
+                              onClick={() =>
+                                setGpsPreview(
+                                  gpsPreview === photo.id ? "" : photo.id,
+                                )
+                              }
+                            >
+                              {gpsPreview === photo.id
+                                ? "收起地图"
+                                : "自动定位拍摄位置 ↗"}
+                            </button>
+                            {gpsPreview === photo.id && (
+                              <LocationMap
+                                latitude={photo.gps.latitude}
+                                longitude={photo.gps.longitude}
+                                place="照片 GPS 拍摄位置"
+                                mapConfig={config}
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <p className="manager-help">
+                            没有可用
+                            GPS，不会猜测位置。部分相机需要开启手机位置同步才能写入
+                            GPS。
+                          </p>
+                        )}
+                        <div className="manager-actions">
+                          {(photo.gps || photo.camera?.capturedAt) && (
+                            <button
+                              disabled={busy}
+                              onClick={() => {
+                                setForm((old) => ({
+                                  ...old,
+                                  ...(photo.gps
+                                    ? {
+                                        latitude: String(photo.gps.latitude),
+                                        googlePlaceId: null,
+                                        longitude: String(photo.gps.longitude),
+                                      }
+                                    : {}),
+                                  ...(photo.camera?.capturedAt
+                                    ? {
+                                        date: photo.camera.capturedAt.slice(
+                                          0,
+                                          10,
+                                        ),
+                                      }
+                                    : {}),
+                                }));
+                                if (photo.gps) setShowMap(true);
+                                setStep("details");
+                                setMessage(
+                                  "已填入旅行日期/参考点，确认后点击保存旅行信息。",
+                                );
+                              }}
+                            >
+                              用这张照片填入旅行信息
+                            </button>
+                          )}
+                          <button
+                            disabled={
+                              busy ||
+                              ["queued", "processing"].includes(
+                                photo.metadata_state,
+                              )
+                            }
+                            onClick={() =>
+                              void run(async () => {
+                                await photoApi(
+                                  config.apiUrl,
+                                  token,
+                                  `/admin/photos/${photo.id}/read-metadata`,
+                                  {},
+                                );
+                                await refresh();
+                                setMessage(
+                                  "已启动 EXIF 补读，不会重新生成切片。",
+                                );
+                              })
+                            }
+                          >
+                            重新读取 EXIF
+                          </button>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                  <span>
+                    {photo.published ? "已发布" : statuses[photo.state]}
+                  </span>
+                  {photo.state === "failed" && (
                     <button
                       disabled={busy}
                       onClick={() =>
@@ -815,278 +1292,87 @@ export default function TravelManager() {
                           await photoApi(
                             config.apiUrl,
                             token,
-                            `/admin/albums/${selected}/unpublish`,
+                            `/admin/photos/${photo.id}/retry`,
                             {},
                           );
                           await refresh();
-                          setMessage(
-                            "已从旅行列表撤下。已公开图片的直链和缓存不会因此失效。",
-                          );
+                          setMessage("已放回待办，请点击处理待办照片。");
                         })
                       }
                     >
-                      从列表撤下
+                      重试
                     </button>
                   )}
-                </div>
-              </div>
-            </section>
-          </div>
-          <section className="manager-jobs">
-            <h2>照片状态</h2>
-            {state?.photos.length ? (
-              state.photos
-                .filter((photo) => !selected || photo.album_id === selected)
-                .map((photo) => (
-                  <div className="manager-job" key={photo.id}>
-                    <div>
-                      {photo.thumbnail && (
-                        <div className="manager-photo-preview">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`${config.mediaUrl}/${photo.thumbnail}`}
-                            alt=""
-                            width={96}
-                            height={72}
-                            loading="lazy"
-                          />
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={(selected === photo.album_id
-                                ? form.coverPhotoIds
-                                : state.albums.find(
-                                    (album) => album.id === photo.album_id,
-                                  )?.coverPhotoIds || []
-                              ).includes(photo.id)}
-                              disabled={busy || photo.state !== "ready"}
-                              onChange={() => toggleCover(photo)}
-                            />
-                            选作旅行封面
-                          </label>
-                        </div>
-                      )}
-                      <strong>{photo.filename}</strong>
-                      <span>
-                        {(photo.bytes / 1_000_000).toFixed(1)} MB
-                        {photo.derived_bytes
-                          ? ` · 展示文件 ${(photo.derived_bytes / 1_000_000).toFixed(1)} MB`
-                          : ""}
-                      </span>
-                      {photo.error && <p>{photo.error}</p>}
-                      {photo.state === "ready" && (
-                        <details className="manager-exif">
-                          <summary>
-                            拍摄信息
-                            {cameraName(photo.camera)
-                              ? ` · ${cameraName(photo.camera)}`
-                              : ""}
-                            {["queued", "processing"].includes(
-                              photo.metadata_state,
-                            )
-                              ? " · 正在读取 EXIF…"
-                              : ""}
-                          </summary>
-                          <PhotoFacts
-                            camera={photo.camera}
-                            sources={photo.equipmentSources}
-                          />
-                          <PhotoEquipmentEditor
-                            key={`${photo.id}:${JSON.stringify(photo.equipment || {})}`}
-                            equipment={photo.equipment || {}}
-                            disabled={busy}
-                            onSave={async (equipment) => {
-                              await run(async () => {
-                                await photoApi(
-                                  config.apiUrl,
-                                  token,
-                                  `/admin/photos/${photo.id}/equipment`,
-                                  equipment,
-                                );
-                                await refresh();
-                                setMessage(
-                                  "设备信息已保存，原始 EXIF 和切片未修改。",
-                                );
-                              });
-                            }}
-                          />
-                          {photo.metadata_error && (
-                            <p role="status">{photo.metadata_error}</p>
-                          )}
-                          {photo.gps ? (
-                            <>
-                              <p className="mono">
-                                GPS {photo.gps.latitude.toFixed(6)},{" "}
-                                {photo.gps.longitude.toFixed(6)}
-                              </p>
-                              <label>
-                                照片位置
-                                <select
-                                  disabled={busy}
-                                  value={photo.location_mode || "exact"}
-                                  onChange={(event) =>
-                                    void run(async () => {
-                                      await photoApi(
-                                        config.apiUrl,
-                                        token,
-                                        `/admin/photos/${photo.id}/location`,
-                                        { mode: event.target.value },
-                                      );
-                                      await refresh();
-                                      setMessage("照片位置显示方式已更新。");
-                                    })
-                                  }
-                                >
-                                  <option value="exact">
-                                    随照片公开精确 GPS
-                                  </option>
-                                  <option value="hidden">
-                                    不公开这张照片的 GPS
-                                  </option>
-                                </select>
-                              </label>
-                              <button
-                                disabled={busy}
-                                onClick={() =>
-                                  setGpsPreview(
-                                    gpsPreview === photo.id ? "" : photo.id,
-                                  )
-                                }
-                              >
-                                {gpsPreview === photo.id
-                                  ? "收起地图"
-                                  : "自动定位拍摄位置 ↗"}
-                              </button>
-                              {gpsPreview === photo.id && (
-                                <LocationMap
-                                  latitude={photo.gps.latitude}
-                                  longitude={photo.gps.longitude}
-                                  place="照片 GPS 拍摄位置"
-                                  mapConfig={config}
-                                />
-                              )}
-                            </>
-                          ) : (
-                            <p className="manager-help">
-                              没有可用
-                              GPS，不会猜测位置。部分相机需要开启手机位置同步才能写入
-                              GPS。
-                            </p>
-                          )}
-                          <div className="manager-actions">
-                            {(photo.gps || photo.camera?.capturedAt) && (
-                              <button
-                                disabled={busy}
-                                onClick={() => {
-                                  selectAlbum(photo.album_id);
-                                  setForm((old) => ({
-                                    ...old,
-                                    ...(photo.gps
-                                      ? {
-                                          latitude: String(photo.gps.latitude),
-                                          googlePlaceId: null,
-                                          longitude: String(
-                                            photo.gps.longitude,
-                                          ),
-                                        }
-                                      : {}),
-                                    ...(photo.camera?.capturedAt
-                                      ? {
-                                          date: photo.camera.capturedAt.slice(
-                                            0,
-                                            10,
-                                          ),
-                                        }
-                                      : {}),
-                                  }));
-                                  if (photo.gps) setShowMap(true);
-                                  setMessage(
-                                    "已填入旅行日期/参考点，确认后点击保存旅行信息。",
-                                  );
-                                }}
-                              >
-                                用这张照片填入旅行信息
-                              </button>
-                            )}
-                            <button
-                              disabled={
-                                busy ||
-                                ["queued", "processing"].includes(
-                                  photo.metadata_state,
-                                )
-                              }
-                              onClick={() =>
-                                void run(async () => {
-                                  await photoApi(
-                                    config.apiUrl,
-                                    token,
-                                    `/admin/photos/${photo.id}/read-metadata`,
-                                    {},
-                                  );
-                                  await refresh();
-                                  setMessage(
-                                    "已启动 EXIF 补读，不会重新生成切片。",
-                                  );
-                                })
-                              }
-                            >
-                              重新读取 EXIF
-                            </button>
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                    <span>
-                      {photo.published ? "已发布" : statuses[photo.state]}
-                    </span>
-                    {photo.state === "failed" && (
-                      <button
-                        disabled={busy}
-                        onClick={() =>
+                  {photo.state === "uploading" && (
+                    <button
+                      disabled={busy}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            "取消这个未完成的上传并释放额度？已成功发布的照片不受影响。",
+                          )
+                        )
                           void run(async () => {
                             await photoApi(
                               config.apiUrl,
                               token,
-                              `/admin/photos/${photo.id}/retry`,
+                              `/admin/uploads/${photo.id}/abort`,
                               {},
                             );
                             await refresh();
-                            setMessage("已放回待办，请点击处理待办照片。");
-                          })
-                        }
-                      >
-                        重试
-                      </button>
-                    )}
-                    {photo.state === "uploading" && (
-                      <button
-                        disabled={busy}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "取消这个未完成的上传并释放额度？已成功发布的照片不受影响。",
-                            )
-                          )
-                            void run(async () => {
-                              await photoApi(
-                                config.apiUrl,
-                                token,
-                                `/admin/uploads/${photo.id}/abort`,
-                                {},
-                              );
-                              await refresh();
-                            });
-                        }}
-                      >
-                        取消未完成上传
-                      </button>
-                    )}
-                  </div>
-                ))
+                          });
+                      }}
+                    >
+                      取消未完成上传
+                    </button>
+                  )}
+                </div>
+              ))
             ) : (
               <p>还没有上传照片。</p>
             )}
           </section>
+          <div className="manager-savebar">
+            <div>
+              <strong>
+                {busy
+                  ? "正在保存或处理…"
+                  : dirty
+                    ? "有未保存的旅行修改"
+                    : "旅行信息已保存"}
+              </strong>
+              <span>
+                {Object.values(dirtyEquipment).some(Boolean)
+                  ? "单张设备修改请在对应照片下保存"
+                  : "封面、地点与默认设备随旅行信息一起保存"}
+              </span>
+            </div>
+            <div className="manager-savebar-actions">
+              {active?.published === 1 && (
+                <Link
+                  href={`/travel/?trip=${selected}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  查看线上 ↗
+                </Link>
+              )}
+              <button
+                className="travel-button"
+                disabled={busy || (!dirty && Boolean(selected))}
+                onClick={() => {
+                  if (!form.title.trim()) {
+                    setStep("details");
+                    setError("请先填写旅行标题。");
+                    return;
+                  }
+                  void run(saveAlbum);
+                }}
+              >
+                {selected ? "保存修改" : "创建旅行并添加照片"}
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>

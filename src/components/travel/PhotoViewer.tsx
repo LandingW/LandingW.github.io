@@ -36,8 +36,11 @@ export default function PhotoViewer({
   const closeButton = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   const viewer = useRef<OpenSeadragon.Viewer | null>(null);
+  const [instance, setInstance] = useState<OpenSeadragon.Viewer | null>(null);
   const [status, setStatus] = useState("正在加载高清切片…");
-  const [drawn, setDrawn] = useState(false);
+  const [drawnSource, setDrawnSource] = useState("");
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const deviceLine = [
     cameraName(photo.camera),
@@ -54,6 +57,7 @@ export default function PhotoViewer({
     document.body.style.overflow = "hidden";
     closeButton.current?.focus();
     return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
       document.body.style.overflow = overflow;
       previous?.focus();
     };
@@ -68,7 +72,6 @@ export default function PhotoViewer({
         ).matches;
         const instance = OSD({
           element: stage.current,
-          tileSources: mediaUrl(mediaBase, photo.dzi),
           showNavigationControl: false,
           showNavigator: false,
           showSequenceControl: false,
@@ -92,7 +95,8 @@ export default function PhotoViewer({
           },
         });
         viewer.current = instance;
-        instance.addOnceHandler("tile-drawn", () => setDrawn(true));
+        instance.addHandler("close", () => setDrawnSource(""));
+        setInstance(instance);
         instance.addHandler("open", () =>
           setStatus("滚轮或双指缩放 · 拖动查看细节"),
         );
@@ -109,16 +113,34 @@ export default function PhotoViewer({
       viewer.current?.destroy();
       viewer.current = null;
     };
-  }, [mediaBase, photo.dzi]);
+  }, [mediaBase]);
+  useEffect(() => {
+    if (!instance) return;
+    const drawn = () => setDrawnSource(photo.dzi);
+    instance.close();
+    instance.addOnceHandler("tile-drawn", drawn);
+    instance.open({ tileSource: mediaUrl(mediaBase, photo.dzi) });
+    return () => instance.removeHandler("tile-drawn", drawn);
+  }, [instance, mediaBase, photo.dzi]);
+  function requestClose() {
+    if (closing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onClose();
+      return;
+    }
+    setClosing(true);
+    closeTimer.current = setTimeout(onClose, 170);
+  }
   return createPortal(
     <div
       ref={dialog}
-      className="photo-viewer"
+      className={`photo-viewer${closing ? " is-closing" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={photo.caption || "高清照片"}
       onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
+        if (closing) return;
+        if (event.key === "Escape") requestClose();
         if (!(event.target as HTMLElement).closest(".photo-info-panel")) {
           if (event.key === "ArrowLeft") onMove(-1);
           if (event.key === "ArrowRight") onMove(1);
@@ -157,14 +179,14 @@ export default function PhotoViewer({
           >
             拍摄信息
           </button>
-          <button ref={closeButton} onClick={onClose}>
+          <button ref={closeButton} onClick={requestClose}>
             关闭 ×
           </button>
         </div>
       </div>
       <div className="viewer-image-area">
         {/* The preview remains below the tiled renderer during slow or failed requests. */}
-        {!drawn && (
+        {drawnSource !== photo.dzi && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             className="viewer-preview"
