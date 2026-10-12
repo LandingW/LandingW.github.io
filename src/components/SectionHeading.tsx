@@ -10,7 +10,7 @@ export default function SectionHeading({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="section-heading">
+    <div className="section-heading" data-reveal>
       <div>
         <p className="eyebrow">
           <span className="section-number">{number}</span> / {title}

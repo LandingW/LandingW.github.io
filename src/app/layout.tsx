@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./motion.css";
+import SiteMotion from "@/components/SiteMotion";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://landingw.github.io"),
@@ -47,6 +49,7 @@ export default function RootLayout({
           跳至主要内容
         </a>
         {children}
+        <SiteMotion />
       </body>
     </html>
   );

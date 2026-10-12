@@ -1,0 +1,369 @@
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-ui: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-fast: 160ms;
+  --motion-medium: 320ms;
+  --motion-reveal: 620ms;
+}
+
+/* The attribute is only applied after an offscreen element is observed. */
+[data-reveal-state="pending"] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+[data-reveal-state="pending"]:focus-within {
+  opacity: 1;
+  transform: none;
+}
+.site-header {
+  view-transition-name: site-header;
+}
+.reading-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(var(--reading-progress, 0));
+  transform-origin: left;
+  pointer-events: none;
+}
+.main-nav {
+  position: relative;
+  isolation: isolate;
+}
+.nav-tracker {
+  position: absolute;
+  z-index: -1;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: var(--nav-width, 0px);
+  transform: translateX(var(--nav-left, 0px));
+  opacity: var(--nav-visible, 0);
+  border-radius: 3px;
+  background: var(--paper-deep);
+  transition:
+    transform var(--motion-medium) var(--ease-out),
+    width var(--motion-medium) var(--ease-out),
+    opacity var(--motion-fast) ease;
+  pointer-events: none;
+}
+.main-nav > a .nav-dot {
+  display: none;
+}
+.main-nav > a {
+  transition: color var(--motion-fast) ease;
+}
+.menu-toggle {
+  align-items: center;
+  gap: 10px;
+}
+.menu-toggle-mark {
+  display: inline-block;
+  font-size: 20px;
+  line-height: 1;
+  transition: transform var(--motion-medium) var(--ease-out);
+}
+.menu-toggle[data-open="true"] .menu-toggle-mark {
+  transform: rotate(45deg);
+}
+
+/* Press feedback preserves the native cursor and the original hit target. */
+.button,
+.travel-button,
+.viewer-controls button,
+.menu-toggle,
+.story-view-switch button,
+.article-filters button,
+.manager-steps button {
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    scale var(--motion-fast) var(--ease-out);
+}
+.button:active,
+.travel-button:active,
+.viewer-controls button:active,
+.menu-toggle:active,
+.story-view-switch button:active,
+.article-filters button:active {
+  scale: 0.97;
+}
+.button:disabled,
+.travel-button:disabled {
+  scale: 1;
+}
+.text-link > svg,
+.section-aside a > svg,
+.home-trip-caption > svg,
+.article-row > svg,
+.nav-contact > svg {
+  transition: transform var(--motion-medium) var(--ease-out);
+}
+.text-link:hover > svg,
+.section-aside a:hover > svg,
+.home-trip:hover .home-trip-caption > svg,
+.article-row:hover > svg,
+.nav-contact:hover > svg {
+  transform: translate(3px, -3px);
+}
+.article-row {
+  position: relative;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease;
+}
+.article-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24%;
+  height: 52%;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--motion-medium) var(--ease-out);
+}
+.article-row:hover::before,
+.article-row:focus-visible::before {
+  transform: scaleY(1);
+}
+.article-row h3 {
+  transition:
+    color 200ms ease,
+    translate var(--motion-medium) var(--ease-out);
+}
+.article-row:hover h3 {
+  translate: 4px 0;
+}
+.article-filters button {
+  border-radius: 2px;
+}
+.focus-item {
+  position: relative;
+  transition: background var(--motion-medium) ease;
+}
+.focus-item::after {
+  content: "";
+  position: absolute;
+  inset: -2px 0 auto;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 400ms var(--ease-out);
+}
+.focus-item:hover {
+  background: color-mix(in srgb, var(--paper-deep) 65%, transparent);
+}
+.focus-item:hover::after {
+  transform: scaleX(1);
+}
+.tags span {
+  transition:
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+.tags span:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-motion="full"]
+    [data-motion-card]
+    :is(.home-trip-image img, .trip-cover-main img, .article-art > img) {
+    transform: translate3d(var(--motion-x, 0px), var(--motion-y, 0px), 0)
+      scale(var(--motion-zoom, 1));
+    transition: transform 300ms var(--ease-out);
+  }
+  html[data-motion="full"]
+    [data-motion-card]:focus-visible
+    :is(.home-trip-image img, .trip-cover-main img, .article-art > img) {
+    transform: scale(1.025);
+  }
+}
+.home-trip-image,
+.trip-cover-main,
+.article-art {
+  overflow: hidden;
+}
+.story-frame button {
+  isolation: isolate;
+}
+html .story-cover-photo .story-cover-sharp {
+  opacity: 0;
+  transition:
+    opacity 240ms ease,
+    transform var(--motion-reveal) var(--ease-out);
+}
+html .story-cover-photo[data-cover-ready="true"] .story-cover-sharp {
+  opacity: 1;
+}
+.story-frame button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgb(255 255 255 / 0%);
+  pointer-events: none;
+  transition: border-color 200ms ease;
+}
+.story-frame button:hover::after {
+  border-color: rgb(255 255 255 / 35%);
+}
+
+/* Native View Transitions interpolate only the matching travel cover. */
+::view-transition-group(*) {
+  animation-duration: 440ms;
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(site-header) {
+  animation: none;
+  opacity: 0;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+::view-transition-image-pair(*) {
+  isolation: auto;
+}
+
+@media (max-width: 760px) {
+  .nav-tracker {
+    display: none;
+  }
+  .main-nav,
+  .main-nav.is-open {
+    position: absolute;
+    top: 68px;
+    left: 0;
+    right: 0;
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition:
+      opacity 200ms ease,
+      transform 260ms var(--ease-out),
+      visibility 0s 260ms;
+    box-shadow: 0 16px 24px rgb(27 36 30 / 5%);
+  }
+  .main-nav.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition-delay: 0s;
+  }
+  .main-nav > a {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      color 160ms,
+      opacity 180ms,
+      transform 260ms var(--ease-out);
+  }
+  .main-nav.is-open > a {
+    opacity: 1;
+    transform: none;
+  }
+  .main-nav.is-open > a:nth-of-type(2) {
+    transition-delay: 25ms;
+  }
+  .main-nav.is-open > a:nth-of-type(3) {
+    transition-delay: 50ms;
+  }
+  .main-nav.is-open > a:nth-of-type(4) {
+    transition-delay: 75ms;
+  }
+  .main-nav.is-open > a:nth-of-type(5) {
+    transition-delay: 100ms;
+  }
+}
+html[data-motion="reduced"] [data-reveal-state="pending"] {
+  opacity: 1;
+  transform: none;
+}
+html[data-motion="reduced"] [data-motion-card] img {
+  transform: none !important;
+}
+html[data-motion="reduced"]
+  :is(
+    .nav-tracker,
+    .menu-toggle-mark,
+    .main-nav,
+    .main-nav > a,
+    .button,
+    .travel-button,
+    .article-row,
+    .article-row h3,
+    .focus-item,
+    .focus-item::after,
+    .article-row::before,
+    [data-motion-card] img,
+    .article-list,
+    .story-frames,
+    .story-contact-sheet
+  ) {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal-state="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+  .nav-tracker,
+  .story-cover-photo .story-cover-sharp,
+  .menu-toggle-mark,
+  .main-nav,
+  .main-nav > a,
+  .button,
+  .travel-button,
+  .viewer-controls button,
+  .article-row,
+  .article-row h3,
+  .article-row::before,
+  .focus-item,
+  .focus-item::after,
+  .text-link > svg,
+  .section-aside a > svg,
+  .home-trip-caption > svg,
+  .article-row > svg,
+  .nav-contact > svg,
+  .story-view-switch button,
+  .article-filters button,
+  .manager-steps button {
+    transition: none !important;
+  }
+  .button:active,
+  .travel-button:active,
+  .viewer-controls button:active,
+  .menu-toggle:active,
+  .story-view-switch button:active,
+  .article-filters button:active {
+    scale: 1;
+  }
+  .article-row:hover h3 {
+    translate: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+@media print {
+  [data-reveal-state="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+  .reading-progress {
+    display: none;
+  }
+}

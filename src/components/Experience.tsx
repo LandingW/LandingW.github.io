@@ -17,6 +17,7 @@ export default function Experience() {
           <article
             key={item.department}
             className={`experience ${item.current ? "experience-current" : ""}`}
+            data-reveal
           >
             <div className="experience-time">
               <span className="mono">{item.period}</span>
@@ -54,8 +55,12 @@ export default function Experience() {
               </div>
               {item.highlights.length > 0 && (
                 <div className="work-highlights">
-                  {item.highlights.map((highlight) => (
-                    <div key={highlight.title}>
+                  {item.highlights.map((highlight, index) => (
+                    <div
+                      key={highlight.title}
+                      data-reveal
+                      data-reveal-index={index % 2}
+                    >
                       <h5>{highlight.title}</h5>
                       <p>{highlight.desc}</p>
                     </div>

@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { navSections } from "@/lib/resume";
 import { Arrow } from "./Icons";
 import FractalMark from "./FractalMark";
+import { useMediaQuery } from "@/lib/use-media-query";
+
+function placeIndicator(nav: HTMLElement | null, link: HTMLElement | null) {
+  if (!nav) return;
+  if (!link || window.matchMedia("(max-width: 760px)").matches) {
+    nav.style.setProperty("--nav-visible", "0");
+    return;
+  }
+  nav.style.setProperty("--nav-left", `${link.offsetLeft - 10}px`);
+  nav.style.setProperty("--nav-width", `${link.offsetWidth + 20}px`);
+  nav.style.setProperty("--nav-visible", "1");
+}
 
 export default function Header({
   article = false,
@@ -15,6 +27,18 @@ export default function Header({
 }) {
   const [active, setActive] = useState("");
   const [open, setOpen] = useState(false);
+  const nav = useRef<HTMLElement>(null);
+  const mobile = useMediaQuery("(max-width: 760px)");
+  useEffect(() => {
+    const element = nav.current;
+    if (!element) return;
+    const measure = () =>
+      placeIndicator(element, element.querySelector<HTMLElement>(".is-active"));
+    const resize = new ResizeObserver(measure);
+    resize.observe(element);
+    measure();
+    return () => resize.disconnect();
+  }, [active, article, travel, mobile]);
 
   useEffect(() => {
     if (article || travel) return;
@@ -47,14 +71,41 @@ export default function Header({
           aria-label={open ? "关闭导航" : "打开导航"}
           aria-expanded={open}
           aria-controls="main-nav"
+          data-open={open}
           onClick={() => setOpen(!open)}
         >
-          {open ? "关闭 −" : "菜单 +"}
+          <span>{open ? "关闭" : "菜单"}</span>
+          <span className="menu-toggle-mark" aria-hidden="true">
+            +
+          </span>
         </button>
         <nav
           id="main-nav"
+          ref={nav}
+          inert={mobile && !open}
           className={`main-nav ${open ? "is-open" : ""}`}
           aria-label="主导航"
+          onPointerLeave={() =>
+            placeIndicator(
+              nav.current,
+              nav.current?.querySelector<HTMLElement>(".is-active") || null,
+            )
+          }
+          onFocusCapture={(event) =>
+            placeIndicator(
+              nav.current,
+              (event.target as HTMLElement).closest<HTMLElement>(
+                "[data-nav-section]",
+              ),
+            )
+          }
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget))
+              placeIndicator(
+                nav.current,
+                nav.current?.querySelector<HTMLElement>(".is-active") || null,
+              );
+          }}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               setOpen(false);
@@ -64,9 +115,15 @@ export default function Header({
             }
           }}
         >
+          <span className="nav-tracker" aria-hidden="true" />
           {navSections.map((section, index) => (
             <Link
               key={section.id}
+              data-nav-section={section.id}
+              onPointerEnter={(event) => {
+                if (event.pointerType === "mouse")
+                  placeIndicator(nav.current, event.currentTarget);
+              }}
               href={`/#${section.id}`}
               onClick={() => setOpen(false)}
               className={
@@ -77,7 +134,9 @@ export default function Header({
                   : ""
               }
               aria-current={
-                active === section.id || (travel && section.id === "travel")
+                active === section.id ||
+                (travel && section.id === "travel") ||
+                (article && section.id === "articles")
                   ? "location"
                   : undefined
               }
@@ -96,6 +155,11 @@ export default function Header({
           </Link>
         </nav>
       </div>
+      <div
+        className="reading-progress"
+        data-reading-progress
+        aria-hidden="true"
+      />
     </header>
   );
 }

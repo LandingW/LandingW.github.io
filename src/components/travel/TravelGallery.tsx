@@ -217,6 +217,9 @@ export default function TravelGallery() {
                   return (
                     <a
                       className="trip-card"
+                      data-reveal
+                      data-reveal-index={tripIndex % 2}
+                      data-motion-card
                       key={trip.id}
                       data-trip={trip.id}
                       href={`?trip=${trip.id}`}
@@ -238,6 +241,7 @@ export default function TravelGallery() {
                         album={trip}
                         photos={manifest.photos}
                         mediaBase={config.mediaUrl}
+                        sharedTransition
                       />
                       <div className="trip-card-meta">
                         <span className="mono">

@@ -10,6 +10,9 @@ export default function HomepageWarmup({ children }: { children: ReactNode }) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const staticMode =
       new URLSearchParams(window.location.search).get("graphics") === "static";
+    const anchored = Boolean(
+      window.location.hash && window.location.hash !== "#home",
+    );
     const displacements =
       filters.current?.querySelectorAll("feDisplacementMap") ?? [];
     const densities = filters.current?.querySelectorAll("feFuncA") ?? [];
@@ -44,7 +47,7 @@ export default function HomepageWarmup({ children }: { children: ReactNode }) {
       if (reducedMotion.matches) finish();
     };
     frame = requestAnimationFrame(
-      reducedMotion.matches || staticMode ? finish : update,
+      reducedMotion.matches || staticMode || anchored ? finish : update,
     );
     document.addEventListener("pointerdown", finish, {
       once: true,

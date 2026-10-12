@@ -11,7 +11,7 @@ export default function Footer() {
         <span className="mono">05 / KEEP IN TOUCH</span>
         <span>有趣的想法，值得一次交流。</span>
       </div>
-      <div className="footer-contact">
+      <div className="footer-contact" data-reveal>
         <div>
           <h2>
             LET’S

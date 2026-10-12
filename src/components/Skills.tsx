@@ -8,8 +8,13 @@ export default function Skills() {
         <p>深入一个问题，也连接不同的领域。</p>
       </SectionHeading>
       <div className="focus-grid">
-        {skills.map((skill) => (
-          <article className="focus-item" key={skill.number}>
+        {skills.map((skill, index) => (
+          <article
+            className="focus-item"
+            key={skill.number}
+            data-reveal
+            data-reveal-index={index}
+          >
             <div className="focus-top mono">
               <span>{skill.number}</span>
               <span>{skill.english}</span>
@@ -24,7 +29,7 @@ export default function Skills() {
           </article>
         ))}
       </div>
-      <div className="education">
+      <div className="education" data-reveal>
         <span className="eyebrow">ALWAYS LEARNING</span>
         <p>
           华南理工大学 <span>软件工程 · 本科</span>

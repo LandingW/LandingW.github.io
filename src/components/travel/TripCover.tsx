@@ -1,14 +1,17 @@
 import { mediaUrl, type TravelAlbum, type TravelPhoto } from "@/lib/travel";
 import { tripCoverPhotos } from "@/lib/trip-presentation";
+import { tripTransitionName } from "@/lib/ui-motion";
 
 export default function TripCover({
   album,
   photos,
   mediaBase,
+  sharedTransition = false,
 }: {
   album: TravelAlbum;
   photos: TravelPhoto[];
   mediaBase: string;
+  sharedTransition?: boolean;
 }) {
   const cover = tripCoverPhotos(album, photos);
   return (
@@ -18,6 +21,11 @@ export default function TripCover({
           <div
             key={photo.id}
             className={index === 0 ? "trip-cover-main" : "trip-cover-detail"}
+            style={
+              index === 0 && sharedTransition
+                ? { viewTransitionName: tripTransitionName(album.id) }
+                : undefined
+            }
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

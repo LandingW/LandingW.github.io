@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   mediaUrl,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/travel";
 import { tripCoverPhotos, tripLocation } from "@/lib/trip-presentation";
 import { cameraName, shootingSummary } from "@/lib/photo-metadata";
+import { tripTransitionName } from "@/lib/ui-motion";
 
 const LocationMap = dynamic(() => import("./LocationMap"), { ssr: false });
 
@@ -28,6 +29,10 @@ export default function TripStory({
 }) {
   const [view, setView] = useState<"story" | "index">("story");
   const [showMap, setShowMap] = useState(false);
+  const [coverReady, setCoverReady] = useState(false);
+  const coverImageRef = useCallback((image: HTMLImageElement | null) => {
+    if (image?.complete && image.naturalWidth > 0) setCoverReady(true);
+  }, []);
   const cover = tripCoverPhotos(album, photos)[0];
   const location = tripLocation(album, photos);
   const devices = [
@@ -77,11 +82,26 @@ export default function TripStory({
         {cover && (
           <button
             className="story-cover-photo"
+            data-cover-ready={coverReady}
+            style={{ viewTransitionName: tripTransitionName(album.id) }}
             onClick={() => onOpen(cover.id)}
             aria-label="放大查看旅行封面"
           >
+            {/* Keep the already-cached card image visible during the shared transition. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              className="story-cover-preview"
+              src={mediaUrl(config.mediaUrl, cover.thumbnail)}
+              width={cover.width}
+              height={cover.height}
+              alt=""
+              aria-hidden="true"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={coverImageRef}
+              className="story-cover-sharp"
+              onLoad={() => setCoverReady(true)}
               src={mediaUrl(config.mediaUrl, cover.preview)}
               alt={cover.caption || album.title}
               width={cover.width}
@@ -143,6 +163,8 @@ export default function TripStory({
           <figure
             className={`story-frame ${index % 5 === 2 ? "is-wide" : ""} ${photo.height > photo.width ? "is-portrait" : ""}`}
             key={photo.id}
+            data-reveal
+            data-reveal-index={index % 2}
           >
             <button
               onClick={() => onOpen(photo.id)}
@@ -173,7 +195,7 @@ export default function TripStory({
           </figure>
         ))}
       </div>
-      <footer className="story-colophon">
+      <footer className="story-colophon" data-reveal>
         <span className="mono">END OF THIS JOURNEY</span>
         <h2>
           把片刻，留在这里<span className="accent">.</span>

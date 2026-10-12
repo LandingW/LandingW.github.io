@@ -67,11 +67,14 @@ export default function TravelPreview() {
       </p>
       {manifest.albums.length > 0 ? (
         <div className="home-travel-grid">
-          {manifest.albums.slice(0, 3).map((album) => {
+          {manifest.albums.slice(0, 3).map((album, index) => {
             const photo = tripCoverPhotos(album, manifest.photos)[0];
             return (
               <Link
                 className="home-trip"
+                data-reveal
+                data-reveal-index={index}
+                data-motion-card
                 key={album.id}
                 href={`/travel/?trip=${album.id}`}
               >

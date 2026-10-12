@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import type { ArticleSummary } from "@/lib/articles";
@@ -63,6 +64,14 @@ export default function Articles({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("全部");
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const toolbar = useRef<HTMLDivElement>(null);
+  function keepToolbarPosition(update: () => void) {
+    const before = toolbar.current?.getBoundingClientRect().top;
+    flushSync(update);
+    const after = toolbar.current?.getBoundingClientRect().top;
+    if (before !== undefined && after !== undefined)
+      window.scrollBy({ top: after - before, behavior: "instant" });
+  }
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const filtered = articles.filter(
     (article) =>
@@ -74,9 +83,11 @@ export default function Articles({
   // The server provides publication-time order, including time-of-day.
   const featured = articles[0];
   const reset = () => {
-    setQuery("");
-    setCategory("全部");
-    setLimit(PAGE_SIZE);
+    keepToolbarPosition(() => {
+      setQuery("");
+      setCategory("全部");
+      setLimit(PAGE_SIZE);
+    });
   };
 
   return (
@@ -97,7 +108,12 @@ export default function Articles({
         </div>
       </SectionHeading>
       {featured && !normalizedQuery && category === "全部" && (
-        <Link href={`/writing/${featured.slug}/`} className="featured-article">
+        <Link
+          href={`/writing/${featured.slug}/`}
+          className="featured-article"
+          data-reveal
+          data-motion-card
+        >
           <LightStudy />
           <div className="featured-copy">
             <span className="eyebrow">LATEST WRITING / 最新文章</span>
@@ -107,7 +123,7 @@ export default function Articles({
           </div>
         </Link>
       )}
-      <div className="writing-toolbar">
+      <div className="writing-toolbar" ref={toolbar}>
         <div className="article-filters" role="group" aria-label="文章分类">
           {filters.map((filter) => (
             <button
@@ -115,8 +131,10 @@ export default function Articles({
               type="button"
               aria-pressed={category === filter}
               onClick={() => {
-                setCategory(filter);
-                setLimit(PAGE_SIZE);
+                keepToolbarPosition(() => {
+                  setCategory(filter);
+                  setLimit(PAGE_SIZE);
+                });
               }}
             >
               {filter}
@@ -142,8 +160,11 @@ export default function Articles({
             placeholder="搜索标题、内容或关键词"
             value={query}
             onChange={(event) => {
-              setQuery(event.target.value);
-              setLimit(PAGE_SIZE);
+              const value = event.target.value;
+              keepToolbarPosition(() => {
+                setQuery(value);
+                setLimit(PAGE_SIZE);
+              });
             }}
           />
         </label>
@@ -155,6 +176,8 @@ export default function Articles({
         {filtered.slice(0, limit).map((article, index) => (
           <Link
             className="article-row"
+            data-reveal
+            data-reveal-index={index % 4}
             key={article.slug}
             href={`/writing/${article.slug}/`}
           >
