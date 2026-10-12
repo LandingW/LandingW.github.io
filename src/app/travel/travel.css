@@ -576,7 +576,8 @@
   color: var(--viewer-ink);
   display: flex;
   flex-direction: column;
-  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
   animation: photo-viewer-enter 0.22s ease-out;
 }
 .viewer-top {
@@ -1176,6 +1177,24 @@
   .viewer-caption {
     max-width: 100%;
     text-align: center;
+    max-height: min(120px, 20dvh);
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+  }
+  .viewer-settings,
+  .viewer-status {
+    font-size: 12px !important;
+    line-height: 1.6;
+  }
+  .viewer-controls {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
+    width: min(100%, 420px);
+    gap: 3px;
+  }
+  .viewer-controls button {
+    padding-inline: 4px;
+    min-height: 48px;
   }
   .viewer-top > span:nth-child(2) {
     display: none;
@@ -1191,12 +1210,29 @@
     width: auto;
     max-height: 80%;
     padding: 18px;
+    overscroll-behavior: contain;
   }
   .photo-info-panel .location-map {
     height: 180px;
   }
   .manager-exif {
     padding-inline: 12px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .viewer-top {
+    padding-block: 2px;
+  }
+  .viewer-bottom {
+    padding-block: 2px;
+  }
+  .viewer-caption {
+    display: none;
+  }
+  .photo-info-panel {
+    top: 0;
+    bottom: 0;
+    max-height: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

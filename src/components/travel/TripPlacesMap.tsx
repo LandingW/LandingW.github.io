@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { mapCoordinates, type TripPoint } from "@/lib/trip-atlas";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { setMapInteraction, TOUCH_MAP_QUERY } from "@/lib/map-interaction";
 
 export default function TripPlacesMap({
   points,
@@ -22,6 +24,24 @@ export default function TripPlacesMap({
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
   const [retry, setRetry] = useState(0);
   const [tileError, setTileError] = useState(false);
+  const touchLayout = useMediaQuery(TOUCH_MAP_QUERY);
+  const [interacting, setInteracting] = useState(false);
+  const locked = touchLayout && !interacting;
+  const interactionAllowed = useRef(!locked);
+  const mapId = useId();
+  const interactionButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    interactionAllowed.current = !locked;
+    if (map.current) setMapInteraction(map.current, !locked);
+  }, [locked, state, retry]);
+  useEffect(() => {
+    if (!touchLayout || !interacting || !container.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) setInteracting(false);
+    });
+    observer.observe(container.current);
+    return () => observer.disconnect();
+  }, [touchLayout, interacting]);
   useEffect(() => {
     callbacks.current = { onSelect };
   }, [onSelect]);
@@ -58,7 +78,10 @@ export default function TripPlacesMap({
         const instance = L.map(element, {
           scrollWheelZoom: false,
           zoomControl: false,
+          attributionControl: false,
         });
+        // Disable gesture capture before Leaflet's first interactive frame.
+        setMapInteraction(instance, interactionAllowed.current);
         map.current = instance;
         L.control.zoom({ position: "bottomright" }).addTo(instance);
         const coordinates = mapCoordinates(points);
@@ -137,18 +160,53 @@ export default function TripPlacesMap({
     };
   }, [points, retry]);
   return (
-    <div className="journey-map-shell">
+    <div
+      className="journey-map-shell"
+      data-locked={locked}
+      onKeyDown={(event) => {
+        if (touchLayout && interacting && event.key === "Escape") {
+          setInteracting(false);
+          interactionButton.current?.focus();
+        }
+      }}
+    >
       <div
+        id={mapId}
         ref={container}
         className="journey-map"
         role="region"
         aria-label="旅行详细地图，可选择编号点位"
+        inert={locked}
       />
       {state === "ready" && (
         <button className="journey-map-fit" onClick={() => fit.current()}>
           ⊕ 全部点位
         </button>
       )}
+      {state === "ready" && touchLayout && (
+        <>
+          <button
+            ref={interactionButton}
+            className="journey-map-interact"
+            aria-controls={mapId}
+            aria-pressed={interacting}
+            onClick={() => setInteracting((value) => !value)}
+          >
+            {interacting ? "完成操作 ✓" : "操作地图 ↗"}
+          </button>
+          <p className="journey-map-gesture" role="status">
+            {locked ? "轻触「操作地图」以拖动、缩放" : "双指缩放 · 拖动探索"}
+          </p>
+        </>
+      )}
+      <a
+        className="journey-map-credit"
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        © OpenStreetMap contributors
+      </a>
       {state === "loading" && (
         <p className="journey-map-state" role="status">
           正在展开地图…

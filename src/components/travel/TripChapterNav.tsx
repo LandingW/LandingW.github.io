@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const chapters = [
   { id: "story-places", label: "地点" },
@@ -10,6 +10,7 @@ const chapters = [
 
 export default function TripChapterNav() {
   const [active, setActive] = useState(chapters[0].id);
+  const navigation = useRef<HTMLElement>(null);
   useEffect(() => {
     let frame = 0;
     function update() {
@@ -17,11 +18,20 @@ export default function TripChapterNav() {
       frame = requestAnimationFrame(() => {
         frame = 0;
         let current = chapters[0].id;
+        const padding =
+          parseFloat(
+            getComputedStyle(document.documentElement).scrollPaddingTop,
+          ) || 0;
         for (const chapter of chapters) {
-          if (
-            (document.getElementById(chapter.id)?.getBoundingClientRect().top ??
-              Infinity) <= 210
-          )
+          const section = document.getElementById(chapter.id);
+          if (!section) continue;
+          const margin =
+            parseFloat(getComputedStyle(section).scrollMarginTop) || 0;
+          const boundary = Math.max(
+            (navigation.current?.getBoundingClientRect().bottom || 0) + 24,
+            padding + margin + 8,
+          );
+          if (section.getBoundingClientRect().top <= boundary)
             current = chapter.id;
         }
         setActive(current);
@@ -37,7 +47,7 @@ export default function TripChapterNav() {
     };
   }, []);
   return (
-    <nav className="journey-chapters" aria-label="旅行章节">
+    <nav ref={navigation} className="journey-chapters" aria-label="旅行章节">
       <span className="mono journey-chapters-caption">INSIDE THIS JOURNEY</span>
       <div>
         {chapters.map((chapter, index) => (

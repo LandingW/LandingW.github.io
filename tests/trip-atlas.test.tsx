@@ -19,6 +19,8 @@ import CountryOutline from "../src/components/travel/CountryOutline";
 import TripEquipment from "../src/components/travel/TripEquipment";
 import TripChapterNav from "../src/components/travel/TripChapterNav";
 import TripStory from "../src/components/travel/TripStory";
+import TripAtlas from "../src/components/travel/TripAtlas";
+import { setMapInteraction, TOUCH_MAP_QUERY } from "../src/lib/map-interaction";
 
 const album: TravelAlbum = {
   id: "norway",
@@ -206,4 +208,75 @@ test("travel detail retains title, cover, photos, and adds distinct place and eq
   assert.match(html, /不会用旅行定位代替每张照片的拍摄位置/);
   assert.match(html, /https:\/\/www.openstreetmap.org/);
   assert.doesNotMatch(html, /Google|路线距离|旅行天数/);
+});
+
+test("touch map guard disables every gesture handler and can restore desktop interaction", () => {
+  const calls: string[] = [];
+  const handlers = [
+    "dragging",
+    "touchZoom",
+    "doubleClickZoom",
+    "boxZoom",
+    "keyboard",
+  ];
+  const map = Object.fromEntries(
+    handlers.map((name) => [
+      name,
+      {
+        enable: () => calls.push(`${name}:on`),
+        disable: () => calls.push(`${name}:off`),
+      },
+    ]),
+  ) as unknown as Parameters<typeof setMapInteraction>[0];
+  setMapInteraction(map, false);
+  assert.deepEqual(
+    calls.splice(0),
+    handlers.map((name) => `${name}:off`),
+  );
+  setMapInteraction(map, true);
+  assert.deepEqual(
+    calls,
+    handlers.map((name) => `${name}:on`),
+  );
+  assert.match(TOUCH_MAP_QUERY, /max-width: 760px/);
+  assert.match(TOUCH_MAP_QUERY, /pointer: coarse/);
+});
+
+test("mobile point picker preserves every location and exposes its label and current value", () => {
+  const html = renderToStaticMarkup(
+    createElement(TripAtlas, {
+      album,
+      photos: [photo("one", 10, 20), photo("two", 11, 21)],
+      config: { apiUrl: "", mediaUrl: "https://media.example.com" },
+      onOpen: () => {},
+    }),
+  );
+  const label = html.match(/<label for="([^"]+)">切换点位<\/label>/);
+  assert.ok(label);
+  assert.ok(html.includes(`<select id="${label[1]}"`));
+  assert.equal((html.match(/<option /g) || []).length, 3);
+  assert.match(html, /<option[^>]*selected=""/);
+  assert.match(html, /照片 GPS/);
+});
+
+test("single and unlocated trips do not repeat a redundant location selector", () => {
+  const props = {
+    photos: [photo("one")],
+    config: { apiUrl: "", mediaUrl: "https://media.example.com" },
+    onOpen: () => {},
+  };
+  const single = renderToStaticMarkup(
+    createElement(TripAtlas, { ...props, album }),
+  );
+  assert.doesNotMatch(single, /<select|journey-point-list/);
+  assert.match(single, /旅行定位/);
+  const empty = renderToStaticMarkup(
+    createElement(TripAtlas, {
+      ...props,
+      album: { ...album, latitude: null, longitude: null },
+    }),
+  );
+  assert.match(empty, /data-has-points="false"/);
+  assert.doesNotMatch(empty, /journey-point-panel|<select/);
+  assert.match(empty, /补充旅行地点/);
 });

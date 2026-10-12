@@ -27,7 +27,7 @@
 }
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 98px;
+  scroll-padding-top: calc(98px + env(safe-area-inset-top));
 }
 body {
   margin: 0;
@@ -100,7 +100,8 @@ svg {
 .header-inner {
   position: relative;
   max-width: calc(var(--page-width) + var(--page-gutter) * 2);
-  padding-inline: var(--page-gutter);
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
   margin-inline: auto;
 }
 .mono,
@@ -128,6 +129,7 @@ svg {
 .site-header {
   position: sticky;
   top: 0;
+  padding-top: env(safe-area-inset-top);
   z-index: 50;
   background: rgb(242 241 235 / 96%);
   backdrop-filter: blur(14px);
@@ -1500,7 +1502,7 @@ summary::-webkit-details-marker {
 }
 @media (max-width: 760px) {
   html {
-    scroll-padding-top: 80px;
+    scroll-padding-top: calc(80px + env(safe-area-inset-top));
   }
   .header-inner {
     height: 68px;

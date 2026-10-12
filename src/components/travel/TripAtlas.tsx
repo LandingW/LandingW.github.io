@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   coordinateLabel,
@@ -39,6 +39,7 @@ export default function TripAtlas({
   const [selected, setSelected] = useState(points[0]?.id || "");
   const [mapVisible, setMapVisible] = useState(false);
   const container = useRef<HTMLDivElement>(null);
+  const pointPickerId = useId();
   const active = points.find((point) => point.id === selected) || points[0];
   const located = photos.filter(
     (photo) => photo.albumId === album.id && photo.location,
@@ -78,7 +79,11 @@ export default function TripAtlas({
             : "这段旅程还没有公开的坐标。"}
         </p>
       </header>
-      <div className="journey-atlas-layout" ref={container}>
+      <div
+        className="journey-atlas-layout"
+        ref={container}
+        data-has-points={points.length > 0}
+      >
         <div className="journey-map-stage">
           {points.length ? (
             mapVisible ? (
@@ -111,91 +116,110 @@ export default function TripAtlas({
             <span>点位为记录位置，不代表实际行走路线</span>
           </div>
         </div>
-        <aside className="journey-point-panel" aria-label="旅行点位与详情">
-          <div className="journey-point-heading">
-            <span className="mono">PLACES INDEX</span>
-            <span>{String(points.length).padStart(2, "0")}</span>
-          </div>
-          {points.length > 0 && (
-            <ol className="journey-point-list">
-              {points.map((point, index) => (
-                <li key={point.id}>
-                  <button
-                    className="journey-point-select"
-                    aria-pressed={point.id === active?.id}
-                    onClick={() => setSelected(point.id)}
-                  >
-                    <span className="point-number mono">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span>
-                      <strong>{point.label}</strong>
-                      <small>
-                        {pointSource(point)}
-                        {point.photos.length
-                          ? ` · ${point.photos.length} 张`
-                          : ""}
-                      </small>
-                    </span>
-                    <span aria-hidden="true">↗</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
-          {active && (
-            <div
-              className="journey-point-detail"
-              key={active.id}
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              <span className="eyebrow">SELECTED LOCATION</span>
-              <h3>{active.label}</h3>
-              <p className="mono point-coordinates">
-                {coordinateLabel(active, 5)}
-              </p>
-              {active.photos.length > 0 && (
-                <div className="journey-point-photos">
-                  {active.photos.slice(0, 4).map((photo) => (
-                    <button
-                      key={photo.id}
-                      onClick={() => onOpen(photo.id)}
-                      aria-label={`放大点位照片：${photo.caption || photo.id}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={mediaUrl(config.mediaUrl, photo.thumbnail)}
-                        width={photo.width}
-                        height={photo.height}
-                        alt={photo.caption || "此处拍摄的照片"}
-                        loading="lazy"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-              {active.photos.length > 4 && (
-                <p>
-                  此处共 {active.photos.length} 张照片，高清查看器中可继续浏览。
-                </p>
-              )}
-              <a
-                className="journey-map-link"
-                href={osmPointLink(active)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                在地图中探索周边 <span aria-hidden="true">↗</span>
-              </a>
+        {active && (
+          <aside className="journey-point-panel" aria-label="旅行点位与详情">
+            <div className="journey-point-heading">
+              <span className="mono">PLACES INDEX</span>
+              <span>{String(points.length).padStart(2, "0")}</span>
             </div>
-          )}
-          <p className="journey-point-footnote">
-            {located
-              ? "编号用于检索照片，不表示行程先后。"
-              : "照片未记录 GPS；不会用旅行定位代替每张照片的拍摄位置。"}
-          </p>
-        </aside>
+            {points.length > 1 && (
+              <div className="journey-point-picker">
+                <label htmlFor={pointPickerId}>切换点位</label>
+                <select
+                  id={pointPickerId}
+                  value={active.id}
+                  onChange={(event) => setSelected(event.target.value)}
+                >
+                  {points.map((point, index) => (
+                    <option key={point.id} value={point.id}>
+                      {String(index + 1).padStart(2, "0")} · {point.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {points.length > 1 && (
+              <ol className="journey-point-list">
+                {points.map((point, index) => (
+                  <li key={point.id}>
+                    <button
+                      className="journey-point-select"
+                      aria-pressed={point.id === active?.id}
+                      onClick={() => setSelected(point.id)}
+                    >
+                      <span className="point-number mono">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span>
+                        <strong>{point.label}</strong>
+                        <small>
+                          {pointSource(point)}
+                          {point.photos.length
+                            ? ` · ${point.photos.length} 张`
+                            : ""}
+                        </small>
+                      </span>
+                      <span aria-hidden="true">↗</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {active && (
+              <div
+                className="journey-point-detail"
+                key={active.id}
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span className="eyebrow">{pointSource(active)}</span>
+                <h3>{active.label}</h3>
+                <p className="mono point-coordinates">
+                  {coordinateLabel(active, 5)}
+                </p>
+                {active.photos.length > 0 && (
+                  <div className="journey-point-photos">
+                    {active.photos.slice(0, 4).map((photo) => (
+                      <button
+                        key={photo.id}
+                        onClick={() => onOpen(photo.id)}
+                        aria-label={`放大点位照片：${photo.caption || photo.id}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={mediaUrl(config.mediaUrl, photo.thumbnail)}
+                          width={photo.width}
+                          height={photo.height}
+                          alt={photo.caption || "此处拍摄的照片"}
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {active.photos.length > 4 && (
+                  <p>
+                    此处共 {active.photos.length}{" "}
+                    张照片，高清查看器中可继续浏览。
+                  </p>
+                )}
+                <a
+                  className="journey-map-link"
+                  href={osmPointLink(active)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  在地图中探索周边 <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            )}
+            <p className="journey-point-footnote">
+              {located
+                ? "编号用于检索照片，不表示行程先后。"
+                : "照片未记录 GPS；不会用旅行定位代替每张照片的拍摄位置。"}
+            </p>
+          </aside>
+        )}
       </div>
     </section>
   );

@@ -72,6 +72,10 @@ createServer(async (req, res) => {
       320,
       Math.min(1280, Number(url.searchParams.get("width")) || 390),
     );
+    const height = Math.max(
+      320,
+      Math.min(1000, Number(url.searchParams.get("height")) || 720),
+    );
     const route =
       url.searchParams.get("page") === "home"
         ? "/"
@@ -80,7 +84,7 @@ createServer(async (req, res) => {
           : "/travel/?trip=48e497df-f629-4026-873c-973472f6ceb6";
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(
-      `<html><body style="margin:0;background:#ddd"><iframe id="mobile-preview" title="${width}px responsive preview" src="${route}" style="display:block;border:0;width:${width}px;height:844px"></iframe></body></html>`,
+      `<html><body style="margin:0;background:#ddd;overflow:hidden"><iframe id="mobile-preview" title="${width}px responsive preview" src="${route}" style="display:block;border:0;width:${width}px;height:${height}px;max-height:100dvh"></iframe></body></html>`,
     );
     return;
   }
