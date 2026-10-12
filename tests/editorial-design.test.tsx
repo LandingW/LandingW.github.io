@@ -8,6 +8,7 @@ import Skills from "../src/components/Skills";
 import Articles from "../src/components/Articles";
 import { getArticleSummaries, getSyncDate } from "../src/lib/articles";
 import { experiences } from "../src/lib/resume";
+import fs from "node:fs/promises";
 
 test("opening is a copy and study composition while retaining headline and graphics", () => {
   const html = renderToStaticMarkup(createElement(Hero));
@@ -30,6 +31,10 @@ test("work disclosures preserve every technical description and only the current
   );
   assert.equal(disclosures.length, experiences.length);
   assert.equal(disclosures.filter((tag) => /\bopen=/.test(tag)).length, 1);
+  assert.equal(
+    (html.match(/class="experience-overview"/g) || []).length,
+    experiences.length,
+  );
   for (const role of experiences)
     for (const detail of role.highlights) {
       const escaped = renderToStaticMarkup(
@@ -37,6 +42,26 @@ test("work disclosures preserve every technical description and only the current
       ).slice(3, -4);
       assert.ok(html.includes(escaped), detail.title);
     }
+});
+
+test("only the homepage opens into a full-width canvas with protected reading surfaces", async () => {
+  const css = await fs.readFile("src/app/home.css", "utf8");
+  const shared = await fs.readFile("src/app/globals.css", "utf8");
+  assert.match(css, /\.home-page > \.page-container[\s\S]*?max-width: none/);
+  assert.match(shared, /--page-width: 1180px/);
+  assert.match(css, /--home-surface: #f7f5eff5/);
+  assert.match(
+    css,
+    /\.home-page \.experience-list[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /\.home-page \.focus-grid[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(css, /\.home-trip:only-child/);
+  assert.match(css, /@media \(max-width: 760px\)/);
+  assert.match(css, /safe-area-inset-left/);
+  assert.doesNotMatch(css, /100vw|overflow-x: hidden/);
 });
 
 test("focus and writing have separate chapter rails and content regions", () => {

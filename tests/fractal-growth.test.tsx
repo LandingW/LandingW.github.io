@@ -7,6 +7,7 @@ import {
   buildFractalVariants,
   growthSchedule,
   FRACTAL_TIMING,
+  fractalScrollOffset,
 } from "../src/lib/fractal-growth";
 import GrowingFractal from "../src/components/GrowingFractal";
 import Home from "../src/app/page";
@@ -19,7 +20,9 @@ test("fractal growth is deterministic, finite and starts children after their pa
   assert.equal(branches.filter((branch) => branch.parent === null).length, 2);
   for (const branch of branches) {
     assert.ok(!/NaN|Infinity/.test(branch.path));
-    assert.ok(branch.width > 0 && branch.opacity > 0 && branch.opacity < 0.3);
+    assert.ok(
+      branch.width >= 2.6 && branch.opacity > 0 && branch.opacity < 0.5,
+    );
     if (branch.parent !== null) {
       const parent = branches[branch.parent];
       assert.equal(branch.depth, parent.depth + 1);
@@ -80,15 +83,18 @@ test("background contains four decorative SVG patterns and a no-script fallback"
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
-  assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 4);
+  assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 8);
   assert.equal(
     (html.match(/<path /g) ?? []).length,
-    buildFractalVariants().reduce(
-      (total, variant) => total + variant.strokes.length,
-      0,
-    ),
+    2 *
+      buildFractalVariants().reduce(
+        (total, variant) => total + variant.strokes.length,
+        0,
+      ),
   );
   assert.match(html, /<noscript>/);
+  assert.equal((html.match(/class="fractal-tile"/g) ?? []).length, 2);
+  assert.match(html, /linearGradient/);
   assert.doesNotMatch(html, /<canvas|<button|<a /);
 });
 
@@ -107,7 +113,7 @@ test("one shared background lives above all homepage chapters, not inside the he
     assert.ok(html.includes(`id="${id}"`));
 });
 
-test("fullscreen fractal is non-interactive, portrait-aware, and no longer attenuated by hero CSS", async () => {
+test("fullscreen colored fractal has a scroll camera, lifecycle cleanup and static fallbacks", async () => {
   const css = await fs.readFile("src/app/globals.css", "utf8");
   const design = await fs.readFile("src/app/design.css", "utf8");
   const component = await fs.readFile(
@@ -118,11 +124,35 @@ test("fullscreen fractal is non-interactive, portrait-aware, and no longer atten
   assert.match(backdrop, /position: fixed/);
   assert.match(backdrop, /inset: 0/);
   assert.match(backdrop, /pointer-events: none/);
-  assert.match(css, /--fractal-opacity: 0\.95/);
-  assert.match(css, /orientation: portrait/);
-  assert.match(css, /rotate\(90deg\)/);
+  assert.match(css, /height: 100lvh/);
+  assert.doesNotMatch(css, /\.fractal-branch\s*\{[^}]*stroke:/);
   assert.doesNotMatch(design, /hero-fractal/);
   assert.match(component, /visibilitychange/);
   assert.match(component, /prefers-reduced-motion/);
   assert.match(component, /graphics.*static/);
+  assert.match(
+    component,
+    /window.addEventListener\("scroll", schedule, \{ passive: true \}\)/,
+  );
+  assert.match(component, /window.removeEventListener\("scroll", schedule\)/);
+  assert.match(component, /cancelAnimationFrame/);
+  assert.match(component, /resize.disconnect\(\)/);
+  assert.match(component, /translate3d/);
+  assert.doesNotMatch(component, /setInterval|preventDefault/);
+});
+
+test("scroll camera is bounded, reversible and wraps by exactly one repeated tile", () => {
+  assert.equal(fractalScrollOffset(0, 700), 0);
+  assert.equal(fractalScrollOffset(500, 700), -140);
+  assert.equal(fractalScrollOffset(1000, 700), -280);
+  assert.equal(fractalScrollOffset(500, 700), -140);
+  assert.ok(Math.abs(fractalScrollOffset(3000, 700) + 140) < 1e-8);
+  for (const input of [NaN, Infinity, -200])
+    assert.equal(fractalScrollOffset(input, 700), 0);
+  for (const height of [0, -1, NaN, Infinity])
+    assert.equal(fractalScrollOffset(500, height), 0);
+  for (let y = 0; y < 100000; y += 73) {
+    const offset = fractalScrollOffset(y, 800);
+    assert.ok(offset <= 0 && offset > -800);
+  }
 });

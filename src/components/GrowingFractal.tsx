@@ -1,22 +1,70 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import {
   buildFractalVariants,
   growthSchedule,
   FRACTAL_TIMING,
+  fractalScrollOffset,
 } from "@/lib/fractal-growth";
 
 const variants = buildFractalVariants();
 
 export default function GrowingFractal() {
   const ref = useRef<HTMLDivElement>(null);
+  const id = useId().replaceAll(":", "");
+
+  // This loop runs only while the page is scrolling/resizing. Growth has its
+  // own timeline, so a scroll never restarts the 2 / 1 / 2 second sequence.
+  useEffect(() => {
+    const element = ref.current;
+    const track = element?.querySelector<HTMLElement>(".fractal-track");
+    const tile = element?.querySelector<SVGSVGElement>(".fractal-tile");
+    if (!element || !track || !tile) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const staticMode =
+      new URLSearchParams(window.location.search).get("graphics") === "static";
+    let frame = 0;
+    let tileHeight = tile.getBoundingClientRect().height;
+    const update = () => {
+      frame = 0;
+      const offset =
+        reducedMotion.matches || staticMode
+          ? 0
+          : fractalScrollOffset(window.scrollY, tileHeight);
+      track.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
+      element.dataset.parallax =
+        reducedMotion.matches || staticMode ? "off" : "on";
+    };
+    const schedule = () => {
+      if (!frame && !document.hidden) frame = requestAnimationFrame(update);
+    };
+    const resize = new ResizeObserver(() => {
+      tileHeight = tile.getBoundingClientRect().height;
+      schedule();
+    });
+    resize.observe(tile);
+    window.addEventListener("scroll", schedule, { passive: true });
+    document.addEventListener("visibilitychange", schedule);
+    reducedMotion.addEventListener("change", schedule);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      window.removeEventListener("scroll", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+      reducedMotion.removeEventListener("change", schedule);
+    };
+  }, []);
+
   useEffect(() => {
     if (!ref.current) return;
     const element = ref.current;
-    const groups = [
-      ...element.querySelectorAll<SVGGElement>("[data-fractal-pattern]"),
-    ];
+    const groups = variants.map((variant) => [
+      ...element.querySelectorAll<SVGGElement>(
+        `[data-fractal-pattern="${variant.id}"]`,
+      ),
+    ]);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const staticMode =
       new URLSearchParams(window.location.search).get("graphics") === "static";
@@ -49,9 +97,11 @@ export default function GrowingFractal() {
     const showStatic = () => {
       stopped = true;
       cancelAll();
-      groups.forEach((group, index) => {
-        group.style.display = index === current ? "inline" : "none";
-        group.style.opacity = "1";
+      groups.forEach((copies, index) => {
+        copies.forEach((group) => {
+          group.style.display = index === current ? "inline" : "none";
+          group.style.opacity = "1";
+        });
       });
       element.dataset.growth = "static";
       element.dataset.phase = "still";
@@ -68,43 +118,51 @@ export default function GrowingFractal() {
     async function cycle() {
       try {
         while (!disposed && !stopped) {
-          const group = groups[current],
+          const copies = groups[current],
             variant = variants[current];
-          groups.forEach((item, index) => {
-            item.style.display = index === current ? "inline" : "none";
-            item.style.opacity = "1";
+          groups.forEach((items, index) => {
+            items.forEach((item) => {
+              item.style.display = index === current ? "inline" : "none";
+              item.style.opacity = "1";
+            });
           });
           element.dataset.fractal = variant.id;
           element.dataset.phase = "grow";
           const schedule = growthSchedule(variant.strokes);
-          group.querySelectorAll("path").forEach((path, index) => {
-            track(
-              path.animate(
-                [
-                  { strokeDashoffset: "1", opacity: 0, offset: 0 },
-                  { strokeDashoffset: ".98", opacity: 1, offset: 0.02 },
-                  { strokeDashoffset: "0", opacity: 1, offset: 1 },
-                ],
-                { ...schedule[index], fill: "both", easing: "linear" },
-              ),
-            );
-          });
-          await clock(group, FRACTAL_TIMING.grow);
-          if (disposed || stopped) return;
-          element.dataset.phase = "hold";
-          await clock(group, FRACTAL_TIMING.hold);
-          if (disposed || stopped) return;
-          element.dataset.phase = "fade";
-          const fade = track(
-            group.animate([{ opacity: 1 }, { opacity: 0 }], {
-              duration: FRACTAL_TIMING.fade,
-              fill: "forwards",
-              easing: "linear",
+          copies.forEach((group) =>
+            group.querySelectorAll("path").forEach((path, index) => {
+              track(
+                path.animate(
+                  [
+                    { strokeDashoffset: "1", opacity: 0, offset: 0 },
+                    { strokeDashoffset: ".98", opacity: 1, offset: 0.02 },
+                    { strokeDashoffset: "0", opacity: 1, offset: 1 },
+                  ],
+                  { ...schedule[index], fill: "both", easing: "linear" },
+                ),
+              );
             }),
           );
-          await fade.finished;
+          await clock(copies[0], FRACTAL_TIMING.grow);
           if (disposed || stopped) return;
-          group.style.display = "none";
+          element.dataset.phase = "hold";
+          await clock(copies[0], FRACTAL_TIMING.hold);
+          if (disposed || stopped) return;
+          element.dataset.phase = "fade";
+          const fades = copies.map((group) =>
+            track(
+              group.animate([{ opacity: 1 }, { opacity: 0 }], {
+                duration: FRACTAL_TIMING.fade,
+                fill: "forwards",
+                easing: "linear",
+              }),
+            ),
+          );
+          await Promise.all(fades.map((fade) => fade.finished));
+          if (disposed || stopped) return;
+          copies.forEach((group) => {
+            group.style.display = "none";
+          });
           cancelAll();
           current = (current + 1) % variants.length;
         }
@@ -147,36 +205,66 @@ export default function GrowingFractal() {
       aria-hidden="true"
     >
       <svg
-        viewBox="0 0 1440 760"
-        preserveAspectRatio="xMidYMid slice"
+        className="fractal-definitions"
+        width="0"
+        height="0"
         focusable="false"
-        fill="none"
       >
-        {variants.map((variant, index) => (
-          <g
-            key={variant.id}
-            data-fractal-pattern={variant.id}
-            style={{ display: index === 0 ? "inline" : "none" }}
-          >
-            {variant.strokes.map((stroke) => (
-              <path
-                key={stroke.id}
-                className={
-                  stroke.accent
-                    ? "fractal-branch fractal-branch-accent"
-                    : "fractal-branch"
-                }
-                d={stroke.path}
-                pathLength={1}
-                strokeWidth={stroke.width}
-                strokeOpacity={stroke.opacity}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ))}
-          </g>
-        ))}
+        <defs>
+          <linearGradient id={`${id}-sage`} x1="0" y1="0" x2="1" y2="1">
+            <stop stopColor="var(--fractal-ink)" />
+            <stop offset="1" stopColor="var(--fractal-cool)" />
+          </linearGradient>
+          <linearGradient id={`${id}-clay`} x1="0" y1="0" x2="1" y2="1">
+            <stop stopColor="var(--fractal-accent)" />
+            <stop offset="1" stopColor="var(--fractal-gold)" />
+          </linearGradient>
+        </defs>
       </svg>
+      <div className="fractal-track">
+        {[0, 1].map((tile) => (
+          <svg
+            className="fractal-tile"
+            key={tile}
+            viewBox="0 0 1440 760"
+            preserveAspectRatio="xMidYMid slice"
+            focusable="false"
+            fill="none"
+          >
+            {variants.map((variant, index) => (
+              <g
+                key={variant.id}
+                data-fractal-pattern={variant.id}
+                style={{ display: index === 0 ? "inline" : "none" }}
+              >
+                {variant.strokes.map((stroke) => (
+                  <path
+                    key={stroke.id}
+                    className={
+                      stroke.accent
+                        ? "fractal-branch fractal-branch-accent"
+                        : "fractal-branch"
+                    }
+                    d={stroke.path}
+                    pathLength={1}
+                    strokeWidth={stroke.width}
+                    strokeOpacity={stroke.opacity}
+                    stroke={`url(#${id}-${stroke.accent ? "clay" : "sage"})`}
+                    fill={
+                      variant.id === "sierpinski" && stroke.depth < 3
+                        ? `url(#${id}-${stroke.accent ? "clay" : "sage"})`
+                        : "none"
+                    }
+                    fillOpacity={0.06}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ))}
+              </g>
+            ))}
+          </svg>
+        ))}
+      </div>
       <noscript>
         <style>
           {".page-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}"}

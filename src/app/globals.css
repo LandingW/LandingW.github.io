@@ -305,10 +305,11 @@ svg {
   isolation: isolate;
   --fractal-ink: #5f7358;
   --fractal-accent: #af6044;
-  --fractal-opacity: 0.95;
+  --fractal-cool: #74aaa3;
+  --fractal-gold: #cfaa68;
 }
-/* One viewport-sized drawing shared by every homepage chapter. Keeping it
-   outside the animated sections avoids transformed ancestors and extra loops. */
+/* Two identical tiles on one timeline; the camera follows scroll.
+   Opaque reading surfaces in home.css separate type from the colored geometry. */
 .page-fractal {
   position: fixed;
   z-index: -1;
@@ -317,40 +318,34 @@ svg {
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  opacity: var(--fractal-opacity);
-  mask-image: radial-gradient(
-    ellipse at 50% 45%,
-    rgb(0 0 0 / 62%) 12%,
-    #000 75%
-  );
+  background:
+    radial-gradient(ellipse at 100% 15%, #d5ddd044, transparent 55%),
+    radial-gradient(ellipse at 0% 80%, #d6b48933, transparent 55%);
 }
-.page-fractal > svg {
+.fractal-definitions {
+  position: absolute;
+}
+.fractal-track {
+  will-change: transform;
+}
+.fractal-tile {
   display: block;
   width: 100%;
-  height: 100%;
+  height: 100lvh;
+  mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
 }
 .fractal-branch {
-  stroke: var(--fractal-ink);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   opacity: 0;
-}
-.fractal-branch-accent {
-  stroke: var(--fractal-accent);
 }
 .page-fractal[data-growth="static"] .fractal-branch {
   opacity: 1;
   stroke-dashoffset: 0;
 }
-@media (orientation: portrait) {
-  /* Rotate the composition rather than slicing away both branching edges. */
-  .page-fractal > svg {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 100lvh;
-    height: 100vw;
-    transform: translate(-50%, -50%) rotate(90deg);
+@media (prefers-reduced-motion: reduce) {
+  .fractal-track {
+    will-change: auto;
   }
 }
 @media print {

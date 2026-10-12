@@ -1,0 +1,534 @@
+/* The homepage is a full-width canvas. Reading pages retain their own measure.
+   Geometry lives behind the page; paper surfaces belong to the content itself. */
+.editorial-site .home-page {
+  --page-gutter: clamp(24px, 4vw, 104px);
+  --home-space: clamp(72px, 7vw, 136px);
+  --home-panel: clamp(24px, 3vw, 58px);
+  --home-surface: #f7f5eff5;
+  --home-gap: clamp(20px, 2.6vw, 52px);
+  --fractal-ink: #589083;
+  --fractal-accent: #c28c62;
+}
+.editorial-site .home-page > .page-container,
+.editorial-site .home-page .header-inner {
+  width: 100%;
+  max-width: none;
+}
+.editorial-site .home-page > .page-container {
+  padding: 0;
+}
+.editorial-site .home-page main > :is(section, footer) {
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+}
+
+/* A large opening spread, not a small poster centered inside a wide screen. */
+.editorial-site .home-page .hero {
+  min-height: calc(100svh - 82px);
+  padding-block: 30px 0;
+  display: flex;
+  flex-direction: column;
+}
+.editorial-site .home-page .hero-topline {
+  font-size: 10px;
+}
+.home-page .hero-topline > span {
+  background: var(--home-surface);
+  padding: 4px 8px;
+  margin-inline: -8px;
+}
+.editorial-site .home-page .hero-stage {
+  flex: 1;
+  grid-template-columns: 1.05fr 1fr;
+  gap: clamp(28px, 5vw, 96px);
+  padding-block: clamp(36px, 5vw, 96px);
+}
+.home-page .hero-copy {
+  padding-block: 24px;
+  background: radial-gradient(
+    ellipse at 28% 50%,
+    var(--paper) 35%,
+    #f7f5efe6 64%,
+    #f7f5ef00 78%
+  );
+}
+.editorial-site .home-page .hero-title {
+  font-size: clamp(90px, 10.5vw, 210px);
+}
+.home-page .hero-author {
+  font-size: 15px;
+}
+.home-page .hero-lead {
+  margin-top: 36px;
+  font-size: clamp(23px, 2.1vw, 36px);
+}
+.editorial-site .home-page .hero-bio p {
+  font-size: clamp(14px, 1vw, 17px);
+  max-width: 30em;
+}
+.home-page .hero-actions a {
+  font-size: 14px;
+  min-height: 44px;
+}
+.home-page .hero-exhibit {
+  padding: var(--home-panel);
+  border: 0;
+  background: radial-gradient(ellipse at 50% 42%, #e1e6da, #efeee6 70%);
+}
+.home-page .hero-exhibit::before {
+  display: none;
+}
+.editorial-site .home-page .hero-exhibit .teapot-surface {
+  aspect-ratio: 1.4;
+}
+.home-page .hero-exhibit-note {
+  font-size: 12px;
+}
+.home-page .hero-exhibit-note > .mono {
+  font-size: 9px;
+}
+.home-page .hero-footer {
+  background: var(--home-surface);
+  padding-inline: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+.editorial-site .home-page .hero-social,
+.editorial-site .home-page .current-strip-company > span {
+  font-size: 12px;
+}
+
+/* Chapter headings stretch across the spread. Only the prose has a measure. */
+.editorial-site .home-page :is(.editorial-section, .home-travel) {
+  display: block;
+  padding-block: var(--home-space);
+  border-top: 0;
+}
+.editorial-site .home-page .section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  position: relative;
+  top: auto;
+  padding-block: 20px;
+  margin-bottom: clamp(32px, 4vw, 64px);
+  background: linear-gradient(90deg, #f7f5effa, #f7f5efcc 65%, #f7f5efee);
+}
+.editorial-site .home-page .section-heading h2 {
+  font-size: clamp(42px, 5.3vw, 100px);
+  line-height: 1.06;
+  margin-top: 18px;
+  text-wrap: initial;
+}
+.editorial-site .home-page .section-heading .eyebrow {
+  font-size: 11px;
+}
+.editorial-site .home-page .section-aside {
+  margin: 0 0 4px;
+  max-width: 24em;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* Current role is a double-page spread; earlier roles form a paired archive. */
+.editorial-site .home-page .experience-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--home-gap);
+  align-items: start;
+}
+.editorial-site .home-page .experience {
+  padding: var(--home-panel);
+  border: 0;
+  background: var(--home-surface);
+  min-width: 0;
+}
+.editorial-site .home-page .experience-current {
+  grid-column: 1 / -1;
+}
+.home-page .experience-current .experience-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  column-gap: clamp(32px, 6vw, 110px);
+}
+.home-page .experience-overview {
+  min-width: 0;
+}
+.editorial-site .home-page .experience-time {
+  margin-bottom: 34px;
+  font-size: 11px;
+}
+.editorial-site .home-page .experience-company h3 {
+  font-size: clamp(28px, 2.7vw, 46px);
+}
+.editorial-site .home-page .experience-current .experience-company h3 {
+  font-size: clamp(40px, 4vw, 72px);
+  font-family: var(--serif);
+  font-weight: 400;
+}
+.editorial-site .home-page .experience-body h4 {
+  font-size: clamp(21px, 1.65vw, 28px);
+  margin-block: 28px 16px;
+}
+.editorial-site .home-page .experience-description {
+  font-size: 15px;
+  max-width: 42em;
+}
+.editorial-site .home-page .tags {
+  margin-top: 25px;
+}
+.editorial-site .home-page .tags span {
+  font-size: 11px;
+  line-height: 1.9;
+}
+.home-page .experience-current .work-detail {
+  margin-top: 0;
+  border-top: 0;
+}
+.home-page .work-detail > summary {
+  min-height: 48px;
+  padding-block: 12px 20px;
+  font-size: 13px;
+}
+.editorial-site .home-page .work-highlights > div {
+  display: block;
+  padding-block: 20px;
+}
+.editorial-site .home-page .work-highlights h5 {
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.editorial-site .home-page .work-highlights p {
+  font-size: 14px;
+  max-width: 46em;
+}
+.editorial-site .home-page .disclosure-note {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  margin-top: 26px;
+}
+
+/* Three equal columns use the available canvas without long prose lines. */
+.editorial-site .home-page .focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+}
+.editorial-site .home-page .focus-item {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border: 0;
+  padding: var(--home-panel);
+  background: var(--home-surface);
+  min-width: 0;
+}
+.editorial-site .home-page .focus-top {
+  font-size: 11px;
+  justify-content: space-between;
+}
+.editorial-site .home-page .focus-item h3 {
+  font-size: clamp(24px, 2vw, 36px);
+  margin-block: 28px 15px;
+}
+.home-page .focus-intro p {
+  font-size: 14px;
+}
+.editorial-site .home-page .focus-item ul {
+  margin: auto 0 0;
+  padding-top: 14px;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  font-size: clamp(11px, 0.9vw, 14px);
+}
+.editorial-site .home-page .education {
+  background: var(--home-surface);
+  padding: 26px var(--home-panel);
+  border-top: 1px solid var(--line);
+}
+.editorial-site .home-page .education .eyebrow {
+  width: auto;
+}
+
+/* A large visual lead followed by a two-column index. */
+.editorial-site .home-page .featured-article {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 0;
+  background: var(--home-surface);
+  margin-bottom: 45px;
+}
+.editorial-site .home-page .article-art {
+  aspect-ratio: 1.45;
+}
+.editorial-site .home-page .article-art > img {
+  min-height: 0;
+}
+.editorial-site .home-page .featured-copy {
+  padding: var(--home-panel);
+}
+.editorial-site .home-page .featured-copy h3 {
+  font-size: clamp(26px, 2.4vw, 42px);
+}
+.editorial-site .home-page .featured-copy > p {
+  font-size: 15px;
+}
+.editorial-site .home-page .featured-copy .article-meta {
+  font-size: 12px;
+  margin-top: 30px;
+}
+.editorial-site .home-page .writing-toolbar {
+  background: var(--home-surface);
+  padding: 16px 22px;
+  border: 0;
+}
+.editorial-site .home-page .article-filters button {
+  font-size: 13px;
+  min-height: 44px;
+}
+.editorial-site .home-page .article-search {
+  max-width: 330px;
+}
+.editorial-site .home-page .results-label {
+  padding-inline: 22px;
+  background: var(--home-surface);
+  font-size: 11px;
+}
+.editorial-site .home-page .article-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  border: 0;
+}
+.editorial-site .home-page .article-row {
+  padding: 30px;
+  border: 0;
+  background: var(--home-surface);
+}
+.editorial-site .home-page .article-row h3 {
+  font-size: clamp(17px, 1.3vw, 22px);
+}
+.editorial-site .home-page .article-row:hover {
+  background: var(--paper-deep);
+}
+.editorial-site .home-page .article-list-footer {
+  flex-direction: row;
+  align-items: center;
+  padding: 18px 22px;
+  background: var(--home-surface);
+  margin-top: 2px;
+}
+
+/* Photos are full-bleed within the page gutters, including a lone trip. */
+.home-page .home-travel-intro {
+  position: relative;
+}
+.editorial-site .home-page .home-travel .section-heading {
+  margin-bottom: 0;
+}
+.editorial-site .home-page .home-travel-summary {
+  margin: 0 0 36px;
+  padding-bottom: 20px;
+  background: var(--home-surface);
+  font-size: 12px;
+}
+.home-page .home-travel-description {
+  display: none;
+}
+.editorial-site .home-page .home-travel-grid {
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--home-gap);
+}
+.editorial-site .home-page .home-trip .home-trip-image {
+  aspect-ratio: 1.6;
+}
+.editorial-site .home-page .home-trip:only-child {
+  grid-column: 1 / -1;
+}
+.editorial-site .home-page .home-trip:only-child .home-trip-image {
+  aspect-ratio: 2.4;
+  max-height: 760px;
+}
+.editorial-site .home-page .home-trip-caption {
+  background: var(--home-surface);
+  padding: 23px 25px;
+}
+.editorial-site .home-page .home-trip-caption h3 {
+  font-size: clamp(26px, 2.3vw, 40px);
+}
+.editorial-site .home-page .home-trip-caption .mono {
+  font-size: 11px;
+}
+.editorial-site .home-page .home-travel-empty {
+  background: var(--home-surface);
+  padding: 28px;
+}
+
+/* A solid closing surface deliberately hides the moving background. */
+.editorial-site .home-page .site-footer {
+  margin: 0;
+  padding-top: 44px;
+  background: var(--ink);
+}
+.home-page .site-footer::before {
+  display: none;
+}
+.editorial-site .home-page .footer-contact {
+  padding-block: clamp(50px, 7vw, 130px);
+}
+.editorial-site .home-page .footer-contact h2 {
+  font-size: clamp(64px, 9vw, 168px);
+}
+.editorial-site .home-page .spline-study {
+  width: clamp(260px, 30vw, 530px);
+}
+
+@media (max-width: 1100px) {
+  .editorial-site .home-page .focus-top {
+    flex-direction: column;
+    align-items: start;
+    gap: 8px;
+  }
+  .editorial-site .home-page .section-heading h2 {
+    font-size: 52px;
+  }
+  .editorial-site .home-page .hero-title {
+    font-size: clamp(86px, 10.5vw, 115px);
+  }
+  .home-page .experience-current .experience-body {
+    column-gap: 32px;
+  }
+}
+
+@media (max-width: 760px) {
+  .editorial-site .home-page {
+    --page-gutter: clamp(20px, 5vw, 32px);
+    --home-space: 60px;
+    --home-panel: 24px;
+  }
+  .editorial-site .home-page .hero {
+    min-height: 0;
+    padding-top: 24px;
+  }
+  .editorial-site .home-page .hero-stage {
+    grid-template-columns: 1fr;
+    padding-block: 24px 32px;
+    gap: 30px;
+  }
+  .editorial-site .home-page .hero-title {
+    font-size: clamp(78px, 17vw, 128px);
+  }
+  .home-page .hero-copy {
+    padding-block: 12px;
+  }
+  .home-page .hero-exhibit {
+    max-width: none;
+    padding: 22px;
+  }
+  .home-page .hero-author {
+    font-size: 13px;
+  }
+  .home-page .hero-lead {
+    font-size: 23px;
+    margin-top: 24px;
+  }
+  .home-page .hero-exhibit-note > .mono {
+    font-size: 7px;
+  }
+  .home-page .hero-footer {
+    grid-template-columns: 1fr;
+    padding-inline: 0;
+  }
+  .editorial-site .home-page .hero-social {
+    padding-block: 16px;
+  }
+  .editorial-site .home-page .section-heading {
+    flex-direction: column;
+    align-items: start;
+    gap: 22px;
+    margin-bottom: 28px;
+  }
+  .editorial-site .home-page .section-heading h2 {
+    font-size: clamp(41px, 9vw, 62px);
+    overflow-wrap: anywhere;
+  }
+  .editorial-site .home-page .section-aside {
+    flex-shrink: 1;
+    max-width: 100%;
+  }
+  .editorial-site .home-page .experience-list,
+  .home-page .experience-current .experience-body,
+  .editorial-site .home-page .focus-grid,
+  .editorial-site .home-page .featured-article,
+  .editorial-site .home-page .article-list {
+    grid-template-columns: 1fr;
+  }
+  .editorial-site .home-page .experience-time {
+    margin-bottom: 24px;
+    gap: 12px;
+    font-size: 10px;
+  }
+  .home-page .experience-current .work-detail {
+    margin-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .editorial-site .home-page .experience-body h4 {
+    font-size: 22px;
+  }
+  .editorial-site .home-page .experience-description,
+  .editorial-site .home-page .work-highlights p {
+    font-size: 14px;
+  }
+  .editorial-site .home-page .focus-top {
+    flex-direction: row;
+  }
+  .editorial-site .home-page .focus-item ul {
+    font-size: 12px;
+  }
+  .editorial-site .home-page .education {
+    align-items: start;
+    flex-direction: column;
+  }
+  .editorial-site .home-page .featured-copy h3 {
+    font-size: 27px;
+  }
+  .editorial-site .home-page .article-search {
+    max-width: none;
+  }
+  .editorial-site .home-page .article-row {
+    padding: 25px 20px;
+    gap: 10px;
+  }
+  .editorial-site .home-page .article-list-footer {
+    flex-direction: column;
+    align-items: start;
+  }
+  .editorial-site .home-page .home-travel-grid {
+    grid-template-columns: 1fr;
+  }
+  .editorial-site .home-page .home-trip:only-child .home-trip-image {
+    aspect-ratio: 1.25;
+  }
+  .editorial-site .home-page .home-trip-caption {
+    padding: 20px;
+  }
+  .editorial-site .home-page .footer-contact h2 {
+    font-size: 64px;
+  }
+}
+
+@media (max-width: 380px) {
+  .editorial-site .home-page {
+    --home-panel: 18px;
+  }
+  .editorial-site .home-page .hero-title {
+    font-size: 74px;
+  }
+  .editorial-site .home-page .experience-company {
+    gap: 14px;
+  }
+  .editorial-site .home-page .work-detail > summary {
+    gap: 9px;
+    font-size: 12px;
+  }
+}

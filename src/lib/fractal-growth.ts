@@ -11,6 +11,22 @@ export interface FractalBranch {
 }
 
 export const FRACTAL_TIMING = { grow: 2000, hold: 1000, fade: 2000 } as const;
+
+/** Repeated viewport tiles let the camera travel in either direction without
+ * clamping at a chapter boundary. Adjacent tiles are identical at the wrap. */
+export function fractalScrollOffset(
+  scrollY: number,
+  tileHeight: number,
+): number {
+  if (
+    !Number.isFinite(scrollY) ||
+    !Number.isFinite(tileHeight) ||
+    tileHeight <= 0
+  )
+    return 0;
+  const offset = (Math.max(0, scrollY) * 0.28) % tileHeight;
+  return offset === 0 ? 0 : -offset;
+}
 export interface FractalVariant {
   id: string;
   strokes: FractalBranch[];
@@ -30,9 +46,9 @@ function stroke(
     path,
     delay: depth,
     duration: 1,
-    width: Math.max(0.75, 1.6 - depth * 0.14),
-    opacity: 0.23 - depth * 0.015,
-    accent: depth > 3 && id % 17 === 0,
+    width: Math.max(2.4, 10 - depth * 1.5),
+    opacity: 0.42 - depth * 0.035,
+    accent: id % 3 === 0,
   };
 }
 
@@ -41,16 +57,16 @@ function polygon(points: Point[]): string {
 }
 
 function sierpinski(): FractalBranch[] {
-  const a: Point = [720, -70],
-    b: Point = [30, 870],
-    c: Point = [1410, 870];
+  const a: Point = [920, -350],
+    b: Point = [-480, 1060],
+    c: Point = [1800, 1060];
   const strokes = [stroke(polygon([a, b, c]), 0)];
   const midpoint = (p: Point, q: Point): Point => [
     (p[0] + q[0]) / 2,
     (p[1] + q[1]) / 2,
   ];
   function divide(p: Point, q: Point, r: Point, depth: number, parent: number) {
-    if (depth > 5) return;
+    if (depth > 4) return;
     const pq = midpoint(p, q),
       qr = midpoint(q, r),
       rp = midpoint(r, p);
@@ -65,11 +81,11 @@ function sierpinski(): FractalBranch[] {
 }
 
 function kochSnowflakes(): FractalBranch[] {
-  return [440, 285, 145].map((radius, index) => {
+  return [820, 540, 270].map((radius, index) => {
     const points: Point[] = [];
     const corners: Point[] = [-Math.PI / 2, (Math.PI * 5) / 6, Math.PI / 6].map(
       (angle) => [
-        720 + Math.cos(angle) * radius,
+        1120 + Math.cos(angle) * radius,
         350 + Math.sin(angle) * radius,
       ],
     );
@@ -99,7 +115,7 @@ function kochSnowflakes(): FractalBranch[] {
 
 function dragonCurve(): FractalBranch[] {
   let turns: number[] = [];
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < 9; i++)
     turns = [
       ...turns,
       1,
@@ -131,7 +147,7 @@ function dragonCurve(): FractalBranch[] {
     maxX = Math.max(...xs),
     minY = Math.min(...ys),
     maxY = Math.max(...ys);
-  const scale = Math.min(1250 / (maxX - minX), 660 / (maxY - minY));
+  const scale = Math.max(1700 / (maxX - minX), 950 / (maxY - minY));
   const mapped = points.map((p): Point => [
     720 + (p[0] - (minX + maxX) / 2) * scale,
     380 + (p[1] - (minY + maxY) / 2) * scale,
@@ -194,9 +210,9 @@ export function buildFractalBranches(requestedDepth = 6): FractalBranch[] {
       path: `M${x.toFixed(2)},${y.toFixed(2)}Q${controlX.toFixed(2)},${controlY.toFixed(2)} ${endX.toFixed(2)},${endY.toFixed(2)}`,
       delay,
       duration,
-      width: 1.7 - depth * 0.15,
-      opacity: 0.26 - depth * 0.015,
-      accent: depth === maxDepth && id % 11 === 0,
+      width: Math.max(2.6, 17 * 0.74 ** depth),
+      opacity: 0.46 - depth * 0.035,
+      accent: handedness < 0,
     });
     if (depth === maxDepth) return;
     const nextStart = delay + duration;
@@ -221,7 +237,7 @@ export function buildFractalBranches(requestedDepth = 6): FractalBranch[] {
       handedness,
     );
   }
-  branch(-70, 730, -0.86, 286, 0, null, 180, 1);
-  branch(1510, 790, -2.28, 290, 0, null, 470, -1);
+  branch(-150, 810, -0.86, 420, 0, null, 180, 1);
+  branch(1610, 840, -2.28, 440, 0, null, 470, -1);
   return branches;
 }

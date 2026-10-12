@@ -31,27 +31,29 @@ export default function Experience() {
               </span>
             </div>
             <div className="experience-body">
-              <div className="experience-company">
-                <div className="company-logo">
-                  <Image
-                    src={item.logo.src}
-                    width={item.logo.width}
-                    height={item.logo.height}
-                    alt={`${item.company}标识`}
-                  />
+              <div className="experience-overview">
+                <div className="experience-company">
+                  <div className="company-logo">
+                    <Image
+                      src={item.logo.src}
+                      width={item.logo.width}
+                      height={item.logo.height}
+                      alt={`${item.company}标识`}
+                    />
+                  </div>
+                  <div className="company-heading">
+                    <p className="company-name">{item.company}</p>
+                    <h3>{item.department}</h3>
+                    <p className="experience-role">{item.role}</p>
+                  </div>
                 </div>
-                <div className="company-heading">
-                  <p className="company-name">{item.company}</p>
-                  <h3>{item.department}</h3>
-                  <p className="experience-role">{item.role}</p>
+                <h4>{item.summary}</h4>
+                <p className="experience-description">{item.description}</p>
+                <div className="tags">
+                  {item.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
                 </div>
-              </div>
-              <h4>{item.summary}</h4>
-              <p className="experience-description">{item.description}</p>
-              <div className="tags">
-                {item.tags.map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
               </div>
               {item.highlights.length > 0 && (
                 <details className="work-detail" open={item.current}>

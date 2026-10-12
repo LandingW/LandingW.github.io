@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./motion.css";
 import "./design.css";
+import "./home.css";
 import SiteMotion from "@/components/SiteMotion";
 
 export const viewport: Viewport = {

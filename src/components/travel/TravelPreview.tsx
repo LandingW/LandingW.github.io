@@ -91,15 +91,20 @@ export default function TravelPreview() {
               >
                 {photo && (
                   <div className="home-trip-image">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={mediaUrl(base, photo.thumbnail)}
-                      width={photo.width}
-                      height={photo.height}
-                      alt={album.title}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    <picture>
+                      <source
+                        media="(min-width: 761px)"
+                        srcSet={mediaUrl(base, photo.preview)}
+                      />
+                      <img
+                        src={mediaUrl(base, photo.thumbnail)}
+                        width={photo.width}
+                        height={photo.height}
+                        alt={album.title}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </picture>
                   </div>
                 )}
                 <div className="home-trip-caption">
