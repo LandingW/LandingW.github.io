@@ -30,3 +30,13 @@
 - 本轮不修改、上传或删除照片，不改旅行数据，不部署 Worker；浏览器响应式验收不等于真机 Safari 或定量 GPU 帧率验证。
 
 截图保存在未提交的 `photo-output/`：`soft-editorial-desktop-20261013.png`、`soft-editorial-work-20261013.png`、`soft-editorial-trip-mobile-20261013.png`、`soft-editorial-trip-desktop-20261013.png`。
+
+## 发布与线上确认
+
+- UI 提交：`abde997c4ff884133812c58ae2689b09742a2583`。
+- [GitHub Pages 运行 38358259873](https://github.com/LandingW/LandingW.github.io/actions/runs/38358259873) 已完成，结论 `success`。
+- 线上首页 390×844：正文面板 `rgba(250,248,243,0.76)`、圆角 `26px`、`blur(2px)`，仅一张 `portrait-continuous` 分形画布；文档与滚动宽度同为 375px，无横向溢出。
+- 线上首页 1280×720：`blur(3px)`、一张 `landscape-continuous` 分形画布；文档与滚动宽度同为 1265px。
+- 线上旅行页成功加载 3 次旅行、40 张照片；旅行卡片底色为同一 76% 材质，1280px 下圆角 `35.84px`。
+- 最终本机生产版 320px 微调复核：中文首屏 lead 单行、两个入口各约 103.6px 宽与 48px 高，文字不换行；静态模式主路径无虚线间隙。
+- 线上截图：`photo-output/soft-editorial-live-mobile-20261013.png`、`photo-output/soft-editorial-live-desktop-20261013.png`。
