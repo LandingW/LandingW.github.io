@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
 import {
   buildFractalVariants,
@@ -8,20 +8,54 @@ import {
   FRACTAL_TIMING,
   fractalScrollOffset,
 } from "@/lib/fractal-growth";
+import {
+  buildPortraitFractals,
+  portraitRows,
+  PORTRAIT_WIDTH,
+  PORTRAIT_SPAN,
+  PORTRAIT_SCROLL_RATE,
+} from "@/lib/fractal-portrait";
 
-const variants = buildFractalVariants();
+const landscapeVariants = buildFractalVariants();
 
 export default function GrowingFractal() {
   const ref = useRef<HTMLDivElement>(null);
   const id = useId().replaceAll(":", "");
-  const compact = useMediaQuery("(max-width: 760px)");
+  const compact = useMediaQuery(
+    "(max-width: 760px) and (orientation: portrait)",
+  );
+  const [rows, setRows] = useState(2);
+  const variants = useMemo(
+    () => (compact ? buildPortraitFractals(rows) : landscapeVariants),
+    [compact, rows],
+  );
+
+  useEffect(() => {
+    if (!compact || !ref.current) return;
+    const element = ref.current;
+    const size = () =>
+      setRows(
+        portraitRows(
+          element.clientWidth,
+          element.clientHeight,
+          document.documentElement.scrollHeight,
+        ),
+      );
+    const observer = new ResizeObserver(size);
+    observer.observe(document.body);
+    observer.observe(element);
+    size();
+    return () => observer.disconnect();
+  }, [compact]);
 
   // This loop runs only while the page is scrolling/resizing. Growth has its
   // own timeline, so a scroll never restarts the 2 / 1 / 2 second sequence.
   useEffect(() => {
     const element = ref.current;
     const track = element?.querySelector<HTMLElement>(".fractal-track");
-    const tile = element?.querySelector<SVGSVGElement>(".fractal-tile");
+    const tile = element?.querySelector<SVGSVGElement>(
+      ".fractal-tile, .fractal-field",
+    );
     if (!element || !track || !tile) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const staticMode =
@@ -33,7 +67,9 @@ export default function GrowingFractal() {
       const offset =
         reducedMotion.matches || staticMode
           ? 0
-          : fractalScrollOffset(window.scrollY, tileHeight);
+          : compact
+            ? -Math.max(0, window.scrollY) * PORTRAIT_SCROLL_RATE
+            : fractalScrollOffset(window.scrollY, tileHeight);
       track.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
       element.dataset.parallax =
         reducedMotion.matches || staticMode ? "off" : "on";
@@ -57,7 +93,7 @@ export default function GrowingFractal() {
       document.removeEventListener("visibilitychange", schedule);
       reducedMotion.removeEventListener("change", schedule);
     };
-  }, []);
+  }, [compact]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -135,11 +171,24 @@ export default function GrowingFractal() {
             group.querySelectorAll("path").forEach((path, index) => {
               track(
                 path.animate(
-                  [
-                    { strokeDashoffset: "1", opacity: 0, offset: 0 },
-                    { strokeDashoffset: ".98", opacity: 1, offset: 0.02 },
-                    { strokeDashoffset: "0", opacity: 1, offset: 1 },
-                  ],
+                  variant.strokes[index].continuous
+                    ? [
+                        {
+                          strokeDasharray: "0 12",
+                          strokeDashoffset: "0",
+                          opacity: 0,
+                        },
+                        {
+                          strokeDasharray: "12 0",
+                          strokeDashoffset: "0",
+                          opacity: 1,
+                        },
+                      ]
+                    : [
+                        { strokeDashoffset: "1", opacity: 0, offset: 0 },
+                        { strokeDashoffset: ".98", opacity: 1, offset: 0.02 },
+                        { strokeDashoffset: "0", opacity: 1, offset: 1 },
+                      ],
                   { ...schedule[index], fill: "both", easing: "linear" },
                 ),
               );
@@ -195,12 +244,13 @@ export default function GrowingFractal() {
       document.removeEventListener("visibilitychange", updatePlayback);
       reducedMotion.removeEventListener("change", onPreferenceChange);
     };
-  }, [compact]);
+  }, [variants]);
 
   return (
     <div
       ref={ref}
       className="page-fractal"
+      data-composition={compact ? "portrait-continuous" : "landscape"}
       data-growth="booting"
       data-fractal="branching"
       data-phase="grow"
@@ -224,12 +274,16 @@ export default function GrowingFractal() {
         </defs>
       </svg>
       <div className="fractal-track">
-        {Array.from({ length: compact ? 5 : 2 }, (_, tile) => (
+        {Array.from({ length: compact ? 1 : 2 }, (_, tile) => (
           <svg
-            className="fractal-tile"
+            className={compact ? "fractal-field" : "fractal-tile"}
             key={tile}
-            viewBox="0 0 1440 760"
-            preserveAspectRatio="xMidYMid slice"
+            viewBox={
+              compact
+                ? `0 0 ${PORTRAIT_WIDTH} ${rows * PORTRAIT_SPAN}`
+                : "0 0 1440 760"
+            }
+            preserveAspectRatio={compact ? "xMidYMin meet" : "xMidYMid slice"}
             focusable="false"
             fill="none"
           >
@@ -248,7 +302,8 @@ export default function GrowingFractal() {
                         : "fractal-branch"
                     }
                     d={stroke.path}
-                    pathLength={1}
+                    pathLength={stroke.continuous ? undefined : 1}
+                    data-continuous={stroke.continuous || undefined}
                     strokeWidth={stroke.width}
                     strokeOpacity={stroke.opacity}
                     stroke={`url(#${id}-${stroke.accent ? "clay" : "sage"})`}

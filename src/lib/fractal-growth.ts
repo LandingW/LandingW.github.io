@@ -8,6 +8,7 @@ export interface FractalBranch {
   width: number;
   opacity: number;
   accent: boolean;
+  continuous?: boolean;
 }
 
 export const FRACTAL_TIMING = { grow: 2000, hold: 1000, fade: 2000 } as const;

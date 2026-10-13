@@ -276,7 +276,7 @@ test(
   },
 );
 
-test("upload completion wakes the backend and mobile fractals repeat at a smaller scale", async () => {
+test("upload completion wakes the backend and mobile fractals use a continuous portrait field", async () => {
   const worker = await fs.readFile("workers/photos/src/index.ts", "utf8");
   assert.match(
     worker,
@@ -289,8 +289,8 @@ test("upload completion wakes the backend and mobile fractals repeat at a smalle
     "utf8",
   );
   const styles = await fs.readFile("src/app/globals.css", "utf8");
-  assert.match(component, /compact \? 5 : 2/);
-  assert.match(styles, /height: max\(220px, 32lvh\)/);
+  assert.match(component, /compact \? 1 : 2/);
+  assert.match(styles, /\.fractal-field\s*\{[^}]*mask-image: none/);
 });
 
 test(
