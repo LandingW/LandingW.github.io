@@ -79,16 +79,15 @@ test("four different fractals share the exact 2s / 1s / 2s cycle", () => {
   assert.deepEqual(growthSchedule([]), []);
 });
 
-test("background contains one isolated canvas and an unconditional static SVG fallback", () => {
+test("background contains two prebuilt plates and is fully rendered without JavaScript", () => {
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
-  assert.equal((html.match(/<canvas/g) ?? []).length, 1);
-  assert.equal((html.match(/<svg/g) ?? []).length, 1);
-  assert.match(html, /data-renderer="isolated-canvas"/);
-  assert.match(html, /data-studies="arc drift fold unfurl"/);
-  assert.match(html, /class="fractal-fallback"/);
-  assert.doesNotMatch(html, /fractal-tile|fractal-contour|<button|<a /);
+  assert.equal((html.match(/class="print-layer /g) ?? []).length, 2);
+  assert.equal((html.match(/<svg/g) ?? []).length, 4);
+  assert.match(html, /data-renderer="composited-print"/);
+  assert.match(html, /data-art-motion="paused"/);
+  assert.doesNotMatch(html, /<canvas|<filter|fractal-tile|<button|<a /);
 });
 
 test("one shared background lives above all homepage chapters, not inside the hero", () => {
@@ -106,10 +105,10 @@ test("one shared background lives above all homepage chapters, not inside the he
     assert.ok(html.includes(`id="${id}"`));
 });
 
-test("fullscreen colored fractal has a scroll camera, lifecycle cleanup and static fallbacks", async () => {
+test("fullscreen artwork has lifecycle cleanup and no JS animation, cursor or layout polling", async () => {
   const css = await fs.readFile("src/app/globals.css", "utf8");
   const design = await fs.readFile("src/app/design.css", "utf8");
-  const component = await fs.readFile("src/lib/typographic-field.ts", "utf8");
+  const component = await fs.readFile("src/lib/print-motion.ts", "utf8");
   const backdrop = css.match(/\.page-fractal\s*\{([^}]+)\}/)?.[1] || "";
   assert.match(backdrop, /position: fixed/);
   assert.match(backdrop, /inset: 0/);
@@ -121,19 +120,11 @@ test("fullscreen colored fractal has a scroll camera, lifecycle cleanup and stat
   assert.match(component, /visibilitychange/);
   assert.match(component, /prefers-reduced-motion/);
   assert.match(component, /graphics.*static/);
-  assert.match(
-    component,
-    /window.addEventListener\("scroll", layout, \{ passive: true \}\)/,
-  );
-  assert.match(component, /window.removeEventListener\("scroll", layout\)/);
-  assert.match(component, /cancelAnimationFrame/);
-  assert.match(component, /resize.disconnect\(\)/);
-  assert.match(component, /mutations.disconnect\(\)/);
-  assert.match(component, /getContext\("2d", \{ alpha: false \}\)/);
-  assert.match(component, /createRange\(\)/);
+  assert.match(component, /removeEventListener\("visibilitychange", update\)/);
+  assert.match(component, /removeEventListener\("change", update\)/);
   assert.doesNotMatch(
     component,
-    /clearRect|\.style\.|setInterval|preventDefault/,
+    /getContext|requestAnimationFrame|pointermove|addEventListener\("scroll"|createRange|getBoundingClientRect|setInterval|preventDefault/,
   );
   assert.doesNotMatch(component, /setInterval|preventDefault/);
 });

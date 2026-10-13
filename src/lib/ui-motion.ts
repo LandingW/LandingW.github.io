@@ -21,24 +21,6 @@ export function readingProgress(
     ? Math.max(0, Math.min(1, scroll / distance))
     : 0;
 }
-export function pointerOffset(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  if (
-    ![x, y, width, height].every(Number.isFinite) ||
-    width <= 0 ||
-    height <= 0
-  )
-    return { x: 0, y: 0 };
-  const clamp = (value: number) => Math.max(-1, Math.min(1, value));
-  return {
-    x: clamp((x / width) * 2 - 1) * 4,
-    y: clamp((y / height) * 2 - 1) * 4,
-  };
-}
 export function tripTransitionName(id: string) {
   return /^[A-Za-z0-9_-]{1,80}$/.test(id) ? `trip-cover-${id}` : "none";
 }

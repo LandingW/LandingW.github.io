@@ -173,20 +173,6 @@
   border-color: var(--accent);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html[data-motion="full"]
-    [data-motion-card]
-    :is(.home-trip-image img, .trip-cover-main img, .article-art > img) {
-    transform: translate3d(var(--motion-x, 0px), var(--motion-y, 0px), 0)
-      scale(var(--motion-zoom, 1));
-    transition: transform 300ms var(--ease-out);
-  }
-  html[data-motion="full"]
-    [data-motion-card]:focus-visible
-    :is(.home-trip-image img, .trip-cover-main img, .article-art > img) {
-    transform: scale(1.025);
-  }
-}
 .home-trip-image,
 .trip-cover-main,
 .article-art {

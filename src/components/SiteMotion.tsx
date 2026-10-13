@@ -2,12 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import {
-  UI_MOTION,
-  pointerOffset,
-  readingProgress,
-  revealDelay,
-} from "@/lib/ui-motion";
+import { UI_MOTION, readingProgress, revealDelay } from "@/lib/ui-motion";
 
 // Progressive enhancement only: without JS every paragraph and link is visible.
 export default function SiteMotion() {
@@ -20,16 +15,12 @@ export default function SiteMotion() {
     )
       return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const staticMode =
       new URLSearchParams(window.location.search).get("graphics") === "static";
     const pending = new Set<HTMLElement>();
     const seen = new WeakSet<HTMLElement>();
     const animations = new Map<HTMLElement, Animation>();
-    let pointerFrame = 0,
-      scrollFrame = 0;
-    let card: HTMLElement | null = null;
-    let pointer = { x: 0, y: 0 };
+    let scrollFrame = 0;
     const canAnimate = () =>
       !reduced.matches && !staticMode && !document.hidden;
     function finish(node: HTMLElement) {
@@ -96,43 +87,6 @@ export default function SiteMotion() {
         observer.observe(node);
       }
     }
-    function resetCard() {
-      if (card) {
-        card.style.removeProperty("--motion-x");
-        card.style.removeProperty("--motion-y");
-        card.style.removeProperty("--motion-zoom");
-      }
-      card = null;
-    }
-    function move(event: PointerEvent) {
-      if (!canAnimate() || !fine.matches || event.pointerType !== "mouse")
-        return;
-      const target =
-        event.target instanceof Element
-          ? event.target.closest<HTMLElement>("[data-motion-card]")
-          : null;
-      if (card !== target) {
-        resetCard();
-        card = target;
-      }
-      if (!card) return;
-      pointer = { x: event.clientX, y: event.clientY };
-      if (pointerFrame) return;
-      pointerFrame = requestAnimationFrame(() => {
-        pointerFrame = 0;
-        if (!card || !card.isConnected) return;
-        const rect = card.getBoundingClientRect();
-        const offset = pointerOffset(
-          pointer.x - rect.left,
-          pointer.y - rect.top,
-          rect.width,
-          rect.height,
-        );
-        card.style.setProperty("--motion-x", `${offset.x.toFixed(2)}px`);
-        card.style.setProperty("--motion-y", `${offset.y.toFixed(2)}px`);
-        card.style.setProperty("--motion-zoom", "1.04");
-      });
-    }
     function updateProgress() {
       if (scrollFrame) return;
       scrollFrame = requestAnimationFrame(() => {
@@ -148,7 +102,6 @@ export default function SiteMotion() {
       });
     }
     function onScroll() {
-      resetCard();
       updateProgress();
     }
     function preference() {
@@ -159,7 +112,6 @@ export default function SiteMotion() {
         pending.forEach(finish);
         animations.forEach((_animation, node) => finish(node));
       }
-      if (!canAnimate() || !fine.matches) resetCard();
     }
     function focused(event: FocusEvent) {
       if (!(event.target instanceof Element)) return;
@@ -186,14 +138,11 @@ export default function SiteMotion() {
     collect(document.body, true);
     changes.observe(document.body, { childList: true, subtree: true });
     resize.observe(document.body);
-    document.addEventListener("pointermove", move, { passive: true });
-    document.addEventListener("pointerleave", resetCard);
     document.addEventListener("focusin", focused);
     document.addEventListener("visibilitychange", preference);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", updateProgress, { passive: true });
     reduced.addEventListener("change", preference);
-    fine.addEventListener("change", preference);
     updateProgress();
     return () => {
       changes.disconnect();
@@ -201,17 +150,12 @@ export default function SiteMotion() {
       pending.forEach(finish);
       animations.forEach((_animation, node) => finish(node));
       observer.disconnect();
-      cancelAnimationFrame(pointerFrame);
       cancelAnimationFrame(scrollFrame);
-      resetCard();
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerleave", resetCard);
       document.removeEventListener("focusin", focused);
       document.removeEventListener("visibilitychange", preference);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", updateProgress);
       reduced.removeEventListener("change", preference);
-      fine.removeEventListener("change", preference);
     };
   }, [pathname]);
   return null;

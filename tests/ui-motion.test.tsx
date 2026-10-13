@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import fs from "node:fs/promises";
 import {
   UI_MOTION,
-  pointerOffset,
   readingProgress,
   revealDelay,
   tripTransitionName,
@@ -17,7 +16,7 @@ import TripCover from "../src/components/travel/TripCover";
 import TripStory from "../src/components/travel/TripStory";
 import { albumInput, type TravelPhoto } from "../src/lib/travel";
 
-test("motion progress, stagger and pointer offsets remain finite and bounded", () => {
+test("motion progress and stagger remain finite and bounded", () => {
   assert.equal(readingProgress(0, 2000, 1000), 0);
   assert.equal(readingProgress(500, 2000, 1000), 0.5);
   assert.equal(readingProgress(3000, 2000, 1000), 1);
@@ -26,9 +25,6 @@ test("motion progress, stagger and pointer offsets remain finite and bounded", (
   assert.equal(readingProgress(NaN, 1000, 500), 0);
   assert.equal(revealDelay(-3), 0);
   assert.equal(revealDelay(10000), UI_MOTION.maxStaggerMs);
-  assert.deepEqual(pointerOffset(50, 50, 100, 100), { x: 0, y: 0 });
-  assert.deepEqual(pointerOffset(500, -500, 100, 100), { x: 4, y: -4 });
-  assert.deepEqual(pointerOffset(50, 50, 0, 100), { x: 0, y: 0 });
 });
 
 test("SSR remains readable and the original four menu entries keep their destinations", () => {
@@ -91,7 +87,10 @@ test("motion code handles reduced preference, keyboard reveal, dynamic content a
   const source = await fs.readFile("src/components/SiteMotion.tsx", "utf8");
   const css = await fs.readFile("src/app/motion.css", "utf8");
   assert.match(source, /prefers-reduced-motion/);
-  assert.match(source, /pointer: fine/);
+  assert.doesNotMatch(
+    source,
+    /pointermove|pointerOffset|--motion-x|--motion-y/,
+  );
   assert.match(source, /visibilitychange/);
   assert.match(source, /focusin/);
   assert.match(source, /MutationObserver/);
