@@ -94,6 +94,7 @@ async function main() {
       const temp = await fs.mkdtemp(path.join(os.tmpdir(), "landingw-photo-")),
         uploaded: string[] = [];
       let allUploaded = false;
+      let phase = "download";
       try {
         const source = path.join(temp, "source"),
           output = path.join(temp, "derived");
@@ -101,7 +102,8 @@ async function main() {
           signal: AbortSignal.timeout(180000),
           redirect: "error",
         });
-        if (!response.ok || !response.body) throw new Error("原文件下载失败");
+        if (!response.ok || !response.body)
+          throw new Error(`原文件下载失败 HTTP ${response.status}`);
         let bytes = 0;
         const limit = new Transform({
           transform(chunk, _encoding, callback) {
@@ -123,7 +125,9 @@ async function main() {
         );
         if (bytes !== job.bytes) throw new Error("文件大小校验失败");
         if (metadataOnly) {
+          phase = "metadata";
           const metadata = await readPhotoMetadata(source);
+          phase = "metadata-complete";
           await complete(`/internal/photos/${job.id}/metadata/complete`, {
             lease: job.lease,
             metadata,
@@ -133,8 +137,10 @@ async function main() {
           );
           continue;
         }
+        phase = "generate";
         const result = await generatePhoto(source, output),
           files = [...result.files];
+        phase = "upload";
         const uploads = await Promise.allSettled(
           Array.from({ length: 6 }, async () => {
             for (;;) {
@@ -161,6 +167,7 @@ async function main() {
         if (uploads.some((upload) => upload.status === "rejected"))
           throw new Error("展示文件上传失败");
         allUploaded = true;
+        phase = "complete";
         await complete(`/internal/photos/${job.id}/complete`, {
           lease: job.lease,
           width: result.width,
@@ -172,10 +179,18 @@ async function main() {
         console.log(
           `Photo ${job.id}: ready; ${result.tileCount} tiles; ${result.derivedBytes} derived bytes.`,
         );
-      } catch {
+      } catch (error) {
         failures++;
         // Opaque IDs only. Do not print original filenames, signed URLs, EXIF or raw SDK errors.
-        console.error(`Photo ${job.id}: processing failed.`);
+        const status =
+          error instanceof Error
+            ? error.message.match(
+                /^(?:原文件下载失败 HTTP |处理接口返回 )(\d{3})$/,
+              )?.[1]
+            : undefined;
+        console.error(
+          `Photo ${job.id}: processing failed at ${phase}${status ? ` (HTTP ${status})` : ""}.`,
+        );
         for (let i = 0; !allUploaded && i < uploaded.length; i += 1000) {
           await s3
             .send(

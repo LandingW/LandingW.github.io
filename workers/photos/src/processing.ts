@@ -22,7 +22,9 @@ export async function dispatchProcessing(
         },
         body: JSON.stringify({ ref: "main", inputs }),
         signal: AbortSignal.timeout(15000),
-        redirect: "error",
+        // Workers supports manual/follow, not the browser's "error" mode.
+        // Keep credentials on this exact endpoint; !ok rejects any redirect.
+        redirect: "manual",
       },
     );
     if (!response.ok)

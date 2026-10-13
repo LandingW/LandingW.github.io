@@ -48,7 +48,7 @@ export async function searchPlaces(env: Env, input: Record<string, unknown>) {
           "LandingW-Travel/1.0 (+https://landingw.github.io/travel/)",
       },
       signal: AbortSignal.timeout(10000),
-      redirect: "error",
+      redirect: "manual",
     });
     if (!response.ok) throw new Error("upstream unavailable");
     results = photonResults(await response.json());

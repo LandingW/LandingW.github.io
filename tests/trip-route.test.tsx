@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { build } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import {
   stopsInput,
@@ -291,3 +292,84 @@ test("upload completion wakes the backend and mobile fractals repeat at a smalle
   assert.match(component, /compact \? 5 : 2/);
   assert.match(styles, /height: max\(220px, 32lvh\)/);
 });
+
+test(
+  "dispatch and place search run inside workerd without unsupported redirect modes",
+  { timeout: 30000 },
+  async () => {
+    const bundle = await build({
+      stdin: {
+        contents: `import {dispatchProcessing} from './workers/photos/src/processing';
+        import {searchPlaces} from './workers/photos/src/places';
+        export default {async fetch(request,env){try {
+          if(new URL(request.url).pathname==='/dispatch') {await dispatchProcessing(env);return Response.json({ok:true});}
+          return Response.json(await searchPlaces(env,{query:'Test hotel Norway'}));
+        }catch(e){return Response.json({error:e.message},{status:502});}}};`,
+        resolveDir: process.cwd(),
+        loader: "ts",
+      },
+      bundle: true,
+      format: "esm",
+      platform: "browser",
+      write: false,
+    });
+    let redirect = false;
+    let requests = 0;
+    const mf = new Miniflare(
+      convertV4MiniflareOptions({
+        modules: true,
+        script: bundle.outputFiles[0].text,
+        d1Databases: ["DB"],
+        bindings: {
+          GITHUB_TOKEN: "test-only",
+          GITHUB_REPOSITORY: "LandingW/LandingW.github.io",
+        },
+        outboundService: async (request) => {
+          requests++;
+          if (request.url.startsWith("https://api.github.com/"))
+            return new Response(
+              null,
+              redirect
+                ? {
+                    status: 302,
+                    headers: { Location: "https://not-allowed.example/" },
+                  }
+                : { status: 204 },
+            );
+          assert.ok(request.url.startsWith("https://photon.komoot.io/api/"));
+          return Response.json(photon);
+        },
+      }),
+    );
+    try {
+      const db = await mf.getD1Database("DB");
+      await db.batch([
+        db.prepare(
+          "CREATE TABLE service_events(key TEXT PRIMARY KEY,value TEXT)",
+        ),
+        db.prepare(
+          "CREATE TABLE service_limits(key TEXT PRIMARY KEY,next_at INTEGER)",
+        ),
+        db.prepare(
+          "CREATE TABLE place_search_cache(key TEXT PRIMARY KEY,results_json TEXT,expires_at INTEGER)",
+        ),
+      ]);
+      const dispatch = await mf.dispatchFetch("http://localhost/dispatch");
+      assert.equal(dispatch.status, 200, await dispatch.text());
+      const search = await mf.dispatchFetch("http://localhost/search");
+      assert.equal(search.status, 200);
+      assert.equal(
+        ((await search.json()) as { results: unknown[] }).results.length,
+        1,
+      );
+      assert.equal(requests, 2);
+      redirect = true;
+      const rejected = await mf.dispatchFetch("http://localhost/dispatch");
+      assert.equal(rejected.status, 502);
+      assert.match(await rejected.text(), /HTTP 302/);
+      assert.equal(requests, 3, "credentials never follow the redirect");
+    } finally {
+      await mf.dispose();
+    }
+  },
+);
