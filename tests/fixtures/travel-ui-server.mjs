@@ -6,6 +6,34 @@ import path from "node:path";
 const root = await realpath("out");
 const config = JSON.parse(await readFile("public/travel-config.json", "utf8"));
 const manifest = await (await fetch(`${config.mediaUrl}/manifest.json`)).json();
+if (process.env.PHOTO_UI_ROUTE_FIXTURE === "1" && manifest.albums[0]) {
+  manifest.albums[0].stops = [
+    {
+      id: "local-stay",
+      name: "本机样例 · 海边酒店",
+      kind: "stay",
+      note: "仅本机路线验证，不保存到云端。",
+      latitude: 69.632,
+      longitude: 17.994,
+    },
+    {
+      id: "local-view",
+      name: "本机样例 · 海岸观景点",
+      kind: "sight",
+      note: "第二站",
+      latitude: 69.612,
+      longitude: 18.04,
+    },
+    {
+      id: "local-harbor",
+      name: "本机样例 · 码头",
+      kind: "transit",
+      note: "第三站",
+      latitude: 69.655,
+      longitude: 18.13,
+    },
+  ];
+}
 // Synthetic GPS for exercising detail-map linking; never written to the service.
 if (process.env.PHOTO_UI_DETAIL_FIXTURE === "1") {
   const target = manifest.albums.find((album) => album.latitude !== null);
@@ -142,6 +170,7 @@ createServer(async (req, res) => {
         folders,
         memberships,
         libraryVersion: 1,
+        routeVersion: 1,
         derivedBytes: photos.reduce(
           (sum, photo) => sum + photo.derived_bytes,
           0,
@@ -156,6 +185,19 @@ createServer(async (req, res) => {
     }
     try {
       const data = JSON.parse(raw || "{}");
+      if (url.pathname === "/admin/places/search")
+        return json({
+          results: [
+            {
+              id: "local-result",
+              name: "本机检索样例 · 酒店",
+              address: "仅用于 UI 测试，不来自线上地名服务",
+              kind: "stay",
+              latitude: 69.636,
+              longitude: 18.035,
+            },
+          ],
+        });
       // Library mutations below affect these in-memory copies only; no R2 calls.
       if (url.pathname === "/admin/library/folders") {
         const id = `local-folder-${Date.now()}`;

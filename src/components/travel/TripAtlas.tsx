@@ -36,6 +36,7 @@ export default function TripAtlas({
   onOpen: (id: string) => void;
 }) {
   const points = useMemo(() => tripPoints(album, photos), [album, photos]);
+  const stopCount = album.stops?.length || 0;
   const [selected, setSelected] = useState(points[0]?.id || "");
   const [mapVisible, setMapVisible] = useState(false);
   const container = useRef<HTMLDivElement>(null);
@@ -66,13 +67,18 @@ export default function TripAtlas({
     >
       <header className="journey-section-heading" data-reveal>
         <div>
-          <p className="eyebrow">01 / THE LOCATION</p>
+          <p className="eyebrow">
+            01 / {stopCount ? "THE ITINERARY" : "THE LOCATION"}
+          </p>
           <h2 id="places-title">
-            风景的坐标<span className="accent">.</span>
+            {stopCount ? "沿途，停留" : "风景的坐标"}
+            <span className="accent">.</span>
           </h2>
         </div>
         <p>
-          从一张照片，走近一个地方。
+          {stopCount
+            ? `${String(stopCount).padStart(2, "0")} 次停留，串起这一程。`
+            : "从一张照片，走近一个地方。"}
           <br />
           {points.length
             ? `${points.length} 个已记录点位 · ${located} 张照片带 GPS`
@@ -113,13 +119,19 @@ export default function TripAtlas({
           )}
           <div className="journey-map-note">
             <span className="mono">OPENSTREETMAP</span>
-            <span>点位为记录位置，不代表实际行走路线</span>
+            <span>
+              {stopCount > 1
+                ? "弧线表示站点顺序，不代表实际行走或导航路线"
+                : "点位为记录位置，不代表实际行走路线"}
+            </span>
           </div>
         </div>
         {active && (
           <aside className="journey-point-panel" aria-label="旅行点位与详情">
             <div className="journey-point-heading">
-              <span className="mono">PLACES INDEX</span>
+              <span className="mono">
+                {stopCount ? "THE STOPS" : "PLACES INDEX"}
+              </span>
               <span>{String(points.length).padStart(2, "0")}</span>
             </div>
             {points.length > 1 && (
@@ -139,7 +151,9 @@ export default function TripAtlas({
               </div>
             )}
             {points.length > 1 && (
-              <ol className="journey-point-list">
+              <ol
+                className={`journey-point-list${stopCount ? " journey-route-list" : ""}`}
+              >
                 {points.map((point, index) => (
                   <li key={point.id}>
                     <button
@@ -174,6 +188,9 @@ export default function TripAtlas({
               >
                 <span className="eyebrow">{pointSource(active)}</span>
                 <h3>{active.label}</h3>
+                {active.note && (
+                  <p className="journey-stop-note">{active.note}</p>
+                )}
                 <p className="mono point-coordinates">
                   {coordinateLabel(active, 5)}
                 </p>
@@ -214,9 +231,11 @@ export default function TripAtlas({
               </div>
             )}
             <p className="journey-point-footnote">
-              {located
-                ? "编号用于检索照片，不表示行程先后。"
-                : "照片未记录 GPS；不会用旅行定位代替每张照片的拍摄位置。"}
+              {stopCount
+                ? "行程站点按你的编排顺序连接；照片 GPS 单独显示，不推断拍摄轨迹。"
+                : located
+                  ? "编号用于检索照片，不表示行程先后。"
+                  : "照片未记录 GPS；不会用旅行定位代替每张照片的拍摄位置。"}
             </p>
           </aside>
         )}

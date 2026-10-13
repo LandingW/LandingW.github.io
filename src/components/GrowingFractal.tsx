@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useMediaQuery } from "@/lib/use-media-query";
 import {
   buildFractalVariants,
   growthSchedule,
@@ -13,6 +14,7 @@ const variants = buildFractalVariants();
 export default function GrowingFractal() {
   const ref = useRef<HTMLDivElement>(null);
   const id = useId().replaceAll(":", "");
+  const compact = useMediaQuery("(max-width: 760px)");
 
   // This loop runs only while the page is scrolling/resizing. Growth has its
   // own timeline, so a scroll never restarts the 2 / 1 / 2 second sequence.
@@ -193,7 +195,7 @@ export default function GrowingFractal() {
       document.removeEventListener("visibilitychange", updatePlayback);
       reducedMotion.removeEventListener("change", onPreferenceChange);
     };
-  }, []);
+  }, [compact]);
 
   return (
     <div
@@ -222,7 +224,7 @@ export default function GrowingFractal() {
         </defs>
       </svg>
       <div className="fractal-track">
-        {[0, 1].map((tile) => (
+        {Array.from({ length: compact ? 5 : 2 }, (_, tile) => (
           <svg
             className="fractal-tile"
             key={tile}

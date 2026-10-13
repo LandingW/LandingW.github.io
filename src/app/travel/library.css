@@ -161,6 +161,32 @@
 .library-content {
   min-width: 0;
 }
+.library-processing {
+  margin-bottom: 24px;
+  padding: 22px;
+  background: var(--paper-deep);
+  border-left: 2px solid var(--accent);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.library-processing > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.library-processing .mono {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+.library-processing p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+.library-processing a {
+  display: inline-block;
+  padding-top: 14px;
+}
 .library-ingest {
   display: flex;
   align-items: center;

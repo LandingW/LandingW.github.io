@@ -12,6 +12,7 @@ export function albumForm(album?: TravelAlbum) {
     googlePlaceId: album?.googlePlaceId || null,
     coverPhotoIds: album?.coverPhotoIds || [],
     equipmentDefaults: album?.equipmentDefaults || ({} as CameraEquipment),
+    stops: album?.stops || [],
   };
 }
 export type AlbumForm = ReturnType<typeof albumForm>;

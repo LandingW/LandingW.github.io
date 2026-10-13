@@ -6,6 +6,7 @@
   "compatibility_date": "2026-10-10",
   "workers_dev": true,
   "observability": { "enabled": false },
+  "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
     "ALLOWED_ORIGINS": "https://landingw.github.io,http://127.0.0.1:3000,http://localhost:3000",
     "PUBLIC_MEDIA_URL": "https://pub-bf2df0b0406a43158f4287ca834603c7.r2.dev",

@@ -25,6 +25,11 @@ export function tripLocation(
   if (album.googlePlaceId) return null;
   if (album.latitude !== null && album.longitude !== null)
     return { latitude: album.latitude, longitude: album.longitude };
+  if (album.stops?.length)
+    return {
+      latitude: album.stops[0].latitude,
+      longitude: album.stops[0].longitude,
+    };
   return (
     photos.find((photo) => photo.albumId === album.id && photo.location)
       ?.location || null

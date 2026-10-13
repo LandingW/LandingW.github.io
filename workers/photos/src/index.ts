@@ -1,5 +1,8 @@
 import { AwsClient } from "aws4fetch";
 import { HttpError } from "./http";
+import { dispatchProcessing, kickQueuedProcessing } from "./processing";
+import { searchPlaces } from "./places";
+import { stopsFromJson } from "../../../src/lib/trip-route";
 import {
   libraryAction,
   requireFolder,
@@ -11,7 +14,11 @@ import {
   normalizeMapsConfig,
   parseCoverIds,
 } from "../../../src/lib/trip-presentation";
-import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
+import type {
+  D1Database,
+  R2Bucket,
+  ExecutionContext,
+} from "@cloudflare/workers-types";
 import {
   cameraFromJson,
   normalizePhotoMetadata,
@@ -45,6 +52,7 @@ export interface Env {
   PROCESSOR_TOKEN: string;
   GITHUB_TOKEN: string;
   GITHUB_REPOSITORY: string;
+  PHOTON_API_URL?: string;
 }
 interface PhotoRow {
   id: string;
@@ -215,7 +223,7 @@ export async function publishManifest(env: Env) {
   if (!serviceUrl(env.PUBLIC_MEDIA_URL))
     throw new HttpError(503, "公开图片地址尚未配置");
   const albums = await env.DB.prepare(
-    "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids FROM albums WHERE published=1 AND deleted_at IS NULL AND is_library=0 ORDER BY date DESC,created_at DESC",
+    "SELECT id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,stops_json FROM albums WHERE published=1 AND deleted_at IS NULL AND is_library=0 ORDER BY date DESC,created_at DESC",
   ).all();
   const photos = await env.DB.prepare(
     "SELECT p.id,ap.album_id,p.caption,p.width,p.height,p.revision,p.camera_json,p.equipment_json,a.equipment_json AS album_equipment_json,p.gps_latitude,p.gps_longitude,p.location_mode FROM photos p JOIN album_photos ap ON ap.photo_id=p.id JOIN albums a ON a.id=ap.album_id WHERE a.published=1 AND a.deleted_at IS NULL AND a.is_library=0 AND ap.published=1 AND p.state='ready' AND p.deleted_at IS NULL ORDER BY ap.album_id,ap.position,p.created_at,p.id",
@@ -231,6 +239,7 @@ export async function publishManifest(env: Env) {
         ...albumInput({
           ...a,
           googlePlaceId: a.google_place_id,
+          stops: stopsFromJson(a.stops_json),
           coverPhotoIds: parseCoverIds(a.cover_photo_ids).filter((id) =>
             photos.results.some(
               (photo) => photo.id === id && photo.album_id === a.id,
@@ -270,33 +279,6 @@ export async function publishManifest(env: Env) {
   return manifest;
 }
 
-async function dispatchProcessing(
-  env: Env,
-  inputs: Record<string, string | boolean> = {},
-) {
-  if (!env.GITHUB_TOKEN || !/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPOSITORY))
-    throw new HttpError(503, "GitHub 图片处理凭据尚未配置");
-  const response = await fetch(
-    `https://api.github.com/repos/${env.GITHUB_REPOSITORY}/actions/workflows/photos.yml/dispatches`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "landingw-photos",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ref: "main", inputs }),
-    },
-  );
-  if (!response.ok)
-    throw new HttpError(
-      502,
-      "无法启动处理任务，请检查工作流和 GitHub 凭据权限",
-    );
-}
-
 async function storeMetadata(
   env: Env,
   row: PhotoRow,
@@ -327,33 +309,49 @@ async function storeMetadata(
   if (row.published) await publishManifest(env);
 }
 
-async function admin(request: Request, env: Env, path: string) {
+async function admin(
+  request: Request,
+  env: Env,
+  path: string,
+  ctx: ExecutionContext,
+) {
   await authorizeAdmin(request, env);
   if (request.method === "GET" && path === "/admin/state") {
-    const [albums, photos, usage, folders, memberships] = await Promise.all([
-      env.DB.prepare(
-        "SELECT * FROM albums WHERE is_library=0 ORDER BY created_at DESC",
-      ).all(),
-      env.DB.prepare(
-        "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,equipment_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error,folder_id,deleted_at,purging FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
-      ).all<PhotoRow>(),
-      env.DB.prepare(
-        "SELECT COALESCE(SUM(bytes),0) AS bytes,COALESCE(SUM(derived_bytes),0) AS derived FROM photos WHERE state!='aborted'",
-      ).first<{ bytes: number; derived: number }>(),
-      env.DB.prepare(
-        "SELECT * FROM photo_folders ORDER BY created_at,id",
-      ).all(),
-      env.DB.prepare(
-        "SELECT * FROM album_photos ORDER BY album_id,position,photo_id",
-      ).all(),
-    ]);
+    const [albums, photos, usage, folders, memberships, dispatch] =
+      await Promise.all([
+        env.DB.prepare(
+          "SELECT * FROM albums WHERE is_library=0 ORDER BY created_at DESC",
+        ).all(),
+        env.DB.prepare(
+          "SELECT id,album_id,filename,bytes,state,caption,published,error,width,height,revision,derived_bytes,created_at,updated_at,camera_json,equipment_json,gps_latitude,gps_longitude,location_mode,metadata_state,metadata_error,folder_id,deleted_at,purging FROM photos WHERE state!='aborted' ORDER BY created_at DESC",
+        ).all<PhotoRow>(),
+        env.DB.prepare(
+          "SELECT COALESCE(SUM(bytes),0) AS bytes,COALESCE(SUM(derived_bytes),0) AS derived FROM photos WHERE state!='aborted'",
+        ).first<{ bytes: number; derived: number }>(),
+        env.DB.prepare(
+          "SELECT * FROM photo_folders ORDER BY created_at,id",
+        ).all(),
+        env.DB.prepare(
+          "SELECT * FROM album_photos ORDER BY album_id,position,photo_id",
+        ).all(),
+        env.DB.prepare(
+          "SELECT value FROM service_events WHERE key='photo-dispatch'",
+        ).first<{ value: string }>(),
+      ]);
     return json({
       albums: albums.results.map(
-        ({ google_place_id, cover_photo_ids, equipment_json, ...album }) => ({
+        ({
+          google_place_id,
+          cover_photo_ids,
+          equipment_json,
+          stops_json,
+          ...album
+        }) => ({
           ...album,
           googlePlaceId: google_place_id || null,
           coverPhotoIds: parseCoverIds(cover_photo_ids),
           equipmentDefaults: equipmentFromJson(equipment_json),
+          stops: stopsFromJson(stops_json),
         }),
       ),
       photos: photos.results.map(
@@ -389,12 +387,16 @@ async function admin(request: Request, env: Env, path: string) {
       folders: folders.results,
       memberships: memberships.results,
       libraryVersion: 1,
+      routeVersion: 1,
+      processingDispatch: dispatch ? JSON.parse(dispatch.value) : null,
       maxBytes: Number(env.MAX_ORIGINAL_BYTES),
       mediaUrl: env.PUBLIC_MEDIA_URL,
     });
   }
   if (request.method !== "POST") throw new HttpError(405, "不支持的操作");
   const input = await body(request);
+  if (path === "/admin/places/search")
+    return json(await searchPlaces(env, input));
   const libraryResult = await libraryAction(path, input, env, () =>
     publishManifest(env),
   );
@@ -417,7 +419,7 @@ async function admin(request: Request, env: Env, path: string) {
     if (data.coverPhotoIds?.length)
       throw new HttpError(400, "新旅行请先上传照片，再选择封面");
     await env.DB.prepare(
-      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,equipment_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO albums(id,title,description,place,date,latitude,longitude,google_place_id,cover_photo_ids,equipment_json,created_at,stops_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
     )
       .bind(
         id,
@@ -431,6 +433,7 @@ async function admin(request: Request, env: Env, path: string) {
         "[]",
         JSON.stringify(data.equipmentDefaults || {}),
         now(),
+        JSON.stringify(data.stops),
       )
       .run();
     return json({ id }, 201);
@@ -453,7 +456,7 @@ async function admin(request: Request, env: Env, path: string) {
           throw new HttpError(400, "封面只能选择当前旅行中已处理完成的照片");
       }
       await env.DB.prepare(
-        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=?,google_place_id=CASE WHEN ? THEN ? ELSE google_place_id END,cover_photo_ids=CASE WHEN ? THEN ? ELSE cover_photo_ids END,equipment_json=CASE WHEN ? THEN ? ELSE equipment_json END WHERE id=?",
+        "UPDATE albums SET title=?,description=?,place=?,date=?,latitude=?,longitude=?,google_place_id=CASE WHEN ? THEN ? ELSE google_place_id END,cover_photo_ids=CASE WHEN ? THEN ? ELSE cover_photo_ids END,equipment_json=CASE WHEN ? THEN ? ELSE equipment_json END,stops_json=CASE WHEN ? THEN ? ELSE stops_json END WHERE id=?",
       )
         .bind(
           d.title,
@@ -468,6 +471,8 @@ async function admin(request: Request, env: Env, path: string) {
           JSON.stringify(d.coverPhotoIds),
           Object.hasOwn(input, "equipmentDefaults") ? 1 : 0,
           JSON.stringify(d.equipmentDefaults || {}),
+          Object.hasOwn(input, "stops") ? 1 : 0,
+          JSON.stringify(d.stops),
           id,
         )
         .run();
@@ -627,6 +632,7 @@ async function admin(request: Request, env: Env, path: string) {
     )
       .bind(now(), id)
       .run();
+    ctx.waitUntil(kickQueuedProcessing(env).catch(() => {}));
     return json({ ok: true });
   }
   const retry = path.match(/^\/admin\/photos\/([\w-]+)\/retry$/);
@@ -638,6 +644,7 @@ async function admin(request: Request, env: Env, path: string) {
       .run();
     if (!result.meta.changes)
       throw new HttpError(409, "只有失败的照片可以重试");
+    ctx.waitUntil(kickQueuedProcessing(env).catch(() => {}));
     return json({ ok: true });
   }
   const equipmentAction = path.match(/^\/admin\/photos\/([\w-]+)\/equipment$/);
@@ -882,7 +889,14 @@ async function internal(request: Request, env: Env, path: string) {
 }
 
 const worker = {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async scheduled(_event: unknown, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(kickQueuedProcessing(env).catch(() => {}));
+  },
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     const origin = request.headers.get("Origin"),
       allowed = env.ALLOWED_ORIGINS.split(",").map((item) => item.trim());
     if (origin && !allowed.includes(origin))
@@ -894,7 +908,7 @@ const worker = {
       else {
         const path = new URL(request.url).pathname.replace(/\/$/, "");
         if (path.startsWith("/admin/"))
-          response = await admin(request, env, path);
+          response = await admin(request, env, path, ctx);
         else if (path.startsWith("/internal/"))
           response = await internal(request, env, path);
         else if (path === "/health" && request.method === "GET")
@@ -907,7 +921,7 @@ const worker = {
           ? error.status
           : error instanceof TypeError ||
               (error instanceof Error &&
-                /格式|长度|日期|经纬度|HTTPS|缺少|封面|Google|设备/.test(
+                /格式|长度|日期|经纬度|HTTPS|缺少|封面|Google|设备|地点/.test(
                   error.message,
                 ))
             ? 400

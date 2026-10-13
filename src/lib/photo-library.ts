@@ -58,6 +58,8 @@ export interface LibraryState {
   maxBytes: number;
   derivedBytes?: number;
   libraryVersion?: number;
+  routeVersion?: number;
+  processingDispatch?: { ok: boolean; message: string; at: string } | null;
 }
 export const photoStatuses: Record<string, string> = {
   uploading: "上传未完成",

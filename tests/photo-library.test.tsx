@@ -192,6 +192,10 @@ test(
       for (const name of ["image.dzi", "thumbnail.jpg", "preview.jpg"])
         await publicBucket.put(`photos/p/v1/${name}`, "test");
       await apply("0006_photo_library.sql");
+      for (const name of migrations.filter(
+        (name) => name > "0006_photo_library.sql",
+      ))
+        await apply(name);
       async function request(path: string, data?: unknown, token = admin) {
         return mf.dispatchFetch(`https://photos.example.com${path}`, {
           method: data === undefined ? "GET" : "POST",
@@ -230,6 +234,37 @@ test(
       assert.equal(migrated.memberships?.[0].published, 1);
       await ok("/admin/albums/a/publish");
       assert.equal((await manifest()).photos[0].dzi, "photos/p/v1/image.dzi");
+      const stops = [
+        {
+          id: "stay-1",
+          name: "Test hotel",
+          kind: "stay",
+          note: "First stop",
+          latitude: 69.632,
+          longitude: 17.99,
+        },
+      ];
+      await ok("/admin/albums/a/edit", { title: "Existing trip", stops });
+      assert.deepEqual((await manifest()).albums[0].stops, stops);
+      await ok("/admin/albums/a/edit", { title: "Existing trip" });
+      assert.deepEqual(
+        (await state()).albums[0].stops,
+        stops,
+        "legacy edits do not erase route stops",
+      );
+      assert.equal(
+        (
+          await request("/admin/albums/a/edit", {
+            title: "Existing trip",
+            stops: [{ ...stops[0], latitude: 200 }],
+          })
+        ).status,
+        400,
+      );
+      assert.equal(
+        (await request("/admin/places/search", { query: "x" })).status,
+        400,
+      );
       const folder = await ok("/admin/library/folders", { name: "Norway" });
       await ok("/admin/library/photos/move", {
         photoIds: ["p"],

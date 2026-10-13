@@ -1,11 +1,15 @@
 import { normalizeLocation, type PhotoLocation } from "./photo-metadata";
 import type { TravelAlbum, TravelPhoto } from "./travel";
+import { STOP_KINDS, type StopKind } from "./trip-route";
 
 export interface TripPoint extends PhotoLocation {
   id: string;
   label: string;
-  source: "trip" | "photo" | "mixed";
+  source: "trip" | "photo" | "mixed" | "stop";
   photos: TravelPhoto[];
+  stopIndex?: number;
+  kind?: StopKind;
+  note?: string;
 }
 
 // A trip pin is a destination, not the presumed location of every photograph.
@@ -14,8 +18,18 @@ export function tripPoints(
   photos: TravelPhoto[],
 ): TripPoint[] {
   const points: TripPoint[] = [];
+  for (const [index, stop] of (album.stops || []).entries()) {
+    points.push({
+      ...stop,
+      id: `stop-${stop.id}`,
+      label: stop.name,
+      source: "stop",
+      stopIndex: index,
+      photos: [],
+    });
+  }
   const destination = !album.googlePlaceId ? normalizeLocation(album) : null;
-  if (destination)
+  if (destination && !points.length)
     points.push({
       ...destination,
       id: `trip-${album.id}`,
@@ -55,6 +69,8 @@ export function coordinateLabel(point: PhotoLocation, precision = 4) {
 }
 
 export function pointSource(point: TripPoint) {
+  if (point.source === "stop")
+    return `${STOP_KINDS[point.kind || "place"]} · 行程站点${point.photos.length ? " · 照片 GPS" : ""}`;
   return point.source === "trip"
     ? "旅行定位"
     : point.source === "mixed"

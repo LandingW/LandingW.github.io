@@ -23,6 +23,8 @@ import {
   type ManagedPhoto as Photo,
 } from "@/lib/photo-library";
 import PhotoLibrary from "./PhotoLibrary";
+import RouteEditor from "./RouteEditor";
+import { normalizeLocation } from "@/lib/photo-metadata";
 import ConfirmAction, { useConfirmation } from "./ConfirmAction";
 import PhotoFacts from "./PhotoFacts";
 import EquipmentFields from "./EquipmentFields";
@@ -279,11 +281,12 @@ export default function TravelManager() {
           );
         }
         try {
-          await photoApi(config!.apiUrl, token, "/admin/process", {
-            albumId: selected,
-          });
+          if (!state?.routeVersion)
+            await photoApi(config!.apiUrl, token, "/admin/process", {
+              albumId: selected,
+            });
           setMessage(
-            `${picked.length} 张已上传，高清处理已启动。你可以继续编辑，处理完成后再发布。`,
+            `${picked.length} 张原片已完整上传，系统会自动安排高清处理。你可以关闭页面或继续编辑，处理完成后再发布。`,
           );
         } catch {
           setMessage(
@@ -698,98 +701,124 @@ export default function TravelManager() {
                         maxLength={1200}
                       />
                     </label>
-                    <div className="manager-fields">
-                      <label>
-                        纬度
-                        <input
-                          type="number"
-                          min={-90}
-                          max={90}
-                          step="any"
-                          value={form.latitude}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              latitude: e.target.value,
-                              googlePlaceId: null,
-                            })
-                          }
-                          placeholder="可留空"
-                        />
-                      </label>
-                      <label>
-                        经度
-                        <input
-                          type="number"
-                          min={-180}
-                          max={180}
-                          step="any"
-                          value={form.longitude}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              longitude: e.target.value,
-                              googlePlaceId: null,
-                            })
-                          }
-                          placeholder="可留空"
-                        />
-                      </label>
-                    </div>
-                    <p className="manager-help">
-                      每次旅行一个标记：优先使用你选择的旅行地点，否则取首张公开
-                      GPS
-                      照片的位置。没有坐标时不会生成图钉；地点名称本身不会自动转换成坐标。
-                    </p>
-                    <div className="manager-actions">
-                      <button
-                        type="button"
-                        onClick={() => setShowMap(!showMap)}
-                      >
-                        {showMap ? "收起选点地图" : "在免费地图上放置图钉"}
-                      </button>
-                      {form.place && (
-                        <a
-                          href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(form.place)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          在 OpenStreetMap 查找地点 ↗
-                        </a>
-                      )}
-                    </div>
-                    {form.googlePlaceId && (
-                      <p className="manager-help">
-                        这条记录关联了旧地图服务，需重新点选或填写坐标才能显示为免费地图图钉。
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm({ ...form, googlePlaceId: null })
-                          }
-                        >
-                          清除旧地点关联
-                        </button>
-                      </p>
-                    )}
-                    {showMap && (
-                      <LocationMap
-                        latitude={
-                          form.latitude === "" ? null : Number(form.latitude)
-                        }
-                        longitude={
-                          form.longitude === "" ? null : Number(form.longitude)
-                        }
+                    {state?.routeVersion && (
+                      <RouteEditor
+                        key={selected || "new"}
+                        stops={form.stops}
                         place={form.place}
-                        onPick={(latitude, longitude) =>
-                          setForm((old) => ({
-                            ...old,
-                            latitude: latitude.toFixed(5),
-                            longitude: longitude.toFixed(5),
-                            googlePlaceId: null,
-                          }))
+                        anchor={
+                          form.latitude !== "" && form.longitude !== ""
+                            ? normalizeLocation({
+                                latitude: Number(form.latitude),
+                                longitude: Number(form.longitude),
+                              })
+                            : null
+                        }
+                        disabled={busy}
+                        apiUrl={config.apiUrl}
+                        token={token}
+                        onChange={(stops) =>
+                          setForm((old) => ({ ...old, stops }))
                         }
                       />
                     )}
+                    <details className="route-overview-pin">
+                      <summary>世界地图总览图钉（可选）</summary>
+                      <div className="manager-fields">
+                        <label>
+                          纬度
+                          <input
+                            type="number"
+                            min={-90}
+                            max={90}
+                            step="any"
+                            value={form.latitude}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                latitude: e.target.value,
+                                googlePlaceId: null,
+                              })
+                            }
+                            placeholder="可留空"
+                          />
+                        </label>
+                        <label>
+                          经度
+                          <input
+                            type="number"
+                            min={-180}
+                            max={180}
+                            step="any"
+                            value={form.longitude}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                longitude: e.target.value,
+                                googlePlaceId: null,
+                              })
+                            }
+                            placeholder="可留空"
+                          />
+                        </label>
+                      </div>
+                      <p className="manager-help">
+                        世界总览每次旅行一个标记：优先使用这里选择的位置，否则使用行程第一站或首张公开
+                        GPS
+                        照片的位置。没有坐标时不会生成图钉；地点名称本身不会自动转换成坐标。
+                      </p>
+                      <div className="manager-actions">
+                        <button
+                          type="button"
+                          onClick={() => setShowMap(!showMap)}
+                        >
+                          {showMap ? "收起选点地图" : "在免费地图上放置图钉"}
+                        </button>
+                        {form.place && (
+                          <a
+                            href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(form.place)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            在 OpenStreetMap 查找地点 ↗
+                          </a>
+                        )}
+                      </div>
+                      {form.googlePlaceId && (
+                        <p className="manager-help">
+                          这条记录关联了旧地图服务，需重新点选或填写坐标才能显示为免费地图图钉。
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm({ ...form, googlePlaceId: null })
+                            }
+                          >
+                            清除旧地点关联
+                          </button>
+                        </p>
+                      )}
+                      {showMap && (
+                        <LocationMap
+                          latitude={
+                            form.latitude === "" ? null : Number(form.latitude)
+                          }
+                          longitude={
+                            form.longitude === ""
+                              ? null
+                              : Number(form.longitude)
+                          }
+                          place={form.place}
+                          onPick={(latitude, longitude) =>
+                            setForm((old) => ({
+                              ...old,
+                              latitude: latitude.toFixed(5),
+                              longitude: longitude.toFixed(5),
+                              googlePlaceId: null,
+                            }))
+                          }
+                        />
+                      )}
+                    </details>
                     <details className="trip-equipment-defaults">
                       <summary>这次旅行的默认设备</summary>
                       <p className="manager-help">

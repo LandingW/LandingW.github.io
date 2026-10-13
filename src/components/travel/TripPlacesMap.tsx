@@ -5,6 +5,7 @@ import type { Map as LeafletMap, Marker } from "leaflet";
 import { mapCoordinates, type TripPoint } from "@/lib/trip-atlas";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { setMapInteraction, TOUCH_MAP_QUERY } from "@/lib/map-interaction";
+import { routeArcs } from "@/lib/trip-route";
 
 export default function TripPlacesMap({
   points,
@@ -105,6 +106,25 @@ export default function TripPlacesMap({
         tiles.on("tileerror", () => {
           if (!disposed) setTileError(true);
         });
+        const route = coordinates.filter(
+          (_, index) => points[index].stopIndex !== undefined,
+        );
+        for (const arc of routeArcs(route)) {
+          L.polyline(arc, {
+            color: "#f7f5ef",
+            weight: 7,
+            opacity: 0.9,
+            interactive: false,
+          }).addTo(instance);
+          L.polyline(arc, {
+            color: "#a45038",
+            weight: 2,
+            opacity: 0.9,
+            dashArray: "6 8",
+            className: "journey-route-line",
+            interactive: false,
+          }).addTo(instance);
+        }
         points.forEach((point, index) => {
           const marker = L.marker(coordinates[index], {
             title: point.label,

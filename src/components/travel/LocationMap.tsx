@@ -82,12 +82,22 @@ export default function LocationMap({
             point.longitude,
           ];
           if (marker.current) marker.current.setLatLng(coords);
-          else
-            marker.current = L.marker(coords, {
+          else {
+            const pin = L.marker(coords, {
               icon,
               title: "旅行地点",
-              keyboard: false,
+              keyboard: true,
+              draggable: !!pick.current,
             }).addTo(instance);
+            pin.on("dragend", () => {
+              const point = pin.getLatLng();
+              const lat = Math.max(-85, Math.min(85, point.lat));
+              const lon = ((((point.lng + 180) % 360) + 360) % 360) - 180;
+              picked.current = true;
+              pick.current?.(lat, lon);
+            });
+            marker.current = pin;
+          }
         };
         updateMarker.current(latest.current.latitude, latest.current.longitude);
         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -127,7 +137,7 @@ export default function LocationMap({
     <div className="travel-location">
       {onPick && (
         <p className="map-picker-instructions">
-          放大到目的地后点击地图放置图钉，再保存旅行。
+          放大到目的地后点击地图放置图钉，拖动图钉微调，再保存旅行。
           {!location && "当前尚未选择地点。"}
         </p>
       )}

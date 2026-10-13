@@ -4,6 +4,7 @@ import "./editorial.css";
 import "./journey.css";
 import "./canvas.css";
 import "./library.css";
+import "./route.css";
 
 export default function TravelLayout({
   children,

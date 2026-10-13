@@ -340,6 +340,13 @@ svg {
   stroke-dashoffset: 1;
   opacity: 0;
 }
+@media (max-width: 760px) {
+  /* Smaller repeating scenes, instead of cropping a landscape SVG to the
+     full portrait height. Five copies cover the viewport plus scroll wrap. */
+  .fractal-tile {
+    height: max(220px, 32lvh);
+  }
+}
 .page-fractal[data-growth="static"] .fractal-branch {
   opacity: 1;
   stroke-dashoffset: 0;

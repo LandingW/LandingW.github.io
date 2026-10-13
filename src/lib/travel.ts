@@ -7,6 +7,7 @@ import {
   type CameraEquipment,
   type EquipmentSources,
 } from "./photo-metadata";
+import { stopsInput, type TripStop } from "./trip-route";
 
 export const PHOTO_LIMIT = 64 * 1024 * 1024;
 export const PART_SIZE = 8 * 1024 * 1024;
@@ -30,6 +31,7 @@ export interface TravelAlbum {
   googlePlaceId?: string | null;
   coverPhotoIds?: string[];
   equipmentDefaults?: CameraEquipment;
+  stops?: TripStop[];
 }
 
 export interface TravelPhoto {
@@ -155,6 +157,7 @@ export function albumInput(value: unknown): Omit<TravelAlbum, "id"> {
     googlePlaceId: googlePlaceId || null,
     coverPhotoIds: covers,
     equipmentDefaults: equipmentInput(v.equipmentDefaults),
+    stops: stopsInput(v.stops),
   };
 }
 

@@ -57,6 +57,13 @@ export default function PhotoLibrary({
   const abort = useRef<AbortController | null>(null),
     fileInput = useRef<HTMLInputElement>(null);
   const activePhotos = state.photos.filter((photo) => !photo.deleted_at);
+  const queuedCount = activePhotos.filter(
+    (photo) => photo.state === "queued" || photo.metadata_state === "queued",
+  ).length;
+  const processingCount = activePhotos.filter(
+    (photo) =>
+      photo.state === "processing" || photo.metadata_state === "processing",
+  ).length;
   const trips = state.albums.filter((album) => !album.deleted_at);
   const activeFolder = state.folders?.find((item) => item.id === folder);
   const uses = (id: string) =>
@@ -168,9 +175,10 @@ export default function PhotoLibrary({
           );
           uploaded++;
         }
-        await photoApi(config.apiUrl, token, "/admin/process", {});
+        if (!state.routeVersion)
+          await photoApi(config.apiUrl, token, "/admin/process", {});
         setMessage(
-          `${uploaded} 张照片已收入照片库，高清处理已启动。处理完成后选择照片加入旅行。`,
+          `${uploaded} 张原片已完整收入照片库，系统会自动安排高清处理。此时可以关闭页面，处理完成后选择照片加入旅行。`,
         );
       } catch (error) {
         throw new Error(
@@ -446,6 +454,32 @@ export default function PhotoLibrary({
           </aside>
         )}
         <div className="library-content">
+          {!trash && (queuedCount > 0 || processingCount > 0) && (
+            <div className="library-processing" role="status">
+              <div>
+                <span className="status-dot" />
+                <strong>高清处理</strong>
+                <span className="mono">AUTO QUEUE</span>
+              </div>
+              <p>
+                {queuedCount} 张等待 · {processingCount} 张处理中
+              </p>
+              <p>
+                原片已保存，无需重新上传。上传完成即自动安排，后台每 5
+                分钟补查；页面可关闭，不会中断已启动的处理。
+              </p>
+              {state.processingDispatch && !state.processingDispatch.ok && (
+                <p className="accent">{state.processingDispatch.message}</p>
+              )}
+              <a
+                href="https://github.com/LandingW/LandingW.github.io/actions/workflows/photos.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                查看处理工作流 ↗
+              </a>
+            </div>
+          )}
           {!trash && (
             <div className="library-ingest">
               <label
@@ -740,7 +774,9 @@ export default function PhotoLibrary({
                             {},
                           );
                           await onRefresh();
-                          setMessage("已重新排队，请点击处理待办。");
+                          setMessage(
+                            "已重新排队，系统会自动安排处理；也可点击处理待办立即重试。",
+                          );
                         })
                       }
                     >
