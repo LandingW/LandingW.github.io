@@ -24,3 +24,10 @@
 - 属于浏览器响应式尺寸验收，未声称真机 Safari 或定量 GPU 帧率测试。
 
 本机截图：`photo-output/fractal-portrait-continuous-390.png`（未提交的忽略目录）。
+
+## 上线确认
+
+- 代码提交 `0e19bc0` 的 GitHub Pages 工作流 `38344547600` 已成功完成 build 与 deploy。
+- 线上主页和旅行页在 390×844 下均确认为 `portrait-continuous`、一个 `.fractal-field`、零个 `.fractal-tile`；主页循环状态为 `cycling`。
+- 本机 `?graphics=static` 检查结果为 `growth=static`、`parallax=off`，连续主路径 `stroke-dasharray: none`。
+- 线上截图：`photo-output/fractal-portrait-live-390.png`。浏览器视口已恢复默认；此次只部署静态前端，未部署 Worker 或修改照片与旅行数据。
