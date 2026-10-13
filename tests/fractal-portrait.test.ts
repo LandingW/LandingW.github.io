@@ -7,6 +7,7 @@ import {
   PORTRAIT_SPAN,
   PORTRAIT_WIDTH,
   PORTRAIT_SCROLL_RATE,
+  portraitFlow,
 } from "../src/lib/fractal-portrait";
 import { growthSchedule } from "../src/lib/fractal-growth";
 
@@ -27,7 +28,8 @@ test("one portrait world covers the complete scroll range without modulo or tile
     "utf8",
   );
   assert.match(component, /orientation: portrait/);
-  assert.match(component, /compact \? 1 : 2/);
+  assert.equal((component.match(/className="fractal-field"/g) || []).length, 1);
+  assert.doesNotMatch(component, /fractal-tile|fractalScrollOffset/);
   assert.match(
     component,
     /-Math.max\(0, window.scrollY\) \* PORTRAIT_SCROLL_RATE/,
@@ -38,6 +40,27 @@ test("one portrait world covers the complete scroll range without modulo or tile
     /\.fractal-field\s*\{[^}]*height: auto;[^}]*mask-image: none/,
   );
   assert.doesNotMatch(css, /height: max\(220px, 32lvh\)/);
+});
+
+test("portrait composition drifts without uniform row spacing or changing existing geometry", () => {
+  const centers = Array.from({ length: 30 }, (_, i) => portraitFlow(i * 160));
+  assert.ok(Math.max(...centers) - Math.min(...centers) > 130);
+  for (const value of centers) assert.ok(value > 120 && value < 300);
+  const short = buildPortraitFractals(3);
+  const long = buildPortraitFractals(12);
+  for (let i = 0; i < short.length; i++) {
+    const a = short[i].strokes[0].path.split("L");
+    const b = long[i].strokes[0].path.split("L");
+    assert.deepEqual(a.slice(0, 20), b.slice(0, 20));
+    for (const stroke of long[i].strokes) {
+      const coords = stroke.path.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      const xs = coords.filter((_, index) => index % 2 === 0);
+      assert.ok(
+        Math.min(...xs) >= 0 && Math.max(...xs) <= PORTRAIT_WIDTH,
+        short[i].id,
+      );
+    }
+  }
 });
 
 test("portrait fractals are deterministic, narrow and connected through a document-length backbone", () => {

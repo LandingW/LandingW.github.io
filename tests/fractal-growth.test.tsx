@@ -10,6 +10,7 @@ import {
   fractalScrollOffset,
 } from "../src/lib/fractal-growth";
 import GrowingFractal from "../src/components/GrowingFractal";
+import { buildFieldVariants } from "../src/lib/fractal-field";
 import Home from "../src/app/page";
 import fs from "node:fs/promises";
 
@@ -83,17 +84,18 @@ test("background contains four decorative SVG patterns and a no-script fallback"
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
-  assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 8);
+  assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 4);
   assert.equal(
     (html.match(/<path /g) ?? []).length,
-    2 *
-      buildFractalVariants().reduce(
-        (total, variant) => total + variant.strokes.length,
-        0,
-      ),
+    buildFieldVariants(2, false).reduce(
+      (total, variant) => total + variant.strokes.length,
+      0,
+    ),
   );
   assert.match(html, /<noscript>/);
-  assert.equal((html.match(/class="fractal-tile"/g) ?? []).length, 2);
+  assert.match(html, /\[data-continuous\]\{stroke-dasharray:none\}/);
+  assert.equal((html.match(/class="fractal-field"/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /fractal-tile/);
   assert.match(html, /linearGradient/);
   assert.doesNotMatch(html, /<canvas|<button|<a /);
 });

@@ -2,21 +2,17 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { growthSchedule, FRACTAL_TIMING } from "@/lib/fractal-growth";
 import {
-  buildFractalVariants,
-  growthSchedule,
-  FRACTAL_TIMING,
-  fractalScrollOffset,
-} from "@/lib/fractal-growth";
-import {
-  buildPortraitFractals,
-  portraitRows,
   PORTRAIT_WIDTH,
   PORTRAIT_SPAN,
   PORTRAIT_SCROLL_RATE,
 } from "@/lib/fractal-portrait";
-
-const landscapeVariants = buildFractalVariants();
+import {
+  buildFieldVariants,
+  fieldRows,
+  LANDSCAPE_WIDTH,
+} from "@/lib/fractal-field";
 
 export default function GrowingFractal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -26,19 +22,20 @@ export default function GrowingFractal() {
   );
   const [rows, setRows] = useState(2);
   const variants = useMemo(
-    () => (compact ? buildPortraitFractals(rows) : landscapeVariants),
+    () => buildFieldVariants(rows, compact),
     [compact, rows],
   );
 
   useEffect(() => {
-    if (!compact || !ref.current) return;
+    if (!ref.current) return;
     const element = ref.current;
     const size = () =>
       setRows(
-        portraitRows(
+        fieldRows(
           element.clientWidth,
           element.clientHeight,
           document.documentElement.scrollHeight,
+          compact,
         ),
       );
     const observer = new ResizeObserver(size);
@@ -53,23 +50,18 @@ export default function GrowingFractal() {
   useEffect(() => {
     const element = ref.current;
     const track = element?.querySelector<HTMLElement>(".fractal-track");
-    const tile = element?.querySelector<SVGSVGElement>(
-      ".fractal-tile, .fractal-field",
-    );
+    const tile = element?.querySelector<SVGSVGElement>(".fractal-field");
     if (!element || !track || !tile) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const staticMode =
       new URLSearchParams(window.location.search).get("graphics") === "static";
     let frame = 0;
-    let tileHeight = tile.getBoundingClientRect().height;
     const update = () => {
       frame = 0;
       const offset =
         reducedMotion.matches || staticMode
           ? 0
-          : compact
-            ? -Math.max(0, window.scrollY) * PORTRAIT_SCROLL_RATE
-            : fractalScrollOffset(window.scrollY, tileHeight);
+          : -Math.max(0, window.scrollY) * PORTRAIT_SCROLL_RATE;
       track.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
       element.dataset.parallax =
         reducedMotion.matches || staticMode ? "off" : "on";
@@ -78,7 +70,6 @@ export default function GrowingFractal() {
       if (!frame && !document.hidden) frame = requestAnimationFrame(update);
     };
     const resize = new ResizeObserver(() => {
-      tileHeight = tile.getBoundingClientRect().height;
       schedule();
     });
     resize.observe(tile);
@@ -250,7 +241,9 @@ export default function GrowingFractal() {
     <div
       ref={ref}
       className="page-fractal"
-      data-composition={compact ? "portrait-continuous" : "landscape"}
+      data-composition={
+        compact ? "portrait-continuous" : "landscape-continuous"
+      }
       data-growth="booting"
       data-fractal="branching"
       data-phase="grow"
@@ -274,57 +267,53 @@ export default function GrowingFractal() {
         </defs>
       </svg>
       <div className="fractal-track">
-        {Array.from({ length: compact ? 1 : 2 }, (_, tile) => (
-          <svg
-            className={compact ? "fractal-field" : "fractal-tile"}
-            key={tile}
-            viewBox={
-              compact
-                ? `0 0 ${PORTRAIT_WIDTH} ${rows * PORTRAIT_SPAN}`
-                : "0 0 1440 760"
-            }
-            preserveAspectRatio={compact ? "xMidYMin meet" : "xMidYMid slice"}
-            focusable="false"
-            fill="none"
-          >
-            {variants.map((variant, index) => (
-              <g
-                key={variant.id}
-                data-fractal-pattern={variant.id}
-                style={{ display: index === 0 ? "inline" : "none" }}
-              >
-                {variant.strokes.map((stroke) => (
-                  <path
-                    key={stroke.id}
-                    className={
-                      stroke.accent
-                        ? "fractal-branch fractal-branch-accent"
-                        : "fractal-branch"
-                    }
-                    d={stroke.path}
-                    pathLength={stroke.continuous ? undefined : 1}
-                    data-continuous={stroke.continuous || undefined}
-                    strokeWidth={stroke.width}
-                    strokeOpacity={stroke.opacity}
-                    stroke={`url(#${id}-${stroke.accent ? "clay" : "sage"})`}
-                    fill={
-                      variant.id === "sierpinski" && stroke.depth < 3
-                        ? `url(#${id}-${stroke.accent ? "clay" : "sage"})`
-                        : "none"
-                    }
-                    fillOpacity={0.06}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ))}
-              </g>
-            ))}
-          </svg>
-        ))}
+        <svg
+          className="fractal-field"
+          viewBox={`0 0 ${compact ? PORTRAIT_WIDTH : LANDSCAPE_WIDTH} ${rows * PORTRAIT_SPAN}`}
+          preserveAspectRatio="xMidYMin meet"
+          focusable="false"
+          fill="none"
+        >
+          {variants.map((variant, index) => (
+            <g
+              key={variant.id}
+              data-fractal-pattern={variant.id}
+              style={{ display: index === 0 ? "inline" : "none" }}
+            >
+              {variant.strokes.map((stroke) => (
+                <path
+                  key={stroke.id}
+                  className={
+                    stroke.accent
+                      ? "fractal-branch fractal-branch-accent"
+                      : "fractal-branch"
+                  }
+                  d={stroke.path}
+                  transform={stroke.layoutTransform}
+                  pathLength={stroke.continuous ? undefined : 1}
+                  data-continuous={stroke.continuous || undefined}
+                  strokeWidth={stroke.width}
+                  strokeOpacity={stroke.opacity}
+                  stroke={`url(#${id}-${stroke.accent ? "clay" : "sage"})`}
+                  fill={
+                    variant.id === "sierpinski" && stroke.depth < 3
+                      ? `url(#${id}-${stroke.accent ? "clay" : "sage"})`
+                      : "none"
+                  }
+                  fillOpacity={0.06}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ))}
+            </g>
+          ))}
+        </svg>
       </div>
       <noscript>
         <style>
-          {".page-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}"}
+          {
+            ".page-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}.page-fractal [data-continuous]{stroke-dasharray:none}"
+          }
         </style>
       </noscript>
     </div>

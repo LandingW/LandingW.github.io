@@ -5,6 +5,13 @@ export const PORTRAIT_SPAN = 840;
 export const PORTRAIT_SCROLL_RATE = 0.28;
 type Point = [number, number];
 
+// Two slow, incommensurate waves create a continuous drifting composition.
+// Coordinates do not depend on document length, so extending the canvas cannot
+// reposition existing geometry. The field opens up around changing focal areas.
+export function portraitFlow(y: number) {
+  return 210 + 62 * Math.sin(y / 247 + 0.8) + 22 * Math.sin(y / 431 + 1.4);
+}
+
 // Size a single world-space field to the document, including the entire scroll
 // camera range. It never wraps at a tile boundary.
 export function portraitRows(
@@ -42,18 +49,17 @@ function stroke(
     path,
     delay: depth * 0.65,
     duration: 0.6,
-    width: Math.max(0.6, 2.7 - depth * 0.6),
-    opacity: 0.46 - depth * 0.055,
+    width: Math.max(0.65, 2.3 - depth * 0.45),
+    opacity: 0.43 - depth * 0.05,
     accent: false,
     continuous: depth === 0,
   };
 }
 
 function fern(height: number) {
-  const center = (y: number) =>
-    210 + 16 * Math.sin((y * Math.PI * 2) / PORTRAIT_SPAN);
   const spine: Point[] = [];
-  for (let y = -120; y <= height + 120; y += 20) spine.push([center(y), y]);
+  for (let y = -160; y <= height + 160; y += 10)
+    spine.push([portraitFlow(y), y]);
   const paths = [stroke(line(spine), 0)];
   function branch(
     p: Point,
@@ -73,24 +79,43 @@ function fern(height: number) {
     branch(end, angle - 0.38, length * 0.61, depth + 1, id, accent);
     branch(end, angle + 0.38, length * 0.61, depth + 1, id, accent);
   }
-  for (let y = 80, i = 0; y < height + 120; y += 150, i++) {
+  for (let y = 40, i = 0; y < height + 160; i++) {
     const side = i % 2 ? -1 : 1;
-    branch([center(y), y], -Math.PI / 2 + side * 0.85, 90, 1, 0, side < 0);
+    const x = portraitFlow(y);
+    const room = side > 0 ? 402 - x : x - 18;
+    const length = Math.min(90 + 12 * Math.sin(i * 1.7), room * 0.44);
+    branch(
+      [x, y],
+      -Math.PI / 2 + side * (0.8 + 0.12 * Math.sin(i)),
+      length,
+      1,
+      0,
+      side < 0,
+    );
+    y += 135 + 45 * (0.5 + 0.5 * Math.sin(i * 2.399));
   }
   return paths;
 }
 
 function triangularLattice(height: number) {
   const triangles: [Point, Point, Point][] = [];
-  const outline: Point[] = [[210, -280]];
-  for (let y = -280, i = 0; y < height + 280; y += 280, i++) {
-    const a: Point = [210, y],
-      b: Point = [i % 2 ? 382 : 38, y + 140],
-      c: Point = [210, y + 280];
+  const outline: Point[] = [[portraitFlow(-320), -320]];
+  for (let y = -320, i = 0; y < height + 320; i++) {
+    const span = 270 + 64 * Math.sin(i * 1.73);
+    const side = i % 2 ? 1 : -1;
+    const a: Point = [portraitFlow(y), y],
+      b: Point = [
+        Math.max(22, Math.min(398, portraitFlow(y + span / 2) + side * 138)),
+        y + span * 0.48,
+      ],
+      c: Point = [portraitFlow(y + span), y + span];
     triangles.push([a, b, c]);
-    outline.push(b, c);
+    // Trace every triangle back to its anchor and continue from its last tip.
+    // One unbroken path, without a straight closing chord through the page.
+    outline.push(b, c, a, c);
+    y += span;
   }
-  const paths = [stroke(line(outline, true), 0)];
+  const paths = [stroke(line(outline), 0)];
   const mid = (a: Point, b: Point): Point => [
     (a[0] + b[0]) / 2,
     (a[1] + b[1]) / 2,
@@ -133,18 +158,14 @@ function kochCoast(height: number) {
     edge(peak, q, depth - 1, side);
     edge(q, b, depth - 1, side);
   }
-  for (let y = -840; y < height + 840; y += 840) {
-    const corners: Point[] = [
-      [210, y],
-      [110, y + 210],
-      [210, y + 420],
-      [310, y + 630],
-      [210, y + 840],
-    ];
-    for (let i = 0; i < 4; i++)
-      edge(corners[i], corners[i + 1], 3, i < 2 ? 1 : -1);
+  let last: Point = [portraitFlow(-420), -420];
+  for (let y = -420, i = 0; y < height + 420; i++) {
+    y += 180 + 34 * Math.sin(i * 2.399);
+    const next: Point = [portraitFlow(y), y];
+    edge(last, next, 3, i % 2 ? 1 : -1);
+    last = next;
   }
-  points.push([210, height + 840]);
+  points.push(last);
   return [stroke(line(points), 0)];
 }
 
@@ -177,21 +198,27 @@ function dragonRibbon(height: number) {
     base.push([p[0] + d[0], p[1] + d[1]]);
   }
   const [dx, dy] = base[base.length - 1],
-    distance2 = dx * dx + dy * dy,
-    step = 252;
+    distance2 = dx * dx + dy * dy;
   const points: Point[] = [];
-  for (let y = -step, i = 0; y < height + step; y += step, i++) {
+  for (let y = -260, i = 0; y < height + 260; i++) {
+    const step = 178 + 22 * Math.sin(i * 1.73);
+    const startX = portraitFlow(y);
+    const deltaX = portraitFlow(y + step) - startX;
     const side = i % 2 ? -1 : 1;
     base.forEach(([x, v], index) => {
       if (index === 0 && points.length) return;
-      // Rigid rotation + uniform scale, not a stretched landscape dragon.
+      const along = (x * dx + v * dy) / distance2;
+      const across = (side * (x * dy - v * dx)) / distance2;
+      // Similarity transform onto each drifting endpoint, preserving the
+      // dragon's right angles; no nonuniform stretching or disconnected tiles.
       points.push([
-        210 + (side * (x * dy - v * dx) * step) / distance2,
-        y + ((x * dx + v * dy) * step) / distance2,
+        startX + along * deltaX + across * step,
+        y + along * step - across * deltaX,
       ]);
     });
+    y += step;
   }
-  return [{ ...stroke(line(points), 0), width: 2.2, accent: true }];
+  return [{ ...stroke(line(points), 0), width: 2, accent: true }];
 }
 
 export function buildPortraitFractals(requestedRows = 2): FractalVariant[] {

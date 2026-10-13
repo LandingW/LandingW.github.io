@@ -1,5 +1,59 @@
 /* The public travel page uses the homepage's shared exhibition tokens.
    Deliberately scoped: no restyling of the private editor or photo lightbox. */
+.editorial-site
+  .travel-page
+  :is(
+    .trip-card,
+    .story-title-block,
+    .journey-cover-note,
+    .journey-equipment,
+    .travel-empty
+  ) {
+  border-radius: var(--home-radius);
+  border: 1px solid var(--home-edge);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  box-shadow: var(--home-shadow);
+}
+.editorial-site
+  .travel-page
+  :is(
+    .travel-atlas-layout,
+    .journey-country,
+    .story-cover-photo,
+    .journey-atlas-layout
+  ) {
+  border-radius: var(--home-radius);
+}
+.editorial-site
+  .travel-page
+  :is(.trip-card, .story-cover-photo, .story-frame, .journey-atlas-layout) {
+  overflow: hidden;
+}
+.editorial-site .travel-page .story-frame {
+  border-radius: var(--home-radius-small);
+}
+.editorial-site
+  .travel-page
+  :is(.story-breadcrumb, .story-toolbar, .journey-chapters, .travel-filter) {
+  border-radius: var(--home-radius-small);
+}
+.editorial-site
+  .travel-page
+  :is(
+    .journey-map-fit,
+    .journey-map-interact,
+    .story-view-switch button,
+    .journey-chapters a
+  ) {
+  border-radius: 999px;
+}
+.travel-page :is(.trip-card, .journey-cover-note) {
+  transition: box-shadow var(--motion-medium) var(--ease-out);
+}
+.travel-page .trip-card:is(:hover, :focus-visible) {
+  box-shadow: var(--home-shadow-raised);
+}
 .editorial-site .travel-page .travel-intro {
   padding-block: var(--home-space) calc(var(--home-space) * 0.7);
   align-items: end;
@@ -7,8 +61,9 @@
 }
 .travel-page .travel-intro > div {
   min-width: 0;
-  background: var(--home-surface);
+  background: transparent;
   padding-block: 14px;
+  text-shadow: 0 2px 22px var(--paper);
 }
 .editorial-site .travel-page .travel-intro h1 {
   font: 400 clamp(48px, 6.2vw, 118px)/1.2 var(--serif-cjk);
@@ -176,6 +231,7 @@
   padding-bottom: max(30px, env(safe-area-inset-bottom));
   gap: 15px 30px;
   flex-wrap: wrap;
+  border-radius: var(--home-radius) var(--home-radius) 0 0;
 }
 .travel-page .travel-end a {
   display: inline-flex;
@@ -224,9 +280,10 @@
   padding-top: var(--home-space);
 }
 .travel-page .journey-section-heading {
-  background: var(--home-surface);
-  padding: 25px var(--home-panel);
+  background: transparent;
+  padding: 12px 4px;
   margin-bottom: var(--home-gap);
+  text-shadow: 0 2px 22px var(--paper);
 }
 .travel-page .journey-section-heading h2,
 .travel-page .journey-equipment-intro h2 {
@@ -354,7 +411,7 @@
     padding-inline: 0;
   }
   .travel-page .journey-section-heading {
-    padding: 22px 20px;
+    padding: 14px 4px;
   }
   .travel-page .journey-section-heading h2,
   .travel-page .journey-equipment-intro h2 {
