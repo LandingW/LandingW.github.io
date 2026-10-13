@@ -11,7 +11,6 @@
   --home-edge: rgb(255 255 255 / 72%);
   --home-radius: clamp(24px, 2.8vw, 42px);
   --home-radius-small: 18px;
-  --home-blur: 3px;
   --home-shadow: 0 8px 36px -22px rgb(57 65 51 / 16%);
   --home-shadow-raised: 0 20px 48px -25px rgb(57 65 51 / 23%);
   --home-gap: clamp(20px, 2.6vw, 52px);
@@ -19,8 +18,7 @@
   --fractal-accent: #c28c62;
 }
 
-/* A shared material, not per-component opacity: type stays fully opaque while
-   the moving geometry is gently diffused behind a translucent warm surface. */
+/* Fixed translucent pigment; no backdrop sampling over the live drawing. */
 .editorial-site
   .home-page
   :is(
@@ -36,14 +34,14 @@
   border: 1px solid var(--home-edge);
   border-radius: var(--home-radius);
   background: var(--home-surface);
-  -webkit-backdrop-filter: blur(var(--home-blur));
-  backdrop-filter: blur(var(--home-blur));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow: var(--home-shadow);
 }
 .editorial-site :is(.home-page, .travel-page) .site-header {
   background: var(--home-header);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .editorial-site :is(.home-page, .travel-page) .header-inner::after {
   opacity: 0.28;
@@ -539,7 +537,6 @@
     --home-space: 72px;
     --home-panel: 24px;
     --home-radius: 26px;
-    --home-blur: 2px;
   }
   .editorial-site .home-page .hero {
     min-height: 0;
@@ -684,21 +681,12 @@
   }
 }
 
-@supports not (
-  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
-) {
-  .editorial-site .home-page,
-  .editorial-site .travel-page {
-    --home-surface: rgb(250 248 243 / 94%);
-  }
-}
 @media (prefers-reduced-transparency: reduce) {
   .editorial-site .home-page,
   .editorial-site .travel-page {
     --home-surface: #faf8f3;
     --home-surface-soft: #faf8f3;
     --home-header: var(--paper);
-    --home-blur: 0px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

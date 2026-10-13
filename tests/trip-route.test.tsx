@@ -289,8 +289,11 @@ test("upload completion wakes the backend and mobile fractals use a continuous p
     "utf8",
   );
   const styles = await fs.readFile("src/app/globals.css", "utf8");
-  assert.equal((component.match(/className="fractal-field"/g) || []).length, 1);
-  assert.match(styles, /\.fractal-field\s*\{[^}]*mask-image: none/);
+  assert.equal(
+    (component.match(/className="fractal-canvas"/g) || []).length,
+    1,
+  );
+  assert.match(styles, /\.page-fractal\s*\{[^}]*height: 100lvh/);
 });
 
 test(

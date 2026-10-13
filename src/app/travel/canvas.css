@@ -11,8 +11,8 @@
   ) {
   border-radius: var(--home-radius);
   border: 1px solid var(--home-edge);
-  -webkit-backdrop-filter: blur(var(--home-blur));
-  backdrop-filter: blur(var(--home-blur));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow: var(--home-shadow);
 }
 .editorial-site

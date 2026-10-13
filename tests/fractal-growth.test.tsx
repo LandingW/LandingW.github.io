@@ -10,7 +10,6 @@ import {
   fractalScrollOffset,
 } from "../src/lib/fractal-growth";
 import GrowingFractal from "../src/components/GrowingFractal";
-import { buildFieldVariants } from "../src/lib/fractal-field";
 import Home from "../src/app/page";
 import fs from "node:fs/promises";
 
@@ -80,26 +79,16 @@ test("four different fractals share the exact 2s / 1s / 2s cycle", () => {
   assert.deepEqual(growthSchedule([]), []);
 });
 
-test("background contains four decorative SVG patterns and a no-script fallback", () => {
+test("background contains one isolated canvas and an unconditional static SVG fallback", () => {
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
-  assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 4);
-  assert.equal(
-    (html.match(/class="fractal-contour"/g) ?? []).length,
-    buildFieldVariants(2, false).reduce(
-      (total, variant) => total + variant.contours.length,
-      0,
-    ),
-  );
-  assert.match(html, /<noscript>/);
-  assert.match(html, /fractal-contour\{opacity:1;stroke-dasharray:none\}/);
-  assert.match(html, /vector-effect="non-scaling-stroke"/);
-  assert.match(html, /data-composition="landscape-terrain"/);
-  assert.equal((html.match(/class="fractal-field"/g) ?? []).length, 1);
-  assert.doesNotMatch(html, /fractal-tile/);
-  assert.match(html, /linearGradient/);
-  assert.doesNotMatch(html, /<canvas|<button|<a /);
+  assert.equal((html.match(/<canvas/g) ?? []).length, 1);
+  assert.equal((html.match(/<svg/g) ?? []).length, 1);
+  assert.match(html, /data-renderer="isolated-canvas"/);
+  assert.match(html, /data-studies="arc drift fold unfurl"/);
+  assert.match(html, /class="fractal-fallback"/);
+  assert.doesNotMatch(html, /fractal-tile|fractal-contour|<button|<a /);
 });
 
 test("one shared background lives above all homepage chapters, not inside the hero", () => {
@@ -120,14 +109,12 @@ test("one shared background lives above all homepage chapters, not inside the he
 test("fullscreen colored fractal has a scroll camera, lifecycle cleanup and static fallbacks", async () => {
   const css = await fs.readFile("src/app/globals.css", "utf8");
   const design = await fs.readFile("src/app/design.css", "utf8");
-  const component = await fs.readFile(
-    "src/components/GrowingFractal.tsx",
-    "utf8",
-  );
+  const component = await fs.readFile("src/lib/typographic-field.ts", "utf8");
   const backdrop = css.match(/\.page-fractal\s*\{([^}]+)\}/)?.[1] || "";
   assert.match(backdrop, /position: fixed/);
   assert.match(backdrop, /inset: 0/);
   assert.match(backdrop, /pointer-events: none/);
+  assert.match(backdrop, /contain: strict/);
   assert.match(css, /height: 100lvh/);
   assert.doesNotMatch(css, /\.fractal-branch\s*\{[^}]*stroke:/);
   assert.doesNotMatch(design, /hero-fractal/);
@@ -136,12 +123,18 @@ test("fullscreen colored fractal has a scroll camera, lifecycle cleanup and stat
   assert.match(component, /graphics.*static/);
   assert.match(
     component,
-    /window.addEventListener\("scroll", schedule, \{ passive: true \}\)/,
+    /window.addEventListener\("scroll", layout, \{ passive: true \}\)/,
   );
-  assert.match(component, /window.removeEventListener\("scroll", schedule\)/);
+  assert.match(component, /window.removeEventListener\("scroll", layout\)/);
   assert.match(component, /cancelAnimationFrame/);
   assert.match(component, /resize.disconnect\(\)/);
-  assert.match(component, /translate3d/);
+  assert.match(component, /mutations.disconnect\(\)/);
+  assert.match(component, /getContext\("2d", \{ alpha: false \}\)/);
+  assert.match(component, /createRange\(\)/);
+  assert.doesNotMatch(
+    component,
+    /clearRect|\.style\.|setInterval|preventDefault/,
+  );
   assert.doesNotMatch(component, /setInterval|preventDefault/);
 });
 
