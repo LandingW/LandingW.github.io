@@ -311,6 +311,12 @@ svg {
 }
 /* A scroll-following drawing behind the shared translucent paper surfaces. */
 .page-fractal {
+  --terrain-sage: #688779;
+  --terrain-sage-soft: #9bab92;
+  --terrain-silt: #b49475;
+  --terrain-silt-soft: #c2b194;
+  --terrain-slate: #809ba0;
+  --terrain-slate-soft: #abb8b0;
   position: fixed;
   z-index: -1;
   inset: 0;
@@ -318,21 +324,17 @@ svg {
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  background:
-    radial-gradient(ellipse at 100% 15%, #d5ddd059, transparent 58%),
-    radial-gradient(ellipse at 0% 80%, #d6b48940, transparent 60%);
+  background: #f7f5ef;
 }
 .fractal-definitions {
   position: absolute;
 }
 .fractal-track {
   will-change: transform;
-  opacity: 0.82;
 }
-.fractal-branch {
+.fractal-contour {
   stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  opacity: 0;
+  stroke-dashoffset: 0;
 }
 .fractal-field {
   display: block;
@@ -341,11 +343,9 @@ svg {
   /* One document-length portrait field: no repeated SVG clipping or fades. */
   mask-image: none;
 }
-.page-fractal[data-growth="static"] .fractal-branch {
+.page-fractal[data-growth="static"] .fractal-contour {
   opacity: 1;
   stroke-dashoffset: 0;
-}
-.page-fractal[data-growth="static"] .fractal-branch[data-continuous] {
   stroke-dasharray: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2083,9 +2083,10 @@ summary::-webkit-details-marker {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fractal-branch {
+  .fractal-contour {
     opacity: 1 !important;
     stroke-dashoffset: 0 !important;
+    stroke-dasharray: none !important;
   }
   .home-page * {
     filter: none !important;

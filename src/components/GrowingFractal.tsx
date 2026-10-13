@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { growthSchedule, FRACTAL_TIMING } from "@/lib/fractal-growth";
+import { FRACTAL_TIMING } from "@/lib/fractal-growth";
 import {
   PORTRAIT_WIDTH,
   PORTRAIT_SPAN,
@@ -101,7 +101,14 @@ export default function GrowingFractal() {
     let disposed = false,
       stopped = false,
       visible = true,
-      current = 0;
+      current = Math.max(
+        0,
+        variants.findIndex(
+          (variant) =>
+            variant.id ===
+            new URLSearchParams(window.location.search).get("fractal"),
+        ),
+      );
     const cancelAll = () => {
       animations.forEach((animation) => animation.cancel());
       animations.clear();
@@ -134,6 +141,7 @@ export default function GrowingFractal() {
       });
       element.dataset.growth = "static";
       element.dataset.phase = "still";
+      element.dataset.fractal = variants[current].id;
     };
     async function clock(group: SVGGElement, duration: number) {
       const animation = track(group.animate([], { duration }));
@@ -157,31 +165,36 @@ export default function GrowingFractal() {
           });
           element.dataset.fractal = variant.id;
           element.dataset.phase = "grow";
-          const schedule = growthSchedule(variant.strokes);
           copies.forEach((group) =>
-            group.querySelectorAll("path").forEach((path, index) => {
+            group
+              .querySelectorAll(".fractal-contour")
+              .forEach((path, index) => {
+                const delay = Math.abs(variant.contours[index].level - 9) * 40;
+                track(
+                  path.animate(
+                    [
+                      { strokeDashoffset: "1", opacity: 0, offset: 0 },
+                      { strokeDashoffset: ".94", opacity: 0.5, offset: 0.12 },
+                      { strokeDashoffset: "0", opacity: 1, offset: 1 },
+                    ],
+                    {
+                      delay,
+                      duration: FRACTAL_TIMING.grow - delay,
+                      fill: "both",
+                      easing: "cubic-bezier(.25,.1,.25,1)",
+                    },
+                  ),
+                );
+              }),
+          );
+          copies.forEach((group) =>
+            group.querySelectorAll(".fractal-wash").forEach((wash) => {
               track(
-                path.animate(
-                  variant.strokes[index].continuous
-                    ? [
-                        {
-                          strokeDasharray: "0 12",
-                          strokeDashoffset: "0",
-                          opacity: 0,
-                        },
-                        {
-                          strokeDasharray: "12 0",
-                          strokeDashoffset: "0",
-                          opacity: 1,
-                        },
-                      ]
-                    : [
-                        { strokeDashoffset: "1", opacity: 0, offset: 0 },
-                        { strokeDashoffset: ".98", opacity: 1, offset: 0.02 },
-                        { strokeDashoffset: "0", opacity: 1, offset: 1 },
-                      ],
-                  { ...schedule[index], fill: "both", easing: "linear" },
-                ),
+                wash.animate([{ opacity: 0 }, { opacity: 1 }], {
+                  duration: FRACTAL_TIMING.grow,
+                  fill: "both",
+                  easing: "ease-in-out",
+                }),
               );
             }),
           );
@@ -196,7 +209,7 @@ export default function GrowingFractal() {
               group.animate([{ opacity: 1 }, { opacity: 0 }], {
                 duration: FRACTAL_TIMING.fade,
                 fill: "forwards",
-                easing: "linear",
+                easing: "ease-in-out",
               }),
             ),
           );
@@ -241,11 +254,9 @@ export default function GrowingFractal() {
     <div
       ref={ref}
       className="page-fractal"
-      data-composition={
-        compact ? "portrait-continuous" : "landscape-continuous"
-      }
+      data-composition={compact ? "portrait-terrain" : "landscape-terrain"}
       data-growth="booting"
-      data-fractal="branching"
+      data-fractal="alluvial"
       data-phase="grow"
       aria-hidden="true"
     >
@@ -256,14 +267,19 @@ export default function GrowingFractal() {
         focusable="false"
       >
         <defs>
-          <linearGradient id={`${id}-sage`} x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="var(--fractal-ink)" />
-            <stop offset="1" stopColor="var(--fractal-cool)" />
-          </linearGradient>
-          <linearGradient id={`${id}-clay`} x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="var(--fractal-accent)" />
-            <stop offset="1" stopColor="var(--fractal-gold)" />
-          </linearGradient>
+          {(["sage", "silt", "slate"] as const).map((tone) => (
+            <linearGradient
+              key={tone}
+              id={`${id}-${tone}`}
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop stopColor={`var(--terrain-${tone})`} />
+              <stop offset="1" stopColor={`var(--terrain-${tone}-soft)`} />
+            </linearGradient>
+          ))}
         </defs>
       </svg>
       <div className="fractal-track">
@@ -280,27 +296,28 @@ export default function GrowingFractal() {
               data-fractal-pattern={variant.id}
               style={{ display: index === 0 ? "inline" : "none" }}
             >
-              {variant.strokes.map((stroke) => (
+              {variant.contours
+                .filter((contour) => contour.closed && contour.level % 4 === 0)
+                .map((contour) => (
+                  <path
+                    key={`wash-${contour.id}`}
+                    className="fractal-wash"
+                    d={contour.path}
+                    fill={`url(#${id}-${contour.tone})`}
+                    fillOpacity={0.035}
+                  />
+                ))}
+              {variant.contours.map((contour) => (
                 <path
-                  key={stroke.id}
-                  className={
-                    stroke.accent
-                      ? "fractal-branch fractal-branch-accent"
-                      : "fractal-branch"
-                  }
-                  d={stroke.path}
-                  transform={stroke.layoutTransform}
-                  pathLength={stroke.continuous ? undefined : 1}
-                  data-continuous={stroke.continuous || undefined}
-                  strokeWidth={stroke.width}
-                  strokeOpacity={stroke.opacity}
-                  stroke={`url(#${id}-${stroke.accent ? "clay" : "sage"})`}
-                  fill={
-                    variant.id === "sierpinski" && stroke.depth < 3
-                      ? `url(#${id}-${stroke.accent ? "clay" : "sage"})`
-                      : "none"
-                  }
-                  fillOpacity={0.06}
+                  key={contour.id}
+                  className="fractal-contour"
+                  d={contour.path}
+                  pathLength={1}
+                  strokeWidth={contour.weight}
+                  strokeOpacity={contour.opacity}
+                  stroke={`url(#${id}-${contour.tone})`}
+                  fill="none"
+                  vectorEffect="non-scaling-stroke"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -311,9 +328,7 @@ export default function GrowingFractal() {
       </div>
       <noscript>
         <style>
-          {
-            ".page-fractal .fractal-branch{opacity:1;stroke-dashoffset:0}.page-fractal [data-continuous]{stroke-dasharray:none}"
-          }
+          {".page-fractal .fractal-contour{opacity:1;stroke-dasharray:none}"}
         </style>
       </noscript>
     </div>

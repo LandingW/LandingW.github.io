@@ -86,14 +86,16 @@ test("background contains four decorative SVG patterns and a no-script fallback"
   assert.match(html, /class="page-fractal"/);
   assert.equal((html.match(/data-fractal-pattern=/g) ?? []).length, 4);
   assert.equal(
-    (html.match(/<path /g) ?? []).length,
+    (html.match(/class="fractal-contour"/g) ?? []).length,
     buildFieldVariants(2, false).reduce(
-      (total, variant) => total + variant.strokes.length,
+      (total, variant) => total + variant.contours.length,
       0,
     ),
   );
   assert.match(html, /<noscript>/);
-  assert.match(html, /\[data-continuous\]\{stroke-dasharray:none\}/);
+  assert.match(html, /fractal-contour\{opacity:1;stroke-dasharray:none\}/);
+  assert.match(html, /vector-effect="non-scaling-stroke"/);
+  assert.match(html, /data-composition="landscape-terrain"/);
   assert.equal((html.match(/class="fractal-field"/g) ?? []).length, 1);
   assert.doesNotMatch(html, /fractal-tile/);
   assert.match(html, /linearGradient/);
