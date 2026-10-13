@@ -309,8 +309,8 @@ svg {
   --fractal-cool: #74aaa3;
   --fractal-gold: #cfaa68;
 }
-/* Two prebuilt plotter plates. Only their transforms animate; no per-frame
-   JS, SVG geometry updates, filters, canvas drawing or opacity cycling. */
+/* Prebuilt plates: autonomous transform + scroll translate, never SVG geometry,
+   filters, canvas drawing or opacity cycling. The viewport clips both layers. */
 .page-fractal {
   position: fixed;
   z-index: 0;
@@ -336,6 +336,7 @@ svg {
   height: 100%;
 }
 .print-layer {
+  translate: 0 0;
   animation: print-drift 56s ease-in-out infinite alternate;
   animation-play-state: paused;
   transform-origin: 28% 48%;
@@ -347,6 +348,10 @@ svg {
 }
 .page-fractal[data-art-motion="running"] .print-layer {
   animation-play-state: running;
+  transition: translate 650ms cubic-bezier(0.2, 0.65, 0.3, 1);
+}
+.print-art {
+  overflow: visible;
 }
 .print-art--portrait {
   display: none;
@@ -376,8 +381,9 @@ svg {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .print-layer {
+  .page-fractal .print-layer {
     animation: none;
+    transition: none;
   }
 }
 @media print {

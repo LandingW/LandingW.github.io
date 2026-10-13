@@ -15,7 +15,7 @@ Next.js 16 / React 19 / TypeScript，静态导出到 GitHub Pages。
 
 置顶文章自动选择最新发布时间；工作历史显示公司图标和公开技术职责。联系方式在 `src/lib/resume.ts` 中集中维护，QQ / 微信支持点击复制。
 
-首页与旅行页使用轻量生成式版画背景：两层预生成 SVG，独立桌面/竖屏构图，只做缓慢 CSS transform 动画。没有光标跟随、逐帧 Canvas 绘制或文字测量；后台暂停，静态模式或减少动态效果偏好下保持静态。几何位于 `src/lib/print-study.ts`，组件位于 `src/components/GrowingFractal.tsx`。参考与性能边界见 [生成式版画验收](docs/PRINT-STUDY-QA.md)。
+首页与旅行页使用轻量生成式版画背景：两层预生成 SVG，独立桌面/竖屏构图，保留自主慢动和随页面滚动的轻微纵向视差。滚动仅合并更新两层位置，650ms CSS 过渡柔和收束，不在空闲时运行 JS 动画循环。没有光标跟随、逐帧 Canvas 绘制或文字测量；后台暂停，静态模式或减少动态效果偏好下保持静态。几何位于 `src/lib/print-study.ts`，滚动控制位于 `src/lib/print-motion.ts`。参考与性能边界见 [生成式版画验收](docs/PRINT-STUDY-QA.md)。
 
 ## 本地运行
 

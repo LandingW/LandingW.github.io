@@ -105,7 +105,7 @@ test("one shared background lives above all homepage chapters, not inside the he
     assert.ok(html.includes(`id="${id}"`));
 });
 
-test("fullscreen artwork has lifecycle cleanup and no JS animation, cursor or layout polling", async () => {
+test("fullscreen artwork has lifecycle cleanup and no cursor or layout polling", async () => {
   const css = await fs.readFile("src/app/globals.css", "utf8");
   const design = await fs.readFile("src/app/design.css", "utf8");
   const component = await fs.readFile("src/lib/print-motion.ts", "utf8");
@@ -124,8 +124,10 @@ test("fullscreen artwork has lifecycle cleanup and no JS animation, cursor or la
   assert.match(component, /removeEventListener\("change", update\)/);
   assert.doesNotMatch(
     component,
-    /getContext|requestAnimationFrame|pointermove|addEventListener\("scroll"|createRange|getBoundingClientRect|setInterval|preventDefault/,
+    /getContext|pointermove|createRange|getBoundingClientRect|setInterval|preventDefault/,
   );
+  assert.match(component, /removeEventListener\("scroll", schedule\)/);
+  assert.match(component, /resize.disconnect\(\)/);
   assert.doesNotMatch(component, /setInterval|preventDefault/);
 });
 
