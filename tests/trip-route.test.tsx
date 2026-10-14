@@ -19,6 +19,7 @@ import { tripPoints, mapCoordinates } from "../src/lib/trip-atlas";
 import { tripLocation } from "../src/lib/trip-presentation";
 import RouteEditor from "../src/components/travel/RouteEditor";
 import TripAtlas from "../src/components/travel/TripAtlas";
+import GrowingFractal from "../src/components/GrowingFractal";
 import {
   dispatchProcessing,
   kickQueuedProcessing,
@@ -284,10 +285,7 @@ test("upload completion wakes the backend and mobile fractals use a continuous p
   );
   const config = await fs.readFile("workers/photos/wrangler.jsonc", "utf8");
   assert.match(config, /\*\/5 \* \* \* \*/);
-  const component = await fs.readFile(
-    "src/components/GrowingFractal.tsx",
-    "utf8",
-  );
+  const component = renderToStaticMarkup(createElement(GrowingFractal));
   const styles = await fs.readFile("src/app/globals.css", "utf8");
   assert.equal(
     (component.match(/data-renderer="julia-ink-scroll"/g) || []).length,

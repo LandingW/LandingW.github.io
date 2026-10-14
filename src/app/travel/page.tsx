@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function TravelPage() {
   return (
     <div className="travel-page">
-      <GrowingFractal />
+      <GrowingFractal study="sand" />
       <Header travel />
       <main id="main-content" className="page-container">
         <TravelGallery />

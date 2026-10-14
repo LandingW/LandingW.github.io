@@ -1,5 +1,14 @@
 /* The public travel page uses the homepage's shared exhibition tokens.
    Deliberately scoped: no restyling of the private editor or photo lightbox. */
+.travel-page > .page-fractal[data-renderer="sand-ring-scroll"] {
+  background: #eeeae0;
+}
+.travel-page > .page-fractal[data-renderer="sand-ring-scroll"] .ink-static {
+  opacity: 0.84;
+}
+.editorial-site .travel-page .site-header {
+  background: var(--home-surface);
+}
 .editorial-site
   .travel-page
   :is(
@@ -56,14 +65,18 @@
 }
 .editorial-site .travel-page .travel-intro {
   padding-block: var(--home-space) calc(var(--home-space) * 0.7);
-  align-items: end;
+  align-items: stretch;
   gap: var(--home-gap);
 }
 .travel-page .travel-intro > div {
   min-width: 0;
-  background: transparent;
-  padding-block: 14px;
-  text-shadow: 0 2px 22px var(--paper);
+  background: var(--home-surface);
+  padding: var(--home-panel);
+  border-radius: var(--home-radius);
+}
+.travel-page .travel-intro > div:first-child {
+  flex: 1 1 auto;
+  border-bottom-right-radius: calc(var(--home-radius) * 1.8);
 }
 .editorial-site .travel-page .travel-intro h1 {
   font: 400 clamp(48px, 6.2vw, 118px)/1.2 var(--serif-cjk);
@@ -73,7 +86,11 @@
 .travel-page .travel-intro-aside {
   font-size: 14px;
   line-height: 1.95;
-  flex-shrink: 0;
+  flex: 0 1 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: start;
 }
 .travel-page .travel-intro-aside > a {
   min-height: 44px;
@@ -280,10 +297,10 @@
   padding-top: var(--home-space);
 }
 .travel-page .journey-section-heading {
-  background: transparent;
-  padding: 12px 4px;
+  background: var(--home-surface);
+  padding: 24px var(--home-panel);
+  border-radius: var(--home-radius-small);
   margin-bottom: var(--home-gap);
-  text-shadow: 0 2px 22px var(--paper);
 }
 .travel-page .journey-section-heading h2,
 .travel-page .journey-equipment-intro h2 {
@@ -345,7 +362,11 @@
   }
   .travel-page .travel-intro-aside {
     font-size: 13px;
-    flex-shrink: 1;
+  }
+  .travel-page .travel-intro > div {
+    flex: auto;
+    width: 100%;
+    padding: 24px 20px;
   }
   .editorial-site .travel-page .travel-atlas-layout {
     padding: 22px 14px;
@@ -411,7 +432,7 @@
     padding-inline: 0;
   }
   .travel-page .journey-section-heading {
-    padding: 14px 4px;
+    padding: 22px 20px;
   }
   .travel-page .journey-section-heading h2,
   .travel-page .journey-equipment-intro h2 {

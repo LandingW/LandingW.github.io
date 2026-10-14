@@ -5,6 +5,7 @@
 - Three.js is MIT licensed, copyright © 2010–2026 three.js authors. The complete upstream license is distributed with the `three` npm package at `node_modules/three/LICENSE`.
 - The Cornell-style image is generated locally by this repository's analytic diffuse path tracer. It is an original illustration inspired by the classic Cornell Box, not an original Cornell photograph or a reconstruction using measured Cornell material data.
 - The Sierpiński mark and Catmull–Rom tube line illustration are generated from their mathematical constructions in this repository. None of these studies represents confidential project content.
+- The travel page's sand-ring background is an original parametric-curve / point-sampling study. Its reference is Anders Hoff's [Sand Spline](https://inconvergent.net/generative/sand-spline/), especially the accumulation of translucent grains. No artwork image or source code is copied, and the curves here are not a reproduction of his B-spline implementation.
 
 ## Three.js MIT license
 
