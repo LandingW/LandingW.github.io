@@ -55,7 +55,7 @@ test("decorative ink SSR stays compact with a visible responsive fallback and no
   );
   assert.doesNotMatch(
     html,
-    /<filter|<animate|<image|<script|tabindex|opacity:0|visibility:hidden/,
+    /<canvas|<filter|<animate|<image|<script|tabindex|opacity:0|visibility:hidden/,
   );
   const css = await fs.readFile("src/app/globals.css", "utf8");
   assert.doesNotMatch(css, /@keyframes print-drift|@keyframes print-counter/);
@@ -65,6 +65,7 @@ test("decorative ink SSR stays compact with a visible responsive fallback and no
     /drawImage|setTimeout|setInterval|createRange|getBoundingClientRect|pointermove/,
   );
   assert.match(css, /\.ink-static img\s*\{[^}]*height: 140%/);
+  assert.match(css, /transition: translate 450ms/);
   for (const file of ["src/app/home.css", "src/app/travel/canvas.css"]) {
     assert.doesNotMatch(
       await fs.readFile(file, "utf8"),
@@ -75,11 +76,11 @@ test("decorative ink SSR stays compact with a visible responsive fallback and no
 
 test("scroll camera is small, reversible, bounded and continuous across chapters", () => {
   assert.deepEqual(printScrollOffsets(0, 6000, 800), [0, 0]);
-  assert.deepEqual(printScrollOffsets(3000, 6000, 800), [-128, -79.36]);
-  assert.deepEqual(printScrollOffsets(6000, 6000, 800), [-256, -158.72]);
-  assert.deepEqual(printScrollOffsets(9000, 6000, 800), [-256, -158.72]);
+  assert.deepEqual(printScrollOffsets(3000, 6000, 800), [-153.6, -95.232]);
+  assert.deepEqual(printScrollOffsets(6000, 6000, 800), [-307.2, -190.464]);
+  assert.deepEqual(printScrollOffsets(9000, 6000, 800), [-307.2, -190.464]);
   assert.deepEqual(printScrollOffsets(-300, 6000, 800), [0, 0]);
-  assert.deepEqual(printScrollOffsets(100, 100, 800), [-7.5, -4.65]);
+  assert.deepEqual(printScrollOffsets(100, 100, 800), [-9, -5.58]);
   for (const input of [NaN, Infinity]) {
     assert.deepEqual(printScrollOffsets(input, 6000, 800), [0, 0]);
     assert.deepEqual(printScrollOffsets(200, input, 800), [0, 0]);
@@ -90,8 +91,8 @@ test("scroll camera is small, reversible, bounded and continuous across chapters
   let previous = 0;
   for (let y = 0; y <= 12000; y += 1) {
     const [current] = printScrollOffsets(y, 12000, 844);
-    assert.ok(current <= previous && current >= -260);
-    assert.ok(Math.abs(current - previous) < 0.023);
+    assert.ok(current <= previous && current >= -312);
+    assert.ok(Math.abs(current - previous) < 0.027);
     previous = current;
   }
 });
@@ -212,15 +213,15 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
   assert.equal(measurements, initialMeasures, "scroll does not measure layout");
   flush();
   assert.equal(pending.size, 0, "no self-scheduling idle render loop");
-  assert.deepEqual(positions, ["0 -128.00px", "0 -79.36px"]);
+  assert.deepEqual(positions, ["0 -153.60px", "0 -95.23px"]);
   win.scrollY = 1500;
   win.dispatchEvent(new Event("scroll"));
   flush();
-  assert.deepEqual(positions, ["0 -64.00px", "0 -39.68px"]);
+  assert.deepEqual(positions, ["0 -76.80px", "0 -47.62px"]);
   pageHeight = 3800;
   resized();
   flush();
-  assert.deepEqual(positions, ["0 -112.50px", "0 -69.75px"]);
+  assert.deepEqual(positions, ["0 -135.00px", "0 -83.70px"]);
   const settledWrites = writes;
   win.dispatchEvent(new Event("scroll"));
   flush();

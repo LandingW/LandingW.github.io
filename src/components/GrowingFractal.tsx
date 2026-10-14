@@ -1,25 +1,23 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createInkScene } from "@/lib/ink-scene";
 import { mountPrintMotion } from "@/lib/print-motion";
 
 export default function GrowingFractal() {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!window.ResizeObserver || !window.MutationObserver) return;
-    if (host.current)
-      return mountPrintMotion(host.current, createInkScene(host.current));
+    if (!window.ResizeObserver) return;
+    if (host.current) return mountPrintMotion(host.current);
   }, []);
   return (
     <div
       ref={host}
       className="page-fractal"
-      data-renderer="julia-ink-field"
+      data-renderer="julia-ink-scroll"
       data-art-motion="paused"
       aria-hidden="true"
     >
-      <picture className="ink-static">
+      <picture className="ink-static print-layer">
         <source
           media="(orientation: portrait)"
           srcSet="/studies/ink-portrait.webp"
@@ -33,7 +31,6 @@ export default function GrowingFractal() {
           decoding="async"
         />
       </picture>
-      <canvas className="ink-live" />
     </div>
   );
 }

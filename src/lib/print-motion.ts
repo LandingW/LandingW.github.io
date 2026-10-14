@@ -3,7 +3,8 @@ export function printScrollOffsets(y: number, range: number, height: number) {
   if (![y, range, height].every(Number.isFinite) || range <= 0 || height <= 0)
     return [0, 0];
   const progress = Math.max(0, Math.min(1, y / range));
-  const travel = Math.min(260, height * 0.32, range * 0.075);
+  // 20% more travel; the 140%-height ink image still covers the full viewport.
+  const travel = Math.min(312, height * 0.384, range * 0.09);
   const offset = progress ? -progress * travel : 0;
   return [offset, offset * 0.62];
 }

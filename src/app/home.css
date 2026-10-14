@@ -18,7 +18,7 @@
   --fractal-accent: #c28c62;
 }
 
-/* Opaque reading paper, with the mathematical field bending around its margin. */
+/* Opaque reading paper above the independent, scroll-only ink background. */
 .editorial-site
   .home-page
   :is(

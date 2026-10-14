@@ -79,14 +79,14 @@ test("four different fractals share the exact 2s / 1s / 2s cycle", () => {
   assert.deepEqual(growthSchedule([]), []);
 });
 
-test("ink background has one responsive precomputed image and a progressive canvas enhancement", () => {
+test("ink background is one responsive precomputed image without canvas or text interaction", () => {
   const html = renderToStaticMarkup(createElement(GrowingFractal));
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
-  assert.equal((html.match(/<canvas/g) ?? []).length, 1);
+  assert.equal((html.match(/<canvas/g) ?? []).length, 0);
   assert.equal((html.match(/<picture/g) ?? []).length, 1);
   assert.match(html, /ink-portrait.webp/);
-  assert.match(html, /data-renderer="julia-ink-field"/);
+  assert.match(html, /data-renderer="julia-ink-scroll"/);
   assert.match(html, /data-art-motion="paused"/);
   assert.doesNotMatch(html, /<svg|<filter|fractal-tile|<button|<a /);
 });

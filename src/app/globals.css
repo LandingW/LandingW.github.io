@@ -309,8 +309,8 @@ svg {
   --fractal-cool: #74aaa3;
   --fractal-gold: #cfaa68;
 }
-/* Precomputed Julia ink. One texture pass bends its margins around reading
-   paper only during input; no live fractal iteration or animated grain. */
+/* Precomputed Julia ink, moved as one image by scroll only.
+   No canvas, text-driven masks, local deformation or animated grain. */
 .page-fractal {
   position: fixed;
   z-index: 0;
@@ -327,7 +327,6 @@ svg {
   position: relative;
   z-index: 1;
 }
-.ink-live,
 .ink-static {
   position: absolute;
   inset: 0;
@@ -344,14 +343,15 @@ svg {
   max-width: none;
   height: 140%;
 }
-.ink-live {
-  visibility: hidden;
+.page-fractal[data-art-motion="running"] .ink-static {
+  transition: translate 450ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  will-change: translate;
 }
-.page-fractal[data-field-ready="true"] .ink-live {
-  visibility: visible;
-}
-.page-fractal[data-field-ready="true"] .ink-static {
-  visibility: hidden;
+@media (prefers-reduced-motion: reduce) {
+  .page-fractal .ink-static {
+    transition: none;
+    will-change: auto;
+  }
 }
 @media print {
   .page-fractal {
