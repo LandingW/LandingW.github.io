@@ -17,7 +17,7 @@ import { moveCover } from "@/lib/travel-editor";
 const RouteMap = dynamic(() => import("./RouteMap"), {
   ssr: false,
   loading: () => (
-    <div className="route-editor-map route-map-loading">正在展开地图…</div>
+    <div className="route-editor-map route-map-loading">正在加载地图…</div>
   ),
 });
 
@@ -105,11 +105,11 @@ export default function RouteEditor({
     <section className="route-editor" aria-label="多地点行程编辑">
       <header className="route-editor-heading">
         <div>
-          <p className="eyebrow">THE ITINERARY</p>
+          <p className="eyebrow">ROUTE</p>
           <h3>
-            把停留，串成旅程<span className="accent">.</span>
+            行程地点<span className="accent">.</span>
           </h3>
-          <p>酒店、景点、小小的停靠。按顺序记录，拖动图钉定位。</p>
+          <p>添加酒店、景点等地点，按行程排序。图钉可以拖到准确位置。</p>
         </div>
         <span className="route-total mono">
           {String(stops.length).padStart(2, "0")} / {MAX_TRIP_STOPS}
@@ -146,8 +146,9 @@ export default function RouteEditor({
         </button>
       </div>
       <p className="route-search-credit">
-        点击查找才会将关键词发送给 Photon。免费 OpenStreetMap
-        数据，可能有遗漏；可拖动图钉修正，不自动读取设备位置。
+        搜索使用 Photon /
+        OpenStreetMap。点击查找后才发送关键词，不读取设备位置。
+        搜不到时可以直接在地图上选点。
       </p>
       {error && (
         <p className="manager-notice is-error" role="alert">
@@ -233,10 +234,8 @@ export default function RouteEditor({
           {!stops.length && (
             <div className="route-empty">
               <span aria-hidden="true">⊕</span>
-              <h4>下一站，去哪里？</h4>
-              <p>
-                搜索一个具体地点，或在地图上点选。现有旅行定位和照片不会被修改。
-              </p>
+              <h4>还没有添加地点</h4>
+              <p>搜索地名，或点击地图添加。已有的旅行定位和照片保持不变。</p>
             </div>
           )}
           <ol className="route-stop-list">
@@ -373,13 +372,13 @@ export default function RouteEditor({
             </label>
           </div>
           <label>
-            这一站的小记（可留空）
+            地点备注（可选）
             <textarea
               value={active.note}
               rows={2}
               maxLength={400}
               disabled={disabled}
-              placeholder="停留的片刻，值得记住的事。"
+              placeholder="可以写住宿、交通或游玩记录"
               onChange={(event) =>
                 update(active.id, { note: event.target.value })
               }
@@ -407,7 +406,7 @@ export default function RouteEditor({
         </div>
       )}
       <p className="route-editor-note">
-        地点与排序随「保存旅行信息」一起保存；修改已发布旅行后会更新公开行程。弧线只表示站点顺序，不是导航路线。
+        添加或调整后，需要保存旅行。已发布的行程会随保存更新；地图弧线只表示地点顺序，不是导航路线。
       </p>
     </section>
   );

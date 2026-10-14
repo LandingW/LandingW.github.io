@@ -386,9 +386,7 @@ export default function TeapotStudy() {
       <figcaption>
         <div>
           <span className="study-hint">
-            {ready
-              ? "拖动旋转 · 经典曲面的当代表达"
-              : "BÉZIER PATCHES / 静态预览"}
+            {ready ? "拖动或按方向键旋转" : "静态预览"}
           </span>
         </div>
         <div

@@ -4,8 +4,8 @@ import SectionHeading from "./SectionHeading";
 export default function Skills() {
   return (
     <section id="skills" className="section editorial-section">
-      <SectionHeading number="02" english="Areas of focus" title="技术栈与专注">
-        <p>深入一个问题，也连接不同的领域。</p>
+      <SectionHeading number="02" english="Skills" title="技术栈">
+        <p>平时用到的技术，以及正在学的东西。</p>
       </SectionHeading>
       <div className="focus-content">
         <div className="focus-grid">
@@ -33,7 +33,7 @@ export default function Skills() {
           ))}
         </div>
         <div className="education" data-reveal>
-          <span className="eyebrow">ALWAYS LEARNING</span>
+          <span className="eyebrow">教育经历</span>
           <p>
             华南理工大学 <span>软件工程 · 本科</span>
           </p>

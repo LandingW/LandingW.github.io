@@ -12,7 +12,7 @@ export default function TravelPreview() {
   const section = useRef<HTMLElement>(null);
   const [manifest, setManifest] = useState(EMPTY_MANIFEST);
   const [base, setBase] = useState("");
-  const [status, setStatus] = useState("旅途中的光与片刻，收进一册影集。");
+  const [status, setStatus] = useState("旅行时拍的照片。");
   useEffect(() => {
     const controller = new AbortController();
     const observer = new IntersectionObserver(
@@ -39,11 +39,11 @@ export default function TravelPreview() {
             setStatus(
               data.albums.length
                 ? `${data.albums.length} 次旅行 · ${new Set(data.photos.map((photo) => photo.id)).size} 张照片`
-                : "第一段旅程，慢慢记录。",
+                : "还没有发布旅行照片。",
             );
           } catch {
             if (!controller.signal.aborted)
-              setStatus("照片预览暂时无法加载，可以进入影集重试。");
+              setStatus("照片加载失败，可以打开旅行页重试。");
           }
         })();
       },
@@ -58,22 +58,16 @@ export default function TravelPreview() {
   return (
     <section id="travel" ref={section} className="home-travel">
       <div className="home-travel-intro">
-        <SectionHeading
-          number="04"
-          english="Away from the screen"
-          title="旅行足迹"
-        >
+        <SectionHeading number="04" english="Travel" title="旅行">
           <Link href="/travel/">
-            全部旅行与世界地图 <Arrow diagonal />
+            全部旅行 <Arrow diagonal />
           </Link>
         </SectionHeading>
         <p className="home-travel-summary" role="status">
           {status}
         </p>
         <p className="home-travel-description">
-          换一种方式看见世界。
-          <br />
-          一些风景，一些留在光里的记忆。
+          按旅行整理了照片和地点，点进去可以看大图。
         </p>
       </div>
       {manifest.albums.length > 0 ? (
@@ -123,7 +117,7 @@ export default function TravelPreview() {
         </div>
       ) : (
         <Link className="home-travel-empty" href="/travel/">
-          翻开旅行影集 <Arrow diagonal />
+          查看旅行照片 <Arrow diagonal />
         </Link>
       )}
     </section>

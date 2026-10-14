@@ -286,11 +286,11 @@ export default function TravelManager() {
               albumId: selected,
             });
           setMessage(
-            `${picked.length} 张原片已完整上传，系统会自动安排高清处理。你可以关闭页面或继续编辑，处理完成后再发布。`,
+            `${picked.length} 张原片已上传，正在等待后台处理。处理完成后再发布，现在可以关闭页面或继续编辑。`,
           );
         } catch {
           setMessage(
-            `${picked.length} 张原片已安全上传，但自动处理未启动。请点击“处理当前旅行的待办照片”重试，不必重复上传。`,
+            `${picked.length} 张原片已上传，但自动处理未启动。请点「处理当前旅行的待办照片」，不用重新上传。`,
           );
         }
       } finally {
@@ -377,11 +377,11 @@ export default function TravelManager() {
     <div className="travel-manager">
       <div className="manager-heading">
         <div>
-          <p className="eyebrow">PRIVATE / 影集管理</p>
+          <p className="eyebrow">PRIVATE / 管理</p>
           <h1>
-            记录下一程<span className="accent">.</span>
+            照片与旅行<span className="accent">.</span>
           </h1>
-          <p>整理照片库，编排旅行，再发布。无需重新构建网站。</p>
+          <p>上传照片、编辑地点和选择封面。新旅行发布后才会出现在网站。</p>
         </div>
         <Link href="/travel/">查看旅行页 ↗</Link>
       </div>
@@ -399,11 +399,8 @@ export default function TravelManager() {
         <p role="status">正在读取配置…</p>
       ) : !config.apiUrl || !config.mediaUrl ? (
         <section className="manager-setup">
-          <h2>先连接你的照片存储</h2>
-          <p>
-            页面和上传流程已准备好，还没有连接 Cloudflare
-            R2。当前不会上传或公开任何照片。
-          </p>
+          <h2>尚未配置照片存储</h2>
+          <p>需要先配置 Cloudflare R2 才能上传照片。当前没有连接存储服务。</p>
           <ol>
             <li>开通 Cloudflare R2，保持免费 Workers 计划。</li>
             <li>
@@ -418,7 +415,7 @@ export default function TravelManager() {
         </section>
       ) : !token ? (
         <form className="manager-login" onSubmit={login}>
-          <h2>仅供本人使用</h2>
+          <h2>登录管理</h2>
           <label>
             管理密码
             <input
@@ -429,7 +426,7 @@ export default function TravelManager() {
               required
               minLength={12}
               maxLength={256}
-              placeholder="自己设置的密码，至少 12 个字符"
+              placeholder="输入管理密码"
             />
           </label>
           <button className="travel-button" disabled={busy}>
@@ -482,7 +479,7 @@ export default function TravelManager() {
           <nav className="manager-workspaces" aria-label="影集管理区域">
             {(
               [
-                ["trips", "旅行编排"],
+                ["trips", "旅行"],
                 ["library", "照片库"],
                 ["trash", "回收站"],
               ] as const
@@ -516,9 +513,7 @@ export default function TravelManager() {
                 applyAlbumSelection(id);
                 setWorkspace("trips");
                 setStep("photos");
-                setMessage(
-                  "照片已加入旅行，尚未自动发布。可以调整顺序、选择封面，再发布。",
-                );
+                setMessage("照片已加入旅行，尚未发布。可以先调整顺序和封面。");
                 const url = new URL(window.location.href);
                 url.searchParams.delete("view");
                 window.history.replaceState({}, "", url);
@@ -528,7 +523,7 @@ export default function TravelManager() {
           <div hidden={workspace !== "trips"}>
             <div className="manager-trip-selector">
               <div className="manager-section-title">
-                <h2>{active ? active.title : "新建一次旅行"}</h2>
+                <h2>{active ? active.title : "新建旅行"}</h2>
                 <button disabled={busy} onClick={() => selectAlbum("")}>
                   新建 ＋
                 </button>
@@ -540,7 +535,7 @@ export default function TravelManager() {
                   disabled={busy}
                   onChange={(event) => selectAlbum(event.target.value)}
                 >
-                  <option value="">新建一次旅行</option>
+                  <option value="">新建旅行</option>
                   {state?.albums
                     .filter((album) => !album.deleted_at)
                     .map((album) => (
@@ -643,9 +638,9 @@ export default function TravelManager() {
             )}
             <div className="manager-layout">
               <section className="manager-album" hidden={step !== "details"}>
-                <h2>给这段旅程一个名字</h2>
+                <h2>旅行信息</h2>
                 <p className="manager-help">
-                  先写下地点与简短记录。日期、坐标和设备可以稍后补充。
+                  标题必填，日期、地点和设备可以稍后补充。
                 </p>
                 <form
                   id="trip-editor"
@@ -664,7 +659,7 @@ export default function TravelManager() {
                         }
                         maxLength={100}
                         required
-                        placeholder="这次旅行的名字"
+                        placeholder="例如：2026 挪威"
                       />
                     </label>
                     <div className="manager-fields">
@@ -679,19 +674,19 @@ export default function TravelManager() {
                         />
                       </label>
                       <label>
-                        地点标签（自己标注）
+                        地点名称
                         <input
                           value={form.place}
                           onChange={(e) =>
                             setForm({ ...form, place: e.target.value })
                           }
                           maxLength={120}
-                          placeholder="城市或景点即可"
+                          placeholder="国家、城市或景点"
                         />
                       </label>
                     </div>
                     <label>
-                      简短记录
+                      旅行备注
                       <textarea
                         rows={3}
                         value={form.description}
@@ -772,7 +767,7 @@ export default function TravelManager() {
                           type="button"
                           onClick={() => setShowMap(!showMap)}
                         >
-                          {showMap ? "收起选点地图" : "在免费地图上放置图钉"}
+                          {showMap ? "收起选点地图" : "在地图上选点"}
                         </button>
                         {form.place && (
                           <a
@@ -786,7 +781,7 @@ export default function TravelManager() {
                       </div>
                       {form.googlePlaceId && (
                         <p className="manager-help">
-                          这条记录关联了旧地图服务，需重新点选或填写坐标才能显示为免费地图图钉。
+                          这个地点来自旧地图服务。请重新选点或填写坐标，才能在当前地图显示。
                           <button
                             type="button"
                             onClick={() =>
@@ -841,7 +836,7 @@ export default function TravelManager() {
                 {state?.libraryVersion && (
                   <div className="manager-library-entry">
                     <div>
-                      <h3>从已处理照片库中编排</h3>
+                      <h3>添加照片</h3>
                       <p>
                         筛选文件夹并批量选择，不重复上传。移出旅行也不会删除照片。
                       </p>
@@ -871,7 +866,7 @@ export default function TravelManager() {
                           : "自动组合封面"}
                       </h3>
                       <p className="manager-help">
-                        在下方勾选最多四张。第一张也是旅行手记的大幅封面，使用箭头调整顺序。
+                        最多选择四张，第一张会用作旅行详情页的大幅封面。用箭头调整顺序。
                       </p>
                       <ol className="cover-order">
                         {form.coverPhotoIds.map((id, index) => (
@@ -951,7 +946,7 @@ export default function TravelManager() {
                       ? "上传新照片并加入本次旅行"
                       : "先创建或选择一次旅行"}
                   </strong>
-                  <span>同时收入照片库 · 手机和电脑均可批量选择</span>
+                  <span>同时保存到照片库 · 支持批量选择</span>
                   <input
                     ref={fileInput}
                     type="file"
@@ -1007,8 +1002,8 @@ export default function TravelManager() {
                 </button>
               </section>
               <section className="manager-publish" hidden={step !== "publish"}>
-                <p className="eyebrow">READY WHEN YOU ARE</p>
-                <h2>最后看一眼，再分享。</h2>
+                <p className="eyebrow">PUBLISH</p>
+                <h2>发布前检查</h2>
                 <ul className="publish-checklist">
                   <li data-ok={!unsaved}>
                     <span>{unsaved ? "○" : "✓"}</span>
@@ -1038,7 +1033,7 @@ export default function TravelManager() {
                   GPS。
                 </p>
                 <p>
-                  处理完成不代表公开。点发布后，当前旅行中已准备好的照片才会出现在网站。
+                  上传和处理不会自动发布。点击发布后，这些照片才会出现在旅行页。
                 </p>
                 <div className="manager-actions">
                   <button
@@ -1242,7 +1237,7 @@ export default function TravelManager() {
                               >
                                 {gpsPreview === photo.id
                                   ? "收起地图"
-                                  : "自动定位拍摄位置 ↗"}
+                                  : "查看拍摄位置 ↗"}
                               </button>
                               {gpsPreview === photo.id && (
                                 <LocationMap
@@ -1254,8 +1249,7 @@ export default function TravelManager() {
                             </>
                           ) : (
                             <p className="manager-help">
-                              没有可用
-                              GPS，不会猜测位置。部分相机需要开启手机位置同步才能写入
+                              未读取到 GPS。部分相机需要开启手机位置同步才能写入
                               GPS。
                             </p>
                           )}

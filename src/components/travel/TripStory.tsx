@@ -21,10 +21,10 @@ const CountryOutline = dynamic(() => import("./CountryOutline"), {
     <figure
       className="journey-country country-skeleton"
       role="status"
-      aria-label="正在展开目的地轮廓"
+      aria-label="正在加载国家轮廓"
     >
       <div className="country-caption">
-        <span className="mono">DESTINATION / ATLAS</span>
+        <span className="mono">国家轮廓</span>
         <span aria-hidden="true">↗</span>
       </div>
       <svg
@@ -34,8 +34,8 @@ const CountryOutline = dynamic(() => import("./CountryOutline"), {
       />
       <figcaption>
         <span>
-          <strong>目的地轮廓</strong>
-          <em>Loading…</em>
+          <strong>国家轮廓</strong>
+          <em>加载中…</em>
         </span>
       </figcaption>
       <p className="country-provenance">正在读取本地地理数据…</p>
@@ -69,13 +69,13 @@ export default function TripStory({
     <article className="trip-story journey-story" id="story-top">
       <div className="story-breadcrumb">
         <button onClick={onBack}>← 全部旅行</button>
-        <span className="mono">FIELD NOTES / {album.date || "旅行记录"}</span>
+        <span className="mono">TRAVEL / {album.date || "日期未填写"}</span>
       </div>
       <header className="story-opening journey-opening">
         <div className="story-title-block">
           <div className="story-title-copy">
             <p className="eyebrow">
-              <span className="status-dot" /> FIELD JOURNAL / 旅行手记
+              <span className="status-dot" /> 旅行相册
             </p>
             <h1 tabIndex={-1}>
               {album.title}
@@ -97,12 +97,12 @@ export default function TripStory({
                 </div>
               )}
               <div>
-                <dt>影像记录</dt>
+                <dt>照片</dt>
                 <dd>{String(photos.length).padStart(2, "0")} 张照片</dd>
               </div>
             </dl>
             <a className="story-read-link" href="#story-places">
-              探索这段旅程 <span aria-hidden="true">↓</span>
+              查看地点 <span aria-hidden="true">↓</span>
             </a>
           </div>
         </div>
@@ -141,9 +141,7 @@ export default function TripStory({
               />
               <span className="story-cover-label">
                 <span className="mono">
-                  {location
-                    ? coordinateLabel(location)
-                    : "LIGHT / PLACE / MEMORY"}
+                  {location ? coordinateLabel(location) : "旅行封面"}
                 </span>
                 <span>高清查看 ↗</span>
               </span>
@@ -152,14 +150,10 @@ export default function TripStory({
           <aside className="journey-cover-aside">
             <CountryOutline location={location} place={album.place} />
             <div className="journey-cover-note">
-              <span className="mono">A MOMENT, SOMEWHERE.</span>
-              <p>
-                把看见的风景，
-                <br />
-                留在抵达的地方。
-              </p>
+              <span className="mono">照片浏览</span>
+              <p>点击照片可以放大。放大到哪里，就加载那一处的高清细节。</p>
               <a href="#story-frames">
-                {String(photos.length).padStart(2, "0")} 张影像记录{" "}
+                查看 {String(photos.length).padStart(2, "0")} 张照片{" "}
                 <span aria-hidden="true">↘</span>
               </a>
             </div>
@@ -180,33 +174,29 @@ export default function TripStory({
       >
         <header className="journey-section-heading" data-reveal>
           <div>
-            <p className="eyebrow">02 / COLLECTED MOMENTS</p>
+            <p className="eyebrow">02 / PHOTOS</p>
             <h2 id="frames-title">
-              沿途的光<span className="accent">.</span>
+              照片<span className="accent">.</span>
             </h2>
           </div>
-          <p>
-            停下来，再看一眼。
-            <br />
-            点击照片，逐层展开高清细节。
-          </p>
+          <p>点击看大图，也可以切换成网格浏览。</p>
         </header>
         <div className="story-toolbar">
           <span className="mono">
-            {String(photos.length).padStart(2, "0")} FRAMES
+            {String(photos.length).padStart(2, "0")} 张照片
           </span>
           <div className="story-view-switch" aria-label="照片排版">
             <button
               aria-pressed={view === "story"}
               onClick={() => setView("story")}
             >
-              手记
+              大图
             </button>
             <button
               aria-pressed={view === "index"}
               onClick={() => setView("index")}
             >
-              照片索引
+              网格
             </button>
           </div>
         </div>
@@ -236,7 +226,7 @@ export default function TripStory({
                     config.mediaUrl,
                     view === "index" ? photo.thumbnail : photo.preview,
                   )}
-                  alt={photo.caption || `旅行影像 ${photos.indexOf(photo) + 1}`}
+                  alt={photo.caption || `旅行照片 ${photos.indexOf(photo) + 1}`}
                   width={photo.width}
                   height={photo.height}
                   loading="lazy"
@@ -258,12 +248,12 @@ export default function TripStory({
       </section>
       <TripEquipment photos={photos} />
       <footer className="story-colophon" data-reveal>
-        <span className="mono">END OF THIS JOURNEY</span>
+        <span className="mono">其他相册</span>
         <h2>
-          把片刻，留在这里<span className="accent">.</span>
+          其他旅行<span className="accent">.</span>
         </h2>
         <button className="travel-text-button" onClick={onBack}>
-          继续看其他旅行 ↗
+          返回全部旅行 ↗
         </button>
       </footer>
     </article>

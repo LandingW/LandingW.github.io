@@ -35,7 +35,7 @@ export default function PhotoViewer({
   const dialog = useRef<HTMLDivElement>(null);
   const viewer = useRef<OpenSeadragon.Viewer | null>(null);
   const [instance, setInstance] = useState<OpenSeadragon.Viewer | null>(null);
-  const [status, setStatus] = useState("正在加载高清切片…");
+  const [status, setStatus] = useState("正在加载高清照片…");
   const [drawnSource, setDrawnSource] = useState("");
   const [closing, setClosing] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,7 +99,7 @@ export default function PhotoViewer({
           setStatus("滚轮或双指缩放 · 拖动查看细节"),
         );
         instance.addHandler("open-failed", () =>
-          setStatus("高清切片暂时无法加载，仍可查看预览图"),
+          setStatus("高清照片加载失败，当前显示预览图"),
         );
         instance.addHandler("tile-load-failed", () =>
           setStatus("部分高清细节加载失败，请稍后重试"),

@@ -25,11 +25,11 @@ function ArticleMeta({
       <span>
         {article.hasFullContent
           ? `全文 · 约 ${article.readingMinutes} 分钟`
-          : "摘要 · 知乎原文"}
+          : "摘要 · 全文见知乎"}
       </span>
       {featured && (
         <span className="read-label">
-          {article.hasFullContent ? "开始阅读" : "阅读摘要"}
+          {article.hasFullContent ? "阅读全文" : "查看摘要"}
           <Arrow />
         </span>
       )}
@@ -42,13 +42,13 @@ function LightStudy() {
     <div className="article-art">
       <Image
         src="/studies/cornell-box.webp"
-        alt="Cornell Box 光照研究：红绿侧墙、面积光源与两个白色方块"
+        alt="Cornell Box：红绿侧墙、顶部面光源和两个白色方块"
         width={480}
         height={480}
       />
       <div className="art-label mono">
         <span>CORNELL BOX</span>
-        <span>LIGHT TRANSPORT / 02</span>
+        <span>02 / 光照测试场景</span>
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ export default function Articles({
 
   return (
     <section id="articles" className="section editorial-section">
-      <SectionHeading number="03" english="Field notes" title="思考的切片">
+      <SectionHeading number="03" english="Writing" title="文章">
         <div className="writing-links">
           <a className="text-link" href="/feed.xml">
             RSS 订阅 <Arrow diagonal />
@@ -117,7 +117,7 @@ export default function Articles({
           >
             <LightStudy />
             <div className="featured-copy">
-              <span className="eyebrow">LATEST WRITING / 最新文章</span>
+              <span className="eyebrow">最新文章</span>
               <h3>{featured.title}</h3>
               <p>{featured.excerpt}</p>
               <ArticleMeta article={featured} featured />
@@ -158,7 +158,7 @@ export default function Articles({
             <input
               type="search"
               aria-label="搜索文章"
-              placeholder="搜索标题、内容或关键词"
+              placeholder="搜索标题或摘要"
               value={query}
               onChange={(event) => {
                 const value = event.target.value;
@@ -171,7 +171,7 @@ export default function Articles({
           </label>
         </div>
         <p className="results-label" role="status" aria-live="polite">
-          {filtered.length} 篇文字{query.trim() && ` · 搜索「${query.trim()}」`}
+          {filtered.length} 篇文章{query.trim() && ` · 搜索「${query.trim()}」`}
         </p>
         <div className="article-list" key={category}>
           {filtered.slice(0, limit).map((article, index) => (
@@ -193,8 +193,8 @@ export default function Articles({
         </div>
         {filtered.length === 0 && (
           <div className="empty-state">
-            <h3>还没有找到这篇文字。</h3>
-            <p>换一个关键词，或回到全部文章看看。</p>
+            <h3>没有找到相关文章</h3>
+            <p>试试其他关键词，或清除筛选。</p>
             <button
               type="button"
               className="button button-outline"
@@ -206,9 +206,9 @@ export default function Articles({
         )}
         <div className="article-list-footer">
           <p>
-            知乎索引更新于 {syncedAt.replaceAll("-", ".")} · 已存档{" "}
+            上次同步知乎：{syncedAt.replaceAll("-", ".")} · 本站可读{" "}
             {articles.filter((article) => article.hasFullContent).length}{" "}
-            篇全文，其余保留摘要
+            篇全文，其余为摘要
           </p>
           {filtered.length > limit ? (
             <button
@@ -216,7 +216,7 @@ export default function Articles({
               type="button"
               onClick={() => setLimit(limit + PAGE_SIZE)}
             >
-              继续阅读 · 还有 {filtered.length - limit} 篇{" "}
+              更多文章 · 还有 {filtered.length - limit} 篇{" "}
               <span aria-hidden="true">+</span>
             </button>
           ) : (

@@ -61,7 +61,7 @@ export default function ConfirmAction({
         onResolve(false);
       }}
     >
-      <p className="eyebrow">PLEASE CONFIRM</p>
+      <p className="eyebrow">操作确认</p>
       <h2 id={`${id}-title`}>{request.title}</h2>
       <p id={`${id}-description`}>{request.description}</p>
       <div>

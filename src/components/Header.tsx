@@ -151,7 +151,7 @@ export default function Header({
             href="/#contact"
             onClick={() => setOpen(false)}
           >
-            聊一聊 <Arrow diagonal />
+            联系我 <Arrow diagonal />
           </Link>
         </nav>
       </div>

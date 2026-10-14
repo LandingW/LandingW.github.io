@@ -53,7 +53,7 @@ export default function TravelGallery() {
         setPhotoId(query.get("photo") || "");
       } catch {
         if (!controller.signal.aborted)
-          setError("暂时无法连接相册。可以重试，其他页面不受影响。");
+          setError("暂时连不上照片服务，请稍后重试。");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -137,40 +137,32 @@ export default function TravelGallery() {
         <>
           <section className="travel-intro">
             <div>
-              <p className="eyebrow">04 / FIELD NOTES</p>
+              <p className="eyebrow">04 / TRAVEL</p>
               <h1>
                 走过的地方<span className="accent">.</span>
               </h1>
             </div>
             <div className="travel-intro-aside">
-              <p>
-                不赶路的时候，看见更多。
-                <br />
-                一些风景，一些留在光里的片刻。
-              </p>
-              <Link href="/travel/manage/">记录一次旅行 ↗</Link>
+              <p>出去玩时拍的照片，按每次旅行整理在这里。</p>
+              <Link href="/travel/manage/">管理旅行 ↗</Link>
             </div>
           </section>
           <div className="travel-atlas-layout" data-reveal>
             <aside className="travel-atlas-intro">
-              <span className="eyebrow">THE TRAVEL INDEX</span>
+              <span className="eyebrow">世界地图</span>
               <h2>
-                Places,
+                World
                 <br />
-                <em>remembered.</em>
+                <em>map.</em>
               </h2>
-              <p>
-                在地图上回看，
-                <br />
-                在照片里走近。
-              </p>
+              <p>点击图钉，查看对应的旅行。</p>
               <dl>
                 <div>
-                  <dt>旅行手记</dt>
+                  <dt>旅行</dt>
                   <dd>{String(manifest.albums.length).padStart(2, "0")}</dd>
                 </div>
                 <div>
-                  <dt>影像记录</dt>
+                  <dt>照片</dt>
                   <dd>
                     {String(
                       new Set(manifest.photos.map((photo) => photo.id)).size,
@@ -192,15 +184,15 @@ export default function TravelGallery() {
       <section
         ref={collection}
         className="travel-collection"
-        aria-label="旅行影集"
+        aria-label="旅行相册"
       >
         {loading ? (
           <p className="travel-empty" role="status">
-            正在翻开旅行影集…
+            正在加载旅行照片…
           </p>
         ) : error ? (
           <div className="travel-empty" role="alert">
-            <h2>稍后再试一次</h2>
+            <h2>照片加载失败</h2>
             <p>{error}</p>
             <button
               className="travel-button"
@@ -226,18 +218,18 @@ export default function TravelGallery() {
           <>
             <div className="travel-filter">
               <h2>
-                旅行手记{" "}
+                全部旅行{" "}
                 <span className="mono">
                   / {String(manifest.albums.length).padStart(2, "0")}
                 </span>
               </h2>
-              <span className="mono">PLACES & MEMORIES</span>
+              <span className="mono">TRIPS</span>
             </div>
             {manifest.albums.length === 0 ? (
               <div className="travel-empty">
-                <span className="mono">A PLACE FOR MEMORIES</span>
-                <h2>照片，慢慢收集。</h2>
-                <p>第一组照片发布后，这里会留下它们的位置与故事。</p>
+                <span className="mono">TRAVEL</span>
+                <h2>还没有发布的旅行</h2>
+                <p>发布后，照片和地点会显示在这里。</p>
               </div>
             ) : (
               <div className="trip-card-grid">
@@ -298,7 +290,7 @@ export default function TravelGallery() {
                           </p>
                         )}
                         <span className="trip-card-cta">
-                          翻开这段旅程 <span aria-hidden="true">↗</span>
+                          查看照片 <span aria-hidden="true">↗</span>
                         </span>
                       </div>
                     </a>
@@ -312,7 +304,7 @@ export default function TravelGallery() {
       <footer className="travel-end">
         <Link href="/">← 回到主页</Link>
         <Link href="/travel/privacy/">地图与隐私说明</Link>
-        <Link href="/travel/manage/">管理影集</Link>
+        <Link href="/travel/manage/">管理照片与旅行</Link>
       </footer>
       {photo && (
         <PhotoViewer

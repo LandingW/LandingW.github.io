@@ -20,7 +20,9 @@ export default function CountryOutline({
   return (
     <figure className="journey-country" data-reveal>
       <div className="country-caption">
-        <span className="mono">DESTINATION / {country?.code || "ATLAS"}</span>
+        <span className="mono">
+          国家轮廓{country ? ` / ${country.code}` : ""}
+        </span>
         <span aria-hidden="true">↗</span>
       </div>
       {country && drawing ? (
@@ -62,13 +64,11 @@ export default function CountryOutline({
       ) : (
         <div className="country-unavailable">
           <span aria-hidden="true">⊕</span>
-          <p>
-            {location ? "这处坐标暂未匹配到国家轮廓" : "在地图上，留一个位置"}
-          </p>
+          <p>{location ? "未找到这个位置的国家轮廓" : "未填写旅行位置"}</p>
           <small>
             {location
-              ? "地点坐标仍完整保留"
-              : "补充旅行定位后，这里会展开目的地地图"}
+              ? "已记录的坐标显示在下方"
+              : "添加位置后可以显示对应的国家轮廓"}
           </small>
         </div>
       )}

@@ -19,7 +19,7 @@ const TripPlacesMap = dynamic(() => import("./TripPlacesMap"), {
   ssr: false,
   loading: () => (
     <div className="journey-map-placeholder" role="status">
-      正在展开地图…
+      正在加载地图…
     </div>
   ),
 });
@@ -67,22 +67,16 @@ export default function TripAtlas({
     >
       <header className="journey-section-heading" data-reveal>
         <div>
-          <p className="eyebrow">
-            01 / {stopCount ? "THE ITINERARY" : "THE LOCATION"}
-          </p>
+          <p className="eyebrow">01 / {stopCount ? "ROUTE" : "MAP"}</p>
           <h2 id="places-title">
-            {stopCount ? "沿途，停留" : "风景的坐标"}
+            {stopCount ? "行程地点" : "地点"}
             <span className="accent">.</span>
           </h2>
         </div>
         <p>
-          {stopCount
-            ? `${String(stopCount).padStart(2, "0")} 次停留，串起这一程。`
-            : "从一张照片，走近一个地方。"}
-          <br />
           {points.length
-            ? `${points.length} 个已记录点位 · ${located} 张照片带 GPS`
-            : "这段旅程还没有公开的坐标。"}
+            ? `${points.length} 个地点 · ${located} 张照片带 GPS`
+            : "这次旅行还没有公开的位置记录。"}
         </p>
       </header>
       <div
@@ -100,20 +94,15 @@ export default function TripAtlas({
               />
             ) : (
               <div className="journey-map-placeholder">
-                <span className="mono">A CLOSER LOOK</span>
-                <button onClick={() => setMapVisible(true)}>
-                  展开互动地图 ↗
-                </button>
+                <span className="mono">地点地图</span>
+                <button onClick={() => setMapVisible(true)}>加载地图 ↗</button>
               </div>
             )
           ) : (
             <div className="journey-map-empty">
               <span aria-hidden="true">⊕</span>
-              <h3>此刻，不必有坐标。</h3>
-              <p>
-                照片仍可完整浏览；补充旅行地点或上传带 GPS
-                的照片后，地图会自动出现。
-              </p>
+              <h3>还没有位置记录</h3>
+              <p>添加旅行地点或公开照片 GPS 后，这里会显示地图。</p>
               <a href={`/travel/manage/?trip=${album.id}`}>补充旅行地点 ↗</a>
             </div>
           )}
@@ -129,9 +118,7 @@ export default function TripAtlas({
         {active && (
           <aside className="journey-point-panel" aria-label="旅行点位与详情">
             <div className="journey-point-heading">
-              <span className="mono">
-                {stopCount ? "THE STOPS" : "PLACES INDEX"}
-              </span>
+              <span className="mono">地点列表</span>
               <span>{String(points.length).padStart(2, "0")}</span>
             </div>
             {points.length > 1 && (
@@ -215,10 +202,7 @@ export default function TripAtlas({
                   </div>
                 )}
                 {active.photos.length > 4 && (
-                  <p>
-                    此处共 {active.photos.length}{" "}
-                    张照片，高清查看器中可继续浏览。
-                  </p>
+                  <p>这里拍了 {active.photos.length} 张照片。</p>
                 )}
                 <a
                   className="journey-map-link"
@@ -226,16 +210,16 @@ export default function TripAtlas({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  在地图中探索周边 <span aria-hidden="true">↗</span>
+                  在 OpenStreetMap 中查看 <span aria-hidden="true">↗</span>
                 </a>
               </div>
             )}
             <p className="journey-point-footnote">
               {stopCount
-                ? "行程站点按你的编排顺序连接；照片 GPS 单独显示，不推断拍摄轨迹。"
+                ? "行程按保存顺序连线，照片 GPS 另行标记。"
                 : located
                   ? "编号用于检索照片，不表示行程先后。"
-                  : "照片未记录 GPS；不会用旅行定位代替每张照片的拍摄位置。"}
+                  : "这是旅行的位置；照片未记录 GPS，无法确定各张的拍摄地点。"}
             </p>
           </aside>
         )}

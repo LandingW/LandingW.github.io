@@ -29,10 +29,10 @@ export default function PhotoEquipmentEditor({
   }, [dirty, onDirtyChange, photoId]);
   return (
     <details className="photo-equipment-editor">
-      <summary>补充 / 修正这张照片的设备</summary>
+      <summary>编辑这张照片的设备</summary>
       <p className="manager-help">
-        手动填写会标注来源，并优先于这张照片的自动设备名称。曝光参数仍保留原
-        EXIF；留空则恢复自动读取或旅行默认设备。
+        手动填写的型号优先显示，并标注为手动补充。留空则使用 EXIF
+        或旅行默认设备， 不修改原片和曝光参数。
       </p>
       <EquipmentFields value={value} onChange={setValue} disabled={disabled} />
       <div className="manager-actions">
@@ -49,7 +49,7 @@ export default function PhotoEquipmentEditor({
             void onSave({});
           }}
         >
-          清除手动覆盖
+          清除手动填写
         </button>
       </div>
     </details>

@@ -215,7 +215,7 @@ export default function TripPlacesMap({
             {interacting ? "完成操作 ✓" : "操作地图 ↗"}
           </button>
           <p className="journey-map-gesture" role="status">
-            {locked ? "轻触「操作地图」以拖动、缩放" : "双指缩放 · 拖动探索"}
+            {locked ? "点击「操作地图」后可拖动、缩放" : "双指缩放 · 拖动地图"}
           </p>
         </>
       )}
@@ -229,12 +229,12 @@ export default function TripPlacesMap({
       </a>
       {state === "loading" && (
         <p className="journey-map-state" role="status">
-          正在展开地图…
+          正在加载地图…
         </p>
       )}
       {state === "failed" && (
         <div className="journey-map-state" role="status">
-          <p>互动地图暂时无法加载，仍可从点位卡打开地图。</p>
+          <p>地图加载失败，可以从地点详情打开 OpenStreetMap。</p>
           <button
             onClick={() => {
               setState("loading");

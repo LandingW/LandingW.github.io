@@ -83,9 +83,9 @@ test("travel story uses a chosen hero, real photo proportions and no fabricated 
   assert.match(html, /story-cover-photo/);
   assert.match(html, /b\/revision\/preview.jpg/);
   assert.match(html, /story-frame is-portrait|story-frame  is-portrait/);
-  assert.match(html, /照片索引/);
+  assert.match(html, /网格/);
   assert.doesNotMatch(html, /<dt>目的地<\/dt>|拍摄设备 \/|Google 地点/);
-  assert.match(html, /这段旅程还没有公开的坐标/);
+  assert.match(html, /这次旅行还没有公开的位置记录/);
   assert.match(html, /机身型号未记录/);
   assert.equal((html.match(/<figure class="story-frame/g) || []).length, 2);
 });

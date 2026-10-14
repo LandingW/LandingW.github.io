@@ -43,7 +43,7 @@ export default function SplineStudy() {
           <path d={d} key={index} stroke="currentColor" strokeWidth=".65" />
         ))}
       </svg>
-      <figcaption className="mono">CONTINUITY / A SPLINE STUDY</figcaption>
+      <figcaption className="mono">CATMULL–ROM SPLINE</figcaption>
     </figure>
   );
 }

@@ -5,12 +5,8 @@ import SectionHeading from "./SectionHeading";
 export default function Experience() {
   return (
     <section id="experience" className="section editorial-section">
-      <SectionHeading number="01" english="Selected work" title="工作与经历">
-        <p>
-          从理解光，到构建世界。
-          <br />
-          在真实的问题中，不断深入。
-        </p>
+      <SectionHeading number="01" english="Experience" title="工作经历">
+        <p>做过的项目和具体工作。</p>
       </SectionHeading>
       <div className="experience-list">
         {experiences.map((item, index) => (
@@ -23,7 +19,7 @@ export default function Experience() {
               <span className="mono">{item.period}</span>
               {item.current && (
                 <span className="current-badge">
-                  <span className="status-dot" /> 现在
+                  <span className="status-dot" /> 在职
                 </span>
               )}
               <span className="experience-index mono">
@@ -58,9 +54,9 @@ export default function Experience() {
               {item.highlights.length > 0 && (
                 <details className="work-detail" open={item.current}>
                   <summary>
-                    <span>技术职责与实践</span>
+                    <span>具体工作</span>
                     <span className="work-detail-count">
-                      {item.highlights.length} 个方向
+                      {item.highlights.length} 项
                     </span>
                     <span className="work-detail-toggle" aria-hidden="true">
                       +
@@ -82,7 +78,7 @@ export default function Experience() {
               )}
               {item.current && (
                 <p className="disclosure-note">
-                  以上为公开技术方向，不涉及项目内部实现与性能数据。
+                  这里只写公开的技术方向，项目细节不便展开。
                 </p>
               )}
             </div>

@@ -91,11 +91,11 @@ export default function WorldMap({
       }}
     >
       <div className="travel-atlas-caption">
-        <span className="mono">WORLD / 世界足迹</span>
+        <span className="mono">已去过的地方</span>
         <span>
           {marked
             ? `${marked} 次旅行已标记 · 悬停预览，点击进入`
-            : "设置旅行地点后，足迹会出现在这里"}
+            : "还没有标记旅行地点"}
         </span>
       </div>
       <div
@@ -165,7 +165,7 @@ export default function WorldMap({
           >
             <span className="atlas-preview-kicker mono">
               {active.albums.length > 1
-                ? `${active.albums.length} 次旅行 · 同一片风景`
+                ? `${active.albums.length} 次旅行 · 相近地点`
                 : "TRAVEL NOTE"}
             </span>
             {active.albums.map((album) => {

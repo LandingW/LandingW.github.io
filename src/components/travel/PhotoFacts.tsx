@@ -13,7 +13,7 @@ export default function PhotoFacts({
 }) {
   const facts = cameraFacts(camera, sources);
   if (!facts.length)
-    return <p className="photo-facts-empty">照片没有记录可读取的摄影参数。</p>;
+    return <p className="photo-facts-empty">未读取到拍摄参数。</p>;
   return (
     <dl className="photo-facts">
       {facts.map((fact) => (

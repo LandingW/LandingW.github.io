@@ -122,6 +122,10 @@
 .editorial-site .home-page .hero-title {
   font-size: clamp(76px, 8.6vw, 172px);
 }
+.editorial-site .home-page .hero-title .title-second {
+  margin-left: 0;
+  font-size: 0.88em;
+}
 .home-page .hero-author {
   font-size: 15px;
 }

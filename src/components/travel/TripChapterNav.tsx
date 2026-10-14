@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 const chapters = [
   { id: "story-places", label: "地点" },
-  { id: "story-frames", label: "影像" },
-  { id: "story-equipment", label: "拍摄档案" },
+  { id: "story-frames", label: "照片" },
+  { id: "story-equipment", label: "设备" },
 ];
 
 export default function TripChapterNav() {
@@ -48,7 +48,7 @@ export default function TripChapterNav() {
   }, []);
   return (
     <nav ref={navigation} className="journey-chapters" aria-label="旅行章节">
-      <span className="mono journey-chapters-caption">INSIDE THIS JOURNEY</span>
+      <span className="mono journey-chapters-caption">本次旅行</span>
       <div>
         {chapters.map((chapter, index) => (
           <a

@@ -178,7 +178,7 @@ export default function PhotoLibrary({
         if (!state.routeVersion)
           await photoApi(config.apiUrl, token, "/admin/process", {});
         setMessage(
-          `${uploaded} 张原片已完整收入照片库，系统会自动安排高清处理。此时可以关闭页面，处理完成后选择照片加入旅行。`,
+          `${uploaded} 张原片已上传。后台处理完成后，可以从照片库加入旅行；现在可以关闭页面。`,
         );
       } catch (error) {
         throw new Error(
@@ -212,7 +212,7 @@ export default function PhotoLibrary({
       setSelected([]);
       setMessage(
         action === "move"
-          ? "分类已更新，无需搬运或重新切片。"
+          ? "已移动到所选文件夹，原片和切片不变。"
           : action === "restore"
             ? "已恢复照片，原旅行关联保留为草稿；需要重新发布才会公开。"
             : "已移入回收站；原片与切片仍占用存储，永久删除后才释放。公开清单约 60 秒更新，已有直链缓存可能保留。",
@@ -258,24 +258,22 @@ export default function PhotoLibrary({
     <section className="photo-library" aria-label={trash ? "回收站" : "照片库"}>
       <div className="library-heading">
         <div>
-          <p className="eyebrow">
-            {trash ? "RECENTLY REMOVED" : "YOUR IMAGE ARCHIVE"}
-          </p>
+          <p className="eyebrow">{trash ? "TRASH" : "PHOTO LIBRARY"}</p>
           <h2>
-            {trash ? "回收站" : "所有影像，一个地方"}
+            {trash ? "回收站" : "照片库"}
             <span className="accent">.</span>
           </h2>
           <p>
             {trash
               ? "恢复不会自动重新发布。永久删除才会释放 R2 空间。"
-              : "先上传并处理，再编排旅行。一张照片可用于多次旅行，只存储一份。"}
+              : "上传后等照片处理完成，再选中加入旅行。同一张照片可以用于多次旅行，不用重复上传。"}
           </p>
         </div>
         <span className="mono">
           {trash
             ? state.photos.filter((photo) => photo.deleted_at).length
             : activePhotos.length}{" "}
-          PHOTOS
+          张照片
         </span>
       </div>
       {error && (
@@ -447,10 +445,7 @@ export default function PhotoLibrary({
                 </button>
               </details>
             )}
-            <p>
-              文件夹是照片库分类。R2
-              使用稳定的照片目录，改名或移动分类不会复制大文件。
-            </p>
+            <p>文件夹用于分类，改名或移动照片不会复制 R2 文件。</p>
           </aside>
         )}
         <div className="library-content">
@@ -459,14 +454,14 @@ export default function PhotoLibrary({
               <div>
                 <span className="status-dot" />
                 <strong>高清处理</strong>
-                <span className="mono">AUTO QUEUE</span>
+                <span className="mono">后台处理</span>
               </div>
               <p>
                 {queuedCount} 张等待 · {processingCount} 张处理中
               </p>
               <p>
-                原片已保存，无需重新上传。上传完成即自动安排，后台每 5
-                分钟补查；页面可关闭，不会中断已启动的处理。
+                上传完成后自动处理，后台每 5 分钟检查一次遗漏任务。
+                关闭页面不影响处理；长时间没有进展时可以点「处理待办」。
               </p>
               {state.processingDispatch && !state.processingDispatch.ok && (
                 <p className="accent">{state.processingDispatch.message}</p>
@@ -661,7 +656,7 @@ export default function PhotoLibrary({
           {matching.length === 0 && (
             <div className="library-empty">
               {trash
-                ? "照片回收站是空的。"
+                ? "回收站里没有照片。"
                 : "这里还没有照片。可以上传，或调整筛选条件。"}
             </div>
           )}

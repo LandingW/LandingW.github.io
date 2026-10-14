@@ -52,10 +52,10 @@ export default async function ArticlePage({
       <main id="main-content" className="page-container">
         <article className="reader">
           <Link href="/#articles" className="text-link reader-back">
-            ← 返回所有文字
+            ← 全部文章
           </Link>
           <header className="reader-header">
-            <p className="eyebrow">FIELD NOTES / {article.category}</p>
+            <p className="eyebrow">文章 / {article.category}</p>
             <h1>{article.title}</h1>
             <div className="article-meta">
               <span>王若淼 / Land1ngW</span>
@@ -74,7 +74,7 @@ export default async function ArticlePage({
               <aside className="reader-source">
                 <span>
                   {article.sourceUrl
-                    ? "本文为作者文章的站内存档；图片可能仍由原站提供。"
+                    ? "这篇文章也保存在本站，部分图片仍从原站加载。"
                     : "本文首发于本站。"}
                 </span>
                 {article.sourceUrl && (
@@ -83,7 +83,7 @@ export default async function ArticlePage({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    查看原始发布 ↗
+                    查看原文 ↗
                   </a>
                 )}
               </aside>
@@ -110,10 +110,10 @@ export default async function ArticlePage({
             </>
           ) : (
             <div className="reader-summary">
-              <h2>先读一段</h2>
+              <h2>摘要</h2>
               <p>{article.excerpt}</p>
               <p className="summary-notice">
-                本站目前仅保存了这篇文章的摘要，尚未导入全文。以下链接前往作者的知乎原文；本站不会把摘要当作完整文章。
+                本站暂时只有摘要，全文请到知乎阅读。
               </p>
               <a
                 className="button button-dark"
@@ -126,9 +126,9 @@ export default async function ArticlePage({
             </div>
           )}
           <div className="reader-end">
-            <p>文字是思考留下的痕迹。感谢你的阅读。</p>
+            <p>感谢阅读。</p>
             <Link href="/#articles" className="text-link">
-              继续探索其他文章 <Arrow />
+              其他文章 <Arrow />
             </Link>
           </div>
         </article>

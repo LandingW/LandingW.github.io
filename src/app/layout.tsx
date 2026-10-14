@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s · landingw的主页",
   },
   description:
-    "王若淼 / Land1ngW，米哈游 Varsapura 图形程序。关注 Nanite Raster、GPU 编程、PS5 图形开发、AMD RDNA 与 CUDA / OptiX，记录引擎研发、学习与思考。",
+    "王若淼 / Land1ngW 的个人主页。目前在米哈游 Varsapura 做图形开发，主要涉及 UE5、Nanite Raster 和 PS5。这里有我的工作经历、技术文章和旅行照片。",
   keywords: [
     "游戏引擎",
     "图形程序",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "application/rss+xml": "/feed.xml" } },
   openGraph: {
     title: "landingw的主页",
-    description: "图形程序 / 游戏引擎开发。工作、学习与思考的个人记录。",
+    description: "王若淼 / Land1ngW，图形程序。工作经历、技术文章和旅行照片。",
     url: "https://landingw.github.io",
     siteName: "landingw的主页",
     locale: "zh_CN",

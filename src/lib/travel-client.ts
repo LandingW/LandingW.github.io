@@ -115,9 +115,7 @@ export async function uploadPhoto(
   folderId?: string | null,
 ) {
   if (!PHOTO_TYPES.has(file.type) || file.size < 1 || file.size > PHOTO_LIMIT)
-    throw new Error(
-      "第一版支持 64MiB 以内的 JPEG、PNG、WebP；RAW 请先导出 JPEG",
-    );
+    throw new Error("支持 64MiB 以内的 JPEG、PNG、WebP。RAW 请先导出为 JPEG。");
   const signature = new Blob([
     `${file.name}:${file.size}:${file.lastModified}:`,
     file.slice(0, 1024 * 1024),

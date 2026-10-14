@@ -8,17 +8,14 @@ export default function Footer() {
   return (
     <footer id="contact" className="site-footer">
       <div className="footer-top">
-        <span className="mono">05 / KEEP IN TOUCH</span>
-        <span>有趣的想法，值得一次交流。</span>
+        <span className="mono">05 / 联系方式</span>
       </div>
       <div className="footer-contact" data-reveal>
         <div>
           <h2>
-            Let’s talk<span>.</span>
+            Contact<span>.</span>
           </h2>
-          <p className="footer-invitation">
-            关于图形、引擎，或下一个有趣的想法。
-          </p>
+          <p className="footer-invitation">可以通过邮件、QQ 或微信联系我。</p>
           <a href={`mailto:${profile.email}`} className="contact-email">
             {profile.email}
             <Arrow diagonal />
@@ -29,7 +26,6 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Land1ngW</span>
-        <span className="footer-note">FORM. LIGHT. CODE.</span>
         <div>
           <a href="/feed.xml">
             RSS <Arrow diagonal />

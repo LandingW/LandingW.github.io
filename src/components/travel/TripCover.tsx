@@ -48,7 +48,7 @@ export default function TripCover({
           </div>
         ))
       ) : (
-        <span className="trip-cover-empty">照片准备中</span>
+        <span className="trip-cover-empty">暂无照片</span>
       )}
     </div>
   );

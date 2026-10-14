@@ -33,31 +33,31 @@ export default function Hero() {
   return (
     <section id="home" className="hero">
       <div className="hero-topline mono">
-        <span>GRAPHICS ENGINEER & ENGINE DEVELOPER</span>
-        <span>A PERSONAL COLLECTION</span>
+        <span>GRAPHICS PROGRAMMER</span>
+        <span>PERSONAL WEBSITE</span>
       </div>
       <div className="hero-stage">
         <div className="hero-copy">
-          <p className="hero-author">
-            {profile.nameReal}
-            <span> / {profile.name}</span>
-          </p>
-          <h1 className="hero-title" aria-label="THINK IN PIXELS.">
-            <span aria-hidden="true">{letters("Think in")}</span>
+          <p className="hero-author">你好，我是</p>
+          <h1
+            className="hero-title"
+            aria-label={`${profile.nameReal} / ${profile.name}`}
+          >
+            <span aria-hidden="true">{letters(profile.nameReal)}</span>
             <span className="title-second" aria-hidden="true">
-              {letters("pixels", 8)}
+              {letters(profile.name, [...profile.nameReal].length)}
               <span className="accent">.</span>
             </span>
           </h1>
-          <p className="hero-lead">于细微处，构建真实。</p>
+          <p className="hero-lead">在米哈游做图形开发。</p>
           <div className="hero-bio">
             <p>
-              一名图形程序。探索实时渲染、GPU
-              编程与引擎系统，也记录光线、风景和旅途中的片刻。
+              主要写 UE5 渲染相关的代码，最近在做 Nanite Raster 和 PS5
+              图形开发。这里放工作经历、技术笔记，还有旅行时拍的照片。
             </p>
             <div className="hero-actions">
               <a href="#experience">
-                工作与经历 <Arrow diagonal />
+                工作经历 <Arrow diagonal />
               </a>
               <a href="#articles">
                 阅读文章 <Arrow />
@@ -67,20 +67,20 @@ export default function Hero() {
         </div>
         <div className="hero-exhibit">
           <div className="hero-exhibit-top mono">
-            <span>01 / FORM STUDY</span>
+            <span>01 / BÉZIER SURFACE</span>
             <FractalMark depth={2} />
           </div>
           <TeapotStudy />
           <div className="hero-exhibit-note">
-            <span>曲面之间，光线成形。</span>
-            <span className="mono">BÉZIER / LIGHT / MATERIAL</span>
+            <span>Bézier 曲面与材质预览</span>
+            <span className="mono">WEBGL</span>
           </div>
         </div>
       </div>
       <div className="hero-footer">
         <a className="current-strip" href="#experience">
           <span className="mono">
-            <span className="status-dot" /> CURRENTLY
+            <span className="status-dot" /> 目前
           </span>
           <span className="current-strip-company">
             Varsapura<span>米哈游 · 图形程序</span>
@@ -88,7 +88,7 @@ export default function Hero() {
           <Arrow diagonal />
         </a>
         <div className="hero-social">
-          <span className="hero-social-label">在别处找到我</span>
+          <span className="hero-social-label">其他主页</span>
           <a href={profile.github} target="_blank" rel="noopener noreferrer">
             GitHub <Arrow diagonal />
           </a>

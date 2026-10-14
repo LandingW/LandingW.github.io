@@ -141,7 +141,7 @@ test("unknown destinations and open ocean never receive an invented country", ()
   const html = renderToStaticMarkup(
     createElement(CountryOutline, { location: null, place: "" }),
   );
-  assert.match(html, /补充旅行定位后/);
+  assert.match(html, /添加位置后可以显示对应的国家轮廓/);
   assert.doesNotMatch(html, /country-land/);
 });
 
@@ -204,8 +204,8 @@ test("travel detail retains title, cover, photos, and adds distinct place and eq
   assert.match(html, /放大查看旅行封面/);
   assert.match(html, /id="story-places"/);
   assert.match(html, /id="story-equipment"/);
-  assert.match(html, /1 个已记录点位 · 0 张照片带 GPS/);
-  assert.match(html, /不会用旅行定位代替每张照片的拍摄位置/);
+  assert.match(html, /1 个地点 · 0 张照片带 GPS/);
+  assert.match(html, /照片未记录 GPS，无法确定各张的拍摄地点/);
   assert.match(html, /https:\/\/www.openstreetmap.org/);
   assert.doesNotMatch(html, /Google|路线距离|旅行天数/);
 });

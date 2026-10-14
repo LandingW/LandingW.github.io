@@ -27,7 +27,7 @@ test("the pinned card automatically links to the newest published article", () =
   assert.ok(card);
   const href = card.match(/href="([^"]+)"/)?.[1];
   assert.equal(href?.replace(/\/$/, ""), `/writing/${articles[0].slug}`);
-  assert.match(card, /LATEST WRITING/);
+  assert.match(card, /最新文章/);
   assert.ok(articles.every((article) => !("featured" in article)));
 });
 
@@ -35,10 +35,24 @@ test("work history has local company logos, detailed responsibilities and the up
   for (const experience of experiences) {
     assert.ok(fs.existsSync(`public${experience.logo.src}`));
     assert.ok(experience.highlights.length >= 2);
-    assert.ok(experience.highlights.every((entry) => entry.desc.length > 50));
+    assert.ok(experience.highlights.every((entry) => entry.desc.length > 35));
     assert.ok(!experience.role.includes("实习生"));
   }
   assert.equal(experiences[1].role, "游戏引擎图形开发");
+  const details = JSON.stringify(experiences);
+  for (const technology of [
+    "Nanite",
+    "PS5",
+    "RDNA",
+    "PSSL",
+    "Probe",
+    "DXR",
+    "CUDA",
+    "OptiX",
+    "ReSTIR",
+    "DDGI",
+  ])
+    assert.ok(details.includes(technology), `retains ${technology}`);
 });
 
 test("QQ and WeChat are rendered as distinct copyable contact handles", () => {
