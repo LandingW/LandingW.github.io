@@ -1,69 +1,61 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { buildPrint, PRINT_VIEWBOX, type PrintFormat } from "@/lib/print-study";
+import { buildJuliaPlates } from "@/lib/julia-study";
+import { createJuliaScene } from "@/lib/julia-surfaces";
 import { mountPrintMotion } from "@/lib/print-motion";
 
-const prints = {
-  landscape: buildPrint("landscape"),
-  portrait: buildPrint("portrait"),
-};
+const plates = buildJuliaPlates("landscape");
 
 export default function GrowingFractal() {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (host.current) return mountPrintMotion(host.current);
+    if (!window.ResizeObserver || !window.MutationObserver) return;
+    if (host.current)
+      return mountPrintMotion(host.current, createJuliaScene(host.current));
   }, []);
   return (
     <div
       ref={host}
       className="page-fractal"
-      data-renderer="composited-print"
+      data-renderer="julia-surface-field"
       data-art-motion="paused"
       aria-hidden="true"
     >
-      {[0, 1].map((layer) => (
+      {plates.map((plate, layer) => (
         <div className={`print-layer print-layer--${layer}`} key={layer}>
-          {(["landscape", "portrait"] as PrintFormat[]).map((format) => (
-            <svg
-              key={format}
-              className={`print-art print-art--${format}`}
-              viewBox={PRINT_VIEWBOX[format]}
-              preserveAspectRatio="none"
-              focusable="false"
-              fill="none"
-            >
-              {prints[format][layer].map((form, index) => (
-                <g
-                  key={index}
-                  stroke={form.ink}
-                  strokeWidth={format === "portrait" ? 0.9 : 1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path
-                    d={form.curves[0]}
-                    fill={form.ink}
-                    fillOpacity=".045"
-                    stroke="none"
-                  />
-                  {form.curves.map((d, ring) => (
-                    <path
-                      key={ring}
-                      d={d}
-                      strokeOpacity={ring % 5 === 0 ? 0.42 : 0.23}
-                    />
-                  ))}
-                  <path
-                    d={form.curves.at(-1)}
-                    fill={form.ink}
-                    fillOpacity=".075"
-                    stroke="none"
-                  />
-                </g>
-              ))}
-            </svg>
-          ))}
+          <picture className="julia-static">
+            <source
+              media="(orientation: portrait)"
+              srcSet={`/studies/julia-portrait-${layer}.svg`}
+            />
+            {/* The mathematical artwork is an SVG, not a photo requiring Next image optimization. */}
+            <img
+              src={`/studies/julia-landscape-${layer}.svg`}
+              alt=""
+              width="1440"
+              height="1000"
+            />
+          </picture>
+          <svg
+            className="julia-live"
+            preserveAspectRatio="none"
+            focusable="false"
+            fillRule="evenodd"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          >
+            {plate.bands.map((band, index) => (
+              <path
+                key={index}
+                fill={plate.ink}
+                fillOpacity={band.fill}
+                stroke={plate.ink}
+                strokeOpacity={band.stroke}
+                strokeWidth=".7"
+              />
+            ))}
+          </svg>
         </div>
       ))}
     </div>

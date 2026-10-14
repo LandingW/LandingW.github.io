@@ -11,7 +11,16 @@ export function printScrollOffsets(y: number, range: number, height: number) {
 /** Scroll events share one pending frame; CSS handles the gentle settling.
  * No idle JS loop, cursor input, path updates or layout reads while scrolling.
  */
-export function mountPrintMotion(host: HTMLDivElement) {
+export interface PrintScene {
+  minFrameMs?: number;
+  observe(notify: () => void): void;
+  measure(): void;
+  draw(y: number, range: number, height: number): void;
+  reset(): void;
+  disconnect(): void;
+}
+
+export function mountPrintMotion(host: HTMLDivElement, scene?: PrintScene) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const staticMode =
     new URLSearchParams(location.search).get("graphics") === "static";
@@ -20,6 +29,7 @@ export function mountPrintMotion(host: HTMLDivElement) {
   let range = 0;
   let height = 0;
   let disposed = false;
+  let lastDraw = -Infinity;
   const previous: string[] = [];
   const canMove = () =>
     !disposed && !document.hidden && !reduced.matches && !staticMode;
@@ -31,9 +41,17 @@ export function mountPrintMotion(host: HTMLDivElement) {
       previous[i] = value;
     });
   };
-  const draw = () => {
+  const draw = (now: number) => {
+    if (canMove() && now - lastDraw < (scene?.minFrameMs || 0)) {
+      frame = requestAnimationFrame(draw);
+      return;
+    }
     frame = 0;
-    if (canMove()) place(printScrollOffsets(window.scrollY, range, height));
+    if (canMove()) {
+      lastDraw = now;
+      place(printScrollOffsets(window.scrollY, range, height));
+      scene?.draw(window.scrollY, range, height);
+    }
   };
   const schedule = () => {
     if (canMove() && !frame) frame = requestAnimationFrame(draw);
@@ -42,6 +60,7 @@ export function mountPrintMotion(host: HTMLDivElement) {
     if (!canMove()) return;
     height = window.innerHeight;
     range = Math.max(0, document.documentElement.scrollHeight - height);
+    scene?.measure();
     schedule();
   };
   const update = () => {
@@ -50,11 +69,15 @@ export function mountPrintMotion(host: HTMLDivElement) {
     else {
       cancelAnimationFrame(frame);
       frame = 0;
-      if (reduced.matches || staticMode) place([0, 0]);
+      if (reduced.matches || staticMode) {
+        place([0, 0]);
+        scene?.reset();
+      }
     }
   };
   const resize = new ResizeObserver(measure);
   resize.observe(document.body);
+  scene?.observe(measure);
   window.addEventListener("scroll", schedule, { passive: true });
   window.addEventListener("resize", measure, { passive: true });
   update();
@@ -65,6 +88,7 @@ export function mountPrintMotion(host: HTMLDivElement) {
     host.dataset.artMotion = "paused";
     cancelAnimationFrame(frame);
     resize.disconnect();
+    scene?.disconnect();
     window.removeEventListener("scroll", schedule);
     window.removeEventListener("resize", measure);
     document.removeEventListener("visibilitychange", update);

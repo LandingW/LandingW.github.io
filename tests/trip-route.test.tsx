@@ -290,7 +290,7 @@ test("upload completion wakes the backend and mobile fractals use a continuous p
   );
   const styles = await fs.readFile("src/app/globals.css", "utf8");
   assert.equal(
-    (component.match(/data-renderer="composited-print"/g) || []).length,
+    (component.match(/data-renderer="julia-surface-field"/g) || []).length,
     1,
   );
   assert.match(styles, /\.page-fractal\s*\{[^}]*height: 100lvh/);

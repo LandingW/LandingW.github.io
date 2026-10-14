@@ -5,7 +5,7 @@
   --page-gutter: clamp(24px, 4vw, 104px);
   --home-space: clamp(80px, 8vw, 152px);
   --home-panel: clamp(24px, 3vw, 58px);
-  --home-surface: rgb(250 248 243 / 76%);
+  --home-surface: #faf8f3;
   --home-surface-soft: rgb(250 248 243 / 58%);
   --home-header: rgb(247 245 239 / 82%);
   --home-edge: rgb(255 255 255 / 72%);
@@ -18,7 +18,7 @@
   --fractal-accent: #c28c62;
 }
 
-/* Fixed translucent pigment; no backdrop sampling over the live drawing. */
+/* Opaque reading paper, with the mathematical field bending around its margin. */
 .editorial-site
   .home-page
   :is(
@@ -217,6 +217,9 @@
   line-height: 1.06;
   margin-top: 18px;
   text-wrap: initial;
+  background: var(--paper);
+  border-radius: 8px;
+  box-shadow: 0 0 0 8px var(--paper);
 }
 .editorial-site .home-page .section-heading .eyebrow {
   font-size: 11px;

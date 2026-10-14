@@ -314,7 +314,7 @@
   padding-block: var(--home-space);
   margin-block: var(--home-space) 0;
 }
-/* Hiding the decoration also pauses its IntersectionObserver-controlled loop. */
+/* Keep the mathematical backdrop out of the photograph viewer. */
 .editorial-site:has(.photo-viewer) .travel-page > .page-fractal {
   display: none;
 }

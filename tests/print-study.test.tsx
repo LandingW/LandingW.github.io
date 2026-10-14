@@ -6,43 +6,44 @@ import { gzipSync } from "node:zlib";
 import fs from "node:fs/promises";
 import GrowingFractal from "../src/components/GrowingFractal";
 import {
-  buildPrint,
-  printForms,
-  printCurve,
-  PRINT_VIEWBOX,
-} from "../src/lib/print-study";
+  buildJuliaPlates,
+  juliaPath,
+  JULIA_VIEWBOX,
+} from "../src/lib/julia-study";
 import { mountPrintMotion, printScrollOffsets } from "../src/lib/print-motion";
 
-test("plotter geometry is deterministic, finite, closed and bounded in count", () => {
+test("Julia contours are deterministic, finite, closed and bounded in count", () => {
   for (const format of ["portrait", "landscape"] as const) {
-    const art = buildPrint(format);
-    assert.deepEqual(art, buildPrint(format));
+    const art = buildJuliaPlates(format);
+    assert.deepEqual(art, buildJuliaPlates(format));
     assert.equal(art.length, 2);
-    const curves = art.flatMap((layer) => layer.flatMap((form) => form.curves));
-    assert.ok(curves.length <= 60);
+    const bands = art.flatMap((plate) => plate.bands);
+    const curves = bands.map((band) => juliaPath(band.loops));
+    assert.ok(
+      bands
+        .flatMap((band) => band.loops)
+        .reduce((n, loop) => n + loop.length, 0) <= 6500,
+    );
     assert.equal(new Set(curves).size, curves.length);
     for (const curve of curves) {
       assert.match(curve, /^M/);
       assert.match(curve, /Z$/);
-      assert.equal((curve.match(/C/g) || []).length, 12);
+      assert.match(curve, /Q/);
       assert.doesNotMatch(curve, /NaN|Infinity/);
     }
-    const form = printForms(format)[0][0];
-    assert.equal(printCurve(form, -1), printCurve(form, 0));
-    assert.equal(printCurve(form, 1000), printCurve(form, form.rings - 1));
   }
 });
 
-test("phone composition uses its own tall space and smaller family sizes", () => {
-  assert.equal(PRINT_VIEWBOX.portrait, "0 0 420 900");
-  const portrait = printForms("portrait").flat(),
-    wide = printForms("landscape").flat();
-  assert.ok(portrait.every((form) => form.rx < 180 && form.rings < 18));
-  assert.ok(portrait.some((form) => form.x - form.rx < 0));
-  assert.ok(portrait.some((form) => form.x + form.rx > 420));
-  assert.ok(portrait.some((form) => form.y - form.ry < 0));
-  assert.ok(portrait.some((form) => form.y + form.ry > 900));
-  assert.notEqual(portrait[0].x / 420, wide[0].x / 1440);
+test("phone composition has an independent vertical Julia framing", () => {
+  assert.deepEqual(JULIA_VIEWBOX.portrait, [420, 900]);
+  const portrait = buildJuliaPlates("portrait")[0].bands[0].loops[0];
+  const wide = buildJuliaPlates("landscape")[0].bands[0].loops[0];
+  const xs = portrait.map((p) => p[0]),
+    ys = portrait.map((p) => p[1]);
+  assert.ok(
+    Math.max(...ys) - Math.min(...ys) > Math.max(...xs) - Math.min(...xs),
+  );
+  assert.notEqual(portrait[0][0] / 420, wide[0][0] / 1440);
 });
 
 test("decorative SSR stays compact and visible with only two transform layers", async () => {
@@ -138,11 +139,16 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
     querySelectorAll: () => layers,
   };
   let nextFrame = 0;
-  const pending = new Map<number, () => void>();
-  const flush = () => {
+  let clock = 0,
+    sceneDraws = 0,
+    sceneResets = 0,
+    sceneDisconnected = false;
+  const pending = new Map<number, (now: number) => void>();
+  const flush = (elapsed = 40) => {
+    clock += elapsed;
     const callbacks = [...pending.values()];
     pending.clear();
-    callbacks.forEach((callback) => callback());
+    callbacks.forEach((callback) => callback(clock));
   };
   let resized = () => {};
   let disconnected = false;
@@ -151,7 +157,7 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
     window: win,
     matchMedia: () => media,
     location: { search: "" },
-    requestAnimationFrame: (callback: () => void) => {
+    requestAnimationFrame: (callback: (now: number) => void) => {
       pending.set(++nextFrame, callback);
       return nextFrame;
     },
@@ -183,7 +189,20 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
       else Reflect.deleteProperty(globalThis, key);
     }
   });
-  cleanup = mountPrintMotion(host as unknown as HTMLDivElement);
+  cleanup = mountPrintMotion(host as unknown as HTMLDivElement, {
+    minFrameMs: 1000 / 30,
+    observe() {},
+    measure() {},
+    draw() {
+      sceneDraws++;
+    },
+    reset() {
+      sceneResets++;
+    },
+    disconnect() {
+      sceneDisconnected = true;
+    },
+  });
   assert.equal(host.dataset.artMotion, "running");
   flush();
   assert.deepEqual(positions, ["0 0.00px", "0 0.00px"]);
@@ -211,6 +230,27 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
   win.dispatchEvent(new Event("scroll"));
   flush();
   assert.equal(writes, settledWrites, "unchanged offset does not write styles");
+  const beforeThrottle = sceneDraws;
+  win.scrollY = 1600;
+  win.dispatchEvent(new Event("scroll"));
+  flush(10);
+  assert.equal(
+    sceneDraws,
+    beforeThrottle,
+    "shape updates respect the 30 Hz budget",
+  );
+  assert.equal(pending.size, 1);
+  flush(24);
+  assert.equal(
+    sceneDraws,
+    beforeThrottle + 1,
+    "the final input is not dropped",
+  );
+  assert.equal(
+    pending.size,
+    0,
+    "trailing frame stops instead of becoming an idle loop",
+  );
   win.dispatchEvent(new Event("scroll"));
   doc.hidden = true;
   doc.dispatchEvent(new Event("visibilitychange"));
@@ -233,6 +273,8 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
   assert.equal(host.dataset.artMotion, "running");
   cleanup();
   assert.equal(disconnected, true);
+  assert.equal(sceneDisconnected, true);
+  assert.ok(sceneResets > 0);
   assert.equal(pending.size, 0);
   const before = writes;
   doc.dispatchEvent(new Event("visibilitychange"));

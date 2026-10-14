@@ -50,7 +50,7 @@ test("public portfolio canvases share width and paper tokens without widening ar
   const shared = await fs.readFile("src/app/globals.css", "utf8");
   assert.match(css, /\.home-page > \.page-container[\s\S]*?max-width: none/);
   assert.match(shared, /--page-width: 1180px/);
-  assert.match(css, /--home-surface: rgb\(250 248 243 \/ 76%\)/);
+  assert.match(css, /--home-surface: #faf8f3/);
   assert.match(css, /--home-radius:/);
   assert.match(css, /backdrop-filter: none/);
   assert.doesNotMatch(css, /backdrop-filter: blur/);

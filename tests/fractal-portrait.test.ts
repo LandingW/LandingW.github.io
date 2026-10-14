@@ -27,13 +27,13 @@ test("one portrait world covers the complete scroll range without modulo or tile
     "src/components/GrowingFractal.tsx",
     "utf8",
   );
-  const geometry = await fs.readFile("src/lib/print-study.ts", "utf8");
+  const geometry = await fs.readFile("src/lib/julia-study.ts", "utf8");
   assert.match(geometry, /format === "portrait"/);
-  assert.match(component, /PRINT_VIEWBOX\[format\]/);
+  assert.match(component, /julia-portrait/);
   assert.doesNotMatch(component, /fractal-tile|fractalScrollOffset/);
   const css = await fs.readFile("src/app/globals.css", "utf8");
   assert.match(css, /\.page-fractal\s*\{[^}]*height: 100lvh/);
-  assert.match(css, /@media \(orientation: portrait\)/);
+  assert.match(component, /media="\(orientation: portrait\)"/);
   assert.doesNotMatch(css, /height: max\(220px, 32lvh\)/);
 });
 

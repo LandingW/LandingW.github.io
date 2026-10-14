@@ -15,7 +15,7 @@ Next.js 16 / React 19 / TypeScript，静态导出到 GitHub Pages。
 
 置顶文章自动选择最新发布时间；工作历史显示公司图标和公开技术职责。联系方式在 `src/lib/resume.ts` 中集中维护，QQ / 微信支持点击复制。
 
-首页与旅行页使用轻量生成式版画背景：两层预生成 SVG，独立桌面/竖屏构图，保留自主慢动和随页面滚动的轻微纵向视差。滚动仅合并更新两层位置，650ms CSS 过渡柔和收束，不在空闲时运行 JS 动画循环。没有光标跟随、逐帧 Canvas 绘制或文字测量；后台暂停，静态模式或减少动态效果偏好下保持静态。几何位于 `src/lib/print-study.ts`，滚动控制位于 `src/lib/print-motion.ts`。参考与性能边界见 [生成式版画验收](docs/PRINT-STUDY-QA.md)。
+首页与旅行页使用真正的 Julia 数学分形：预生成 `z²+c` 逃逸场轮廓，独立桌面/竖屏构图，保留缓慢滚动视差。文本框的真实圆角边界会使邻近轮廓局部偏折；正文纸面不透背景。滚动不重算复数迭代、不测量文字或面板布局；最多每秒 30 次更新五条 SVG 路径，停止输入后没有持续 JS 循环。没有光标跟随；后台暂停，静态模式和减少动态效果偏好使用完整静态 SVG。生成命令为 `npx tsx scripts/generate-julia-study.ts`；运行时几何位于 `src/lib/julia-study.ts`，面板交互位于 `src/lib/julia-surfaces.ts`。设计、验证和性能边界见 [Julia 分形与文本边界](docs/JULIA-FIELD-QA.md)。
 
 ## 本地运行
 

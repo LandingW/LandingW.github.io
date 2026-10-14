@@ -84,8 +84,9 @@ test("background contains two prebuilt plates and is fully rendered without Java
   assert.match(html, /aria-hidden="true"/);
   assert.match(html, /class="page-fractal"/);
   assert.equal((html.match(/class="print-layer /g) ?? []).length, 2);
-  assert.equal((html.match(/<svg/g) ?? []).length, 4);
-  assert.match(html, /data-renderer="composited-print"/);
+  assert.equal((html.match(/<svg/g) ?? []).length, 2);
+  assert.equal((html.match(/<picture/g) ?? []).length, 2);
+  assert.match(html, /data-renderer="julia-surface-field"/);
   assert.match(html, /data-art-motion="paused"/);
   assert.doesNotMatch(html, /<canvas|<filter|fractal-tile|<button|<a /);
 });
