@@ -227,6 +227,9 @@
 .editorial-site .home-page .section-aside {
   margin: 0 0 4px;
   max-width: 24em;
+  background: var(--paper);
+  border-radius: 12px;
+  box-shadow: 0 0 16px 10px var(--paper);
   font-size: 13px;
   flex-shrink: 0;
 }

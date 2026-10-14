@@ -8,14 +8,14 @@ export function printScrollOffsets(y: number, range: number, height: number) {
   return [offset, offset * 0.62];
 }
 
-/** Scroll events share one pending frame; CSS handles the gentle settling.
- * No idle JS loop, cursor input, path updates or layout reads while scrolling.
+/** Scroll events share one pending frame; a scene may request finite settling frames.
+ * No idle JS loop, cursor input or layout reads while scrolling.
  */
 export interface PrintScene {
   minFrameMs?: number;
   observe(notify: () => void): void;
   measure(): void;
-  draw(y: number, range: number, height: number): void;
+  draw(y: number, range: number, height: number): boolean | void;
   reset(): void;
   disconnect(): void;
 }
@@ -50,7 +50,7 @@ export function mountPrintMotion(host: HTMLDivElement, scene?: PrintScene) {
     if (canMove()) {
       lastDraw = now;
       place(printScrollOffsets(window.scrollY, range, height));
-      scene?.draw(window.scrollY, range, height);
+      if (scene?.draw(window.scrollY, range, height)) schedule();
     }
   };
   const schedule = () => {

@@ -46,32 +46,25 @@ test("phone composition has an independent vertical Julia framing", () => {
   assert.notEqual(portrait[0][0] / 420, wide[0][0] / 1440);
 });
 
-test("decorative SSR stays compact and visible with only two transform layers", async () => {
+test("decorative ink SSR stays compact with a visible responsive fallback and no idle animation", async () => {
   const html = renderToStaticMarkup(createElement(GrowingFractal));
-  assert.equal((html.match(/class="print-layer /g) || []).length, 2);
+  assert.equal((html.match(/<picture/g) || []).length, 1);
   assert.ok(
     gzipSync(html).byteLength < 26000,
     `compressed background: ${gzipSync(html).byteLength} bytes`,
   );
   assert.doesNotMatch(
     html,
-    /<canvas|<filter|<animate|<image|<script|tabindex|opacity:0|visibility:hidden/,
+    /<filter|<animate|<image|<script|tabindex|opacity:0|visibility:hidden/,
   );
   const css = await fs.readFile("src/app/globals.css", "utf8");
-  for (const name of ["print-drift", "print-counter"]) {
-    const frames = css
-      .split(`@keyframes ${name}`)[1]
-      .split("@keyframes")[0]
-      .split("@media")[0];
-    assert.match(frames, /translate3d/);
-    assert.doesNotMatch(frames, /opacity:|filter:|stroke-|width:|height:/);
-  }
+  assert.doesNotMatch(css, /@keyframes print-drift|@keyframes print-counter/);
   const controller = await fs.readFile("src/lib/print-motion.ts", "utf8");
   assert.doesNotMatch(
     controller,
     /drawImage|setTimeout|setInterval|createRange|getBoundingClientRect|pointermove/,
   );
-  assert.match(css, /transition: translate 650ms/);
+  assert.match(css, /\.ink-static img\s*\{[^}]*height: 140%/);
   for (const file of ["src/app/home.css", "src/app/travel/canvas.css"]) {
     assert.doesNotMatch(
       await fs.readFile(file, "utf8"),
@@ -142,7 +135,8 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
   let clock = 0,
     sceneDraws = 0,
     sceneResets = 0,
-    sceneDisconnected = false;
+    sceneDisconnected = false,
+    scenePending = 0;
   const pending = new Map<number, (now: number) => void>();
   const flush = (elapsed = 40) => {
     clock += elapsed;
@@ -195,6 +189,7 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
     measure() {},
     draw() {
       sceneDraws++;
+      return --scenePending > 0;
     },
     reset() {
       sceneResets++;
@@ -251,6 +246,13 @@ test("scroll bursts coalesce, idle work stops, cursor is ignored and lifecycle c
     0,
     "trailing frame stops instead of becoming an idle loop",
   );
+  scenePending = 3;
+  win.dispatchEvent(new Event("scroll"));
+  flush();
+  assert.equal(pending.size, 1, "a scene may request a bounded settling frame");
+  flush();
+  flush();
+  assert.equal(pending.size, 0, "settling stops on the final scene frame");
   win.dispatchEvent(new Event("scroll"));
   doc.hidden = true;
   doc.dispatchEvent(new Event("visibilitychange"));

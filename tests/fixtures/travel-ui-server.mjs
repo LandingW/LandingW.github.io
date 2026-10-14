@@ -105,6 +105,7 @@ const mime = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
   ".json": "application/json",
   ".woff2": "font/woff2",
 };
